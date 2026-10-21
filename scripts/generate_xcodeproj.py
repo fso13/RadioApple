@@ -97,7 +97,7 @@ def build() -> tuple[str, str]:
     tests_proxy = new_id("B9")
 
     folder_groups = {
-        name: new_id("A3") for name in ["Models", "Data", "Services", "UI", "Window", "Resources"]
+        name: new_id("A3") for name in ["Models", "Data", "Services", "Intents", "UI", "Window", "Resources"]
     }
 
     sources_phase = new_id("C4")
@@ -183,6 +183,7 @@ def build() -> tuple[str, str]:
                 f"{folder_groups['Models']} /* Models */",
                 f"{folder_groups['Data']} /* Data */",
                 f"{folder_groups['Services']} /* Services */",
+                f"{folder_groups['Intents']} /* Intents */",
                 f"{folder_groups['UI']} /* UI */",
                 f"{folder_groups['Window']} /* Window */",
                 f"{folder_groups['Resources']} /* Resources */",
@@ -190,7 +191,7 @@ def build() -> tuple[str, str]:
             path="RadioMac",
         )
     )
-    for name in ["Models", "Data", "Services", "UI", "Window"]:
+    for name in ["Models", "Data", "Services", "Intents", "UI", "Window"]:
         group_section.append(group(folder_groups[name], files_in(name), path=name))
     group_section.append(
         group(
@@ -270,6 +271,11 @@ def build() -> tuple[str, str]:
         "LD_RUNPATH_SEARCH_PATHS = (",
         '\t"$(inherited)",',
         '\t"@executable_path/../Frameworks",',
+        ");",
+        "OTHER_LDFLAGS = (",
+        '\t"$(inherited)",',
+        '\t"-framework",',
+        '\tAppIntents,',
         ");",
         "MARKETING_VERSION = 1.0.0;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",

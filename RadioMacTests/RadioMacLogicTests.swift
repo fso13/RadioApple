@@ -9,6 +9,28 @@ import XCTest
 final class RadioMacLogicTests: XCTestCase {
     // MARK: - Genres
 
+    func testRadioURLPlayCommand() {
+        XCTAssertEqual(
+            RadioURLCommand.parse(URL(string: "radiomac://play/rock-nashe")!),
+            .play(id: "rock-nashe")
+        )
+        XCTAssertEqual(
+            RadioURLCommand.parse(URL(string: "radiomac://play?id=rock-nashe")!),
+            .play(id: "rock-nashe")
+        )
+    }
+
+    func testRadioURLPauseAndOpenCommands() {
+        XCTAssertEqual(RadioURLCommand.parse(URL(string: "radiomac://pause")!), .pause)
+        XCTAssertEqual(RadioURLCommand.parse(URL(string: "radiomac://open")!), .open)
+    }
+
+    func testRadioURLRejectsUnknownAndEmptyCommands() {
+        XCTAssertNil(RadioURLCommand.parse(URL(string: "https://play/rock-nashe")!))
+        XCTAssertNil(RadioURLCommand.parse(URL(string: "radiomac://play/")!))
+        XCTAssertNil(RadioURLCommand.parse(URL(string: "radiomac://unknown")!))
+    }
+
     func testGenreCatalogNormalizesEmptyAndKnownNames() {
         XCTAssertEqual(GenreCatalog.normalize(""), GenreCatalog.other)
         XCTAssertEqual(GenreCatalog.normalize("   "), GenreCatalog.other)

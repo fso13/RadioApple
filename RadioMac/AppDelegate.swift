@@ -35,6 +35,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.onQuit = { NSApp.terminate(nil) }
         statusItemController = statusItem
 
+        AppRuntime.shared.install(
+            environment: environment,
+            showWindow: { [weak windowController] in windowController?.showMainWindow() },
+            showSettings: { [weak windowController] in windowController?.showSettings() }
+        )
+
 #if DEBUG
         if DebugHarness.handle(
             arguments: ProcessInfo.processInfo.arguments,
@@ -47,6 +53,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         if ProcessInfo.processInfo.arguments.contains("-showWindow") {
             windowController.showMainWindow()
+        }
+    }
+
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            guard let command = RadioURLCommand.parse(url) else { continue }
+#if DEBUG
+            DebugLog.write("open url: \(url.absoluteString) -> \(String(describing: command))")
+#endif
+            AppRuntime.shared.handle(command)
         }
     }
 
