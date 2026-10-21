@@ -232,6 +232,16 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testAudioEnginePreferenceSelection() {
+        let hls = URL(string: "https://example.com/live.m3u8")!
+        let mp3 = URL(string: "https://example.com/live.mp3")!
+
+        XCTAssertTrue(AudioEnginePreference.automatic.prefersNative(for: hls))
+        XCTAssertFalse(AudioEnginePreference.automatic.prefersNative(for: mp3))
+        XCTAssertTrue(AudioEnginePreference.native.prefersNative(for: mp3))
+        XCTAssertFalse(AudioEnginePreference.bass.prefersNative(for: hls))
+    }
+
     func testLastFmKeychainRoundtrip() {
         let service = "com.fso13.radioMac.lastfm.tests.\(UUID().uuidString)"
         let credentials = LastFmCredentials(

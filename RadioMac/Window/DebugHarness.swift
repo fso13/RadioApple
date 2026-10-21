@@ -27,6 +27,13 @@ enum DebugHarness {
             runPlaytest(output: scratchDirectory(named: "").appendingPathComponent(name), environment: environment)
             return true
         }
+        if let name = value(after: "-nativetest", in: arguments) {
+            runNativeTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                environment: environment
+            )
+            return true
+        }
         return false
     }
 
@@ -104,6 +111,50 @@ enum DebugHarness {
     // MARK: - Playback smoke test
 
     private static var playtestCancellables: Set<AnyCancellable> = []
+
+    private static func runNativeTest(output: URL, environment: AppEnvironment) {
+        let player = environment.player
+        let previousEngine = environment.settings.audioEnginePreference
+        environment.settings.setAudioEnginePreference(.native)
+        player.stop()
+        playtestCancellables.removeAll()
+
+        var lines: [String] = []
+        let started = Date()
+        func stamp() -> String {
+            String(format: "%5.1fs", Date().timeIntervalSince(started))
+        }
+
+        player.$status
+            .sink { status in
+                lines.append("[\(stamp())] state=\(status.rawValue) engine=\(player.activeEngineName) error=\(player.errorMessage ?? "-")")
+            }
+            .store(in: &playtestCancellables)
+
+        guard let station = environment.library.byID("rp-soundpark")
+            ?? environment.library.stations.first(where: { $0.url.contains(".m3u8") })
+        else {
+            try? "no HLS station\n".write(to: output, atomically: true, encoding: .utf8)
+            NSApp.terminate(nil)
+            return
+        }
+
+        lines.append("== native \(station.name) <\(station.url)>")
+        player.play(station)
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 15_000_000_000)
+            lines.append("[15.0s] final state=\(player.status.rawValue) engine=\(player.activeEngineName) info=\(player.streamInfo?.codec ?? "-")")
+            player.stop()
+            environment.settings.setAudioEnginePreference(previousEngine)
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output,
+                atomically: true,
+                encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
+    }
 
     private static func runPlaytest(output: URL, environment: AppEnvironment) {
         let player = environment.player

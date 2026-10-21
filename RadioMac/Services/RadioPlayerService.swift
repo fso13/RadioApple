@@ -22,11 +22,19 @@ final class RadioPlayerService: ObservableObject {
     @Published private(set) var streamInfo: StreamInfo?
     @Published private(set) var errorMessage: String?
     @Published private(set) var volume: Double
+    @Published private(set) var activeEngineName = "BASS"
+
+    private enum AudioEngineKind {
+        case bass
+        case native
+    }
 
     private let settings: AppSettings
     private let library: StationLibrary
     private let equalizer: EqualizerService
-    private let engine: RadioEngine
+    private let bassEngine: RadioEngine
+    private let nativeEngine = NativeAudioEngine()
+    private var activeEngine: AudioEngineKind?
     private let lookup = NowPlayingLookup.shared
 
     private var pollTimer: Timer?
@@ -43,7 +51,7 @@ final class RadioPlayerService: ObservableObject {
         self.settings = settings
         self.library = library
         self.equalizer = equalizer
-        self.engine = engine
+        self.bassEngine = engine
         self.volume = settings.volume
         wireEngine()
         observeLibrary()
@@ -63,7 +71,8 @@ final class RadioPlayerService: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
-        engine.setVolume(volume)
+        bassEngine.setVolume(volume)
+        nativeEngine.setVolume(volume)
         if settings.resumeLastStation,
            let id = settings.lastStationID,
            let station = library.byID(id) {
@@ -72,17 +81,29 @@ final class RadioPlayerService: ObservableObject {
     }
 
     private func wireEngine() {
-        engine.onStateChange = { [weak self] state in
-            self?.handleEngineState(state)
+        bassEngine.onStateChange = { [weak self] state in
+            self?.handleEngineState(state, from: .bass)
         }
-        engine.onICYTitle = { [weak self] title in
-            self?.handleICYTitle(title)
+        bassEngine.onICYTitle = { [weak self] title in
+            guard let self, self.activeEngine == .bass else { return }
+            self.handleICYTitle(title)
         }
-        engine.onICYURL = { [weak self] url in
-            self?.handleICYURL(url)
+        bassEngine.onICYURL = { [weak self] url in
+            guard let self, self.activeEngine == .bass else { return }
+            self.handleICYURL(url)
         }
-        engine.onPlaybackError = { [weak self] message in
-            self?.errorMessage = message
+        bassEngine.onPlaybackError = { [weak self] message in
+            guard let self, self.activeEngine == .bass else { return }
+            self.errorMessage = message
+        }
+
+        nativeEngine.onStateChange = { [weak self] state in
+            self?.handleEngineState(state, from: .native)
+        }
+        nativeEngine.onPlaybackError = { [weak self] message in
+            guard let self, self.activeEngine == .native else { return }
+            self.errorMessage = message
+            self.handleEngineState(.error, from: .native)
         }
     }
 
@@ -116,8 +137,24 @@ final class RadioPlayerService: ObservableObject {
             stopNowPlayingPoll()
             return
         }
-        engine.play(url: url)
-        engine.setVolume(volume)
+
+        let kind: AudioEngineKind = settings.audioEnginePreference.prefersNative(for: url)
+            ? .native
+            : .bass
+        activeEngine = nil
+        bassEngine.stop()
+        nativeEngine.stop()
+        activeEngine = kind
+        activeEngineName = kind == .native ? "AVPlayer" : "BASS"
+
+        switch kind {
+        case .bass:
+            bassEngine.setVolume(volume)
+            bassEngine.play(url: url)
+        case .native:
+            nativeEngine.setVolume(volume)
+            nativeEngine.play(url: url)
+        }
     }
 
     func togglePlayPause() {
@@ -125,7 +162,7 @@ final class RadioPlayerService: ObservableObject {
         case .playing:
             pause()
         case .paused:
-            engine.resume()
+            resumeActive()
         default:
             if let station { play(station) }
         }
@@ -133,21 +170,36 @@ final class RadioPlayerService: ObservableObject {
 
     func pause() {
         guard status == .playing else { return }
-        engine.pause()
+        switch activeEngine {
+        case .bass: bassEngine.pause()
+        case .native: nativeEngine.pause()
+        case nil: break
+        }
     }
 
     func resumeOrPlay() {
         if status == .paused {
-            engine.resume()
+            resumeActive()
         } else if let station {
             play(station)
+        }
+    }
+
+    private func resumeActive() {
+        switch activeEngine {
+        case .bass: bassEngine.resume()
+        case .native: nativeEngine.resume()
+        case nil:
+            if let station { play(station) }
         }
     }
 
     func stop() {
         stopNowPlayingPoll()
         nowPlayingGeneration += 1
-        engine.stop()
+        activeEngine = nil
+        bassEngine.stop()
+        nativeEngine.stop()
         status = .idle
         nowPlaying = nil
         streamInfo = nil
@@ -158,7 +210,8 @@ final class RadioPlayerService: ObservableObject {
 
     func setVolume(_ value: Double) {
         volume = min(1, max(0, value))
-        engine.setVolume(volume)
+        bassEngine.setVolume(volume)
+        nativeEngine.setVolume(volume)
         settings.setVolume(volume)
     }
 
@@ -174,7 +227,11 @@ final class RadioPlayerService: ObservableObject {
 
     // MARK: - Engine events
 
-    private func handleEngineState(_ state: RadioPlaybackState) {
+    private func handleEngineState(
+        _ state: RadioPlaybackState,
+        from kind: AudioEngineKind
+    ) {
+        guard activeEngine == kind else { return }
         let next = Status(rawValue: state.rawValue) ?? .idle
         // Keep the error banner until the user dismisses or retries.
         if next == .idle, status == .error { return }
@@ -203,9 +260,15 @@ final class RadioPlayerService: ObservableObject {
         guard force || streamInfo == nil else { return }
 
         let stationID = station.id
-        engine.fetchStreamInfo { [weak self] info in
+        let completion: @MainActor (StreamInfo?) -> Void = { [weak self] info in
             guard let self, self.station?.id == stationID else { return }
             self.streamInfo = info
+        }
+        switch activeEngine {
+        case .native:
+            nativeEngine.fetchStreamInfo(completion: completion)
+        case .bass, nil:
+            bassEngine.fetchStreamInfo(completion: completion)
         }
     }
 

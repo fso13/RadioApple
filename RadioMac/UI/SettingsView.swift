@@ -162,10 +162,28 @@ struct SettingsView: View {
                 }
 
                 section("Звук") {
+                    SettingsRow(title: "Движок", subtitle: settings.audioEnginePreference.detail) {
+                        Picker(
+                            "",
+                            selection: Binding(
+                                get: { settings.audioEnginePreference },
+                                set: { settings.setAudioEnginePreference($0) }
+                            )
+                        ) {
+                            ForEach(AudioEnginePreference.allCases) { preference in
+                                Text(preference.title).tag(preference)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        .frame(width: 220)
+                    }
+                    Hairline()
                     SettingsRow(title: "Эквалайзер", subtitle: equalizerSubtitle) {
                         TextButton(title: "Настроить", systemImage: "arrow.right", iconPosition: .trailing) {
                             onOpenEqualizer()
                         }
+                        .disabled(player.activeEngineName == "AVPlayer")
                     }
                 }
 
@@ -176,6 +194,8 @@ struct SettingsView: View {
                     )
                     Hairline()
                     InfoRow(label: "Статус", value: playerStatusText)
+                    Hairline()
+                    InfoRow(label: "Движок", value: player.activeEngineName)
                     Hairline()
                     InfoRow(label: "Кодек", value: player.streamInfo?.codec ?? "—")
                     Hairline()
@@ -586,6 +606,9 @@ struct SettingsView: View {
     }
 
     private var equalizerSubtitle: String {
+        if player.activeEngineName == "AVPlayer" {
+            return "В AVPlayer эквалайзер пока недоступен"
+        }
         guard equalizer.isSupported else { return "Недоступен на этом Mac" }
         return equalizer.enabled
             ? "Включён · \(equalizer.preset.label)"
