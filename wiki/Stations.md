@@ -90,7 +90,7 @@
 
 Ключи: `stations_v1` (станции и флаг избранного), `volume`, `resume_last_station`,
 `last_station_id`, `auto_start`, `theme_preference`, `eq_enabled`, `eq_preset`,
-`eq_gains`, `eq_custom_gains`.
+`eq_gains`, `eq_custom_gains`, `alarm_settings`.
 
 ## Переход с Flutter-версии
 

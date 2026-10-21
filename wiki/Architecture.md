@@ -47,6 +47,8 @@ RadioMac — нативное приложение на **Swift 5** (SwiftUI + A
 | `AppSettings` | громкость, автозапуск, последняя станция |
 | `ThemeService` | системная/светлая/тёмная тема |
 | `LaunchAtLogin` | `SMAppService.mainApp` |
+| `AlarmService` | расписание будильника, fade-in, уведомления, wake catch-up |
+| `DiagnosticsService` | opt-in локальный журнал и обнаружение аварийных завершений |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.
