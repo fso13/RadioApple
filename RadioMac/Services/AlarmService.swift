@@ -37,7 +37,6 @@ final class AlarmService: ObservableObject {
 
         observePlayer()
         observeWake()
-        refreshNotificationSettings()
         schedule()
         updateActivity()
     }
@@ -198,7 +197,7 @@ final class AlarmService: ObservableObject {
 
     private func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
-            [weak self] granted, error in
+            @Sendable [weak self] granted, error in
             let denied = !granted
             let message = error?.localizedDescription
             Task { @MainActor in
@@ -207,13 +206,6 @@ final class AlarmService: ObservableObject {
                     NSLog("RadioMac: alarm notification permission: %@", message)
                 }
             }
-        }
-    }
-
-    private func refreshNotificationSettings() {
-        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            let denied = settings.authorizationStatus == .denied
-            Task { @MainActor in self?.notificationDenied = denied }
         }
     }
 
