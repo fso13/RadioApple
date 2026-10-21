@@ -6,6 +6,7 @@ import UserNotifications
 /// Wake-up radio: a weekday schedule, station selection, fade-in and a local
 /// notification. Works while RadioMac is running; after sleep it catches up if
 /// the scheduled time passed within ten minutes.
+@MainActor
 final class AlarmService: ObservableObject {
     @Published private(set) var settings: AlarmSettings
     @Published private(set) var nextFireDate: Date?
@@ -39,15 +40,6 @@ final class AlarmService: ObservableObject {
         refreshNotificationSettings()
         schedule()
         updateActivity()
-    }
-
-    deinit {
-        scheduleTimer?.invalidate()
-        fadeTimer?.invalidate()
-        if let activity { ProcessInfo.processInfo.endActivity(activity) }
-        if let wakeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(wakeObserver)
-        }
     }
 
     // MARK: - Public API
@@ -110,7 +102,7 @@ final class AlarmService: ObservableObject {
         nextFireDate = fireDate
 
         let timer = Timer(fire: fireDate, interval: 0, repeats: false) { [weak self] _ in
-            self?.fire()
+            Task { @MainActor in self?.fire() }
         }
         timer.tolerance = 1
         RunLoop.main.add(timer, forMode: .common)
@@ -175,20 +167,23 @@ final class AlarmService: ObservableObject {
 
         player.setVolume(0)
         let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            let elapsed = Date().timeIntervalSince(self.fadeStarted)
-            let duration = TimeInterval(self.settings.fadeInSeconds)
-            self.player.setVolume(
-                Self.fadeVolume(target: self.fadeTarget, elapsed: elapsed, duration: duration)
-            )
-            if elapsed >= duration {
-                self.player.setVolume(self.fadeTarget)
-                self.fadeTimer?.invalidate()
-                self.fadeTimer = nil
-            }
+            Task { @MainActor in self?.tickFade() }
         }
         RunLoop.main.add(timer, forMode: .common)
         fadeTimer = timer
+    }
+
+    private func tickFade() {
+        let elapsed = Date().timeIntervalSince(fadeStarted)
+        let duration = TimeInterval(settings.fadeInSeconds)
+        player.setVolume(
+            Self.fadeVolume(target: fadeTarget, elapsed: elapsed, duration: duration)
+        )
+        if elapsed >= duration {
+            player.setVolume(fadeTarget)
+            fadeTimer?.invalidate()
+            fadeTimer = nil
+        }
     }
 
     private func cancelFade(restore: Bool) {
@@ -204,10 +199,12 @@ final class AlarmService: ObservableObject {
     private func requestAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) {
             [weak self] granted, error in
-            DispatchQueue.main.async {
-                self?.notificationDenied = !granted
-                if let error {
-                    NSLog("RadioMac: alarm notification permission: %@", error.localizedDescription)
+            let denied = !granted
+            let message = error?.localizedDescription
+            Task { @MainActor in
+                self?.notificationDenied = denied
+                if let message {
+                    NSLog("RadioMac: alarm notification permission: %@", message)
                 }
             }
         }
@@ -215,9 +212,8 @@ final class AlarmService: ObservableObject {
 
     private func refreshNotificationSettings() {
         UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
-            DispatchQueue.main.async {
-                self?.notificationDenied = settings.authorizationStatus == .denied
-            }
+            let denied = settings.authorizationStatus == .denied
+            Task { @MainActor in self?.notificationDenied = denied }
         }
     }
 
@@ -266,7 +262,7 @@ final class AlarmService: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleWake()
+            Task { @MainActor in self?.handleWake() }
         }
     }
 

@@ -2,7 +2,7 @@ import Foundation
 
 /// File storage for the opt-in diagnostics journal. Kept separate from the
 /// service so writing, trimming and crash-marker handling can be unit-tested.
-final class DiagnosticsStore {
+final class DiagnosticsStore: @unchecked Sendable {
     let directory: URL
     let logURL: URL
     let markerURL: URL

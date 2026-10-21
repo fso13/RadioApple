@@ -4,7 +4,7 @@ import Foundation
 ///
 /// `weekdays` uses `Calendar.component(.weekday:)` values: 1 = Sunday …
 /// 7 = Saturday. The UI displays them Monday-first.
-struct AlarmSettings: Codable, Equatable {
+struct AlarmSettings: Codable, Equatable, Sendable {
     var enabled: Bool
     var hour: Int
     var minute: Int

@@ -29,6 +29,7 @@ enum StationEditorRequest: Identifiable {
 
 /// UI state for the main panel: search text, genre filter, keyboard selection
 /// and the station editor sheet.
+@MainActor
 final class MainViewModel: ObservableObject {
     private let library: StationLibrary
     private var cancellables: Set<AnyCancellable> = []

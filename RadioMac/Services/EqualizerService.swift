@@ -1,6 +1,7 @@
 import Foundation
 
 /// Ten-band equalizer state, pushed straight into BASS (no stream restart needed).
+@MainActor
 final class EqualizerService: ObservableObject {
     private let defaults: UserDefaults
     private let engine: RadioEngine

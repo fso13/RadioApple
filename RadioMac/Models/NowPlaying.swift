@@ -1,7 +1,7 @@
 import Foundation
 
 /// Track metadata shown in the now-playing bar, menu bar and Control Center.
-struct NowPlaying: Equatable {
+struct NowPlaying: Equatable, Sendable {
     var raw: String
     var artist: String?
     var title: String?

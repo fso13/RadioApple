@@ -4,6 +4,7 @@ import MediaPlayer
 
 /// Publishes playback metadata to Control Center / the menu-bar Now Playing tile
 /// and forwards the system transport commands back to the player.
+@MainActor
 final class NowPlayingCenter {
     static let shared = NowPlayingCenter()
 

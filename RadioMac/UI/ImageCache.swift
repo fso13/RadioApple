@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 /// Process-wide image cache for station logos and artwork.
+@MainActor
 final class ImageCache {
     static let shared = ImageCache()
 

@@ -1,6 +1,7 @@
 import Foundation
 
 /// The user's station library: built-in catalog plus their own streams.
+@MainActor
 final class StationLibrary: ObservableObject {
     private let defaults: UserDefaults
 

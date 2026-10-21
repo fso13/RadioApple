@@ -3,6 +3,7 @@ import AppKit
 /// Keyboard handling for the panel, ported from the Flutter shortcuts:
 /// Esc hides (or leaves search), Space toggles, ↑/↓ move the selection,
 /// Enter plays, 1–9 jump to a station, ⌘F focuses search, ⌘N adds a station.
+@MainActor
 final class KeyboardRouter {
     weak var panel: NSWindow?
 
@@ -32,8 +33,6 @@ final class KeyboardRouter {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
     }
-
-    deinit { uninstall() }
 
     private var isEditingText: Bool {
         panel?.firstResponder is NSTextView

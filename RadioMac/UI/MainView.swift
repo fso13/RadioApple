@@ -229,15 +229,13 @@ struct MainView: View {
     /// Loads the dragged station id and hands it to `onDrop` on the main queue.
     private func handleStationDrop(
         _ providers: [NSItemProvider],
-        onDrop: @escaping (String) -> Void
+        onDrop: @escaping @MainActor (String) -> Void
     ) -> Bool {
         guard model.canReorder, let provider = providers.first else { return false }
         provider.loadObject(ofClass: NSString.self) { object, _ in
             guard let value = object as? NSString else { return }
             let id = value as String
-            DispatchQueue.main.async {
-                onDrop(id)
-            }
+            Task { @MainActor in onDrop(id) }
         }
         return true
     }

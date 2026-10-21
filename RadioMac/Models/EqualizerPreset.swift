@@ -2,7 +2,7 @@ import Foundation
 
 /// A 10-band equalizer preset. Gains are in dB, ordered low → high:
 /// 32, 64, 125, 250, 500, 1k, 2k, 4k, 8k, 16k Hz.
-struct EqualizerPreset: Identifiable, Hashable {
+struct EqualizerPreset: Identifiable, Hashable, Sendable {
     let id: String
     let label: String
     let gains: [Double]

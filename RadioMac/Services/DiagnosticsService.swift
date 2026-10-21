@@ -3,6 +3,7 @@ import Foundation
 
 /// Opt-in local diagnostics: a small event journal plus crash detection via a
 /// session marker. Nothing is uploaded; station URLs are reduced to their host.
+@MainActor
 final class DiagnosticsService: ObservableObject {
     @Published private(set) var isEnabled: Bool
     @Published private(set) var lines: [String] = []

@@ -3,8 +3,9 @@ import Foundation
 
 /// Glue between the audio engine, the station library, track metadata and the
 /// system Now Playing tile.
+@MainActor
 final class RadioPlayerService: ObservableObject {
-    enum Status: String {
+    enum Status: String, Sendable {
         case idle, loading, playing, paused, error
 
         var isActive: Bool {
@@ -244,7 +245,7 @@ final class RadioPlayerService: ObservableObject {
         stopNowPlayingPoll()
         pollNowPlaying()
         pollTimer = Timer.scheduledTimer(withTimeInterval: 20, repeats: true) { [weak self] _ in
-            self?.pollNowPlaying()
+            Task { @MainActor in self?.pollNowPlaying() }
         }
     }
 

@@ -3,7 +3,7 @@ import Foundation
 /// Audio properties of the current stream, as reported by BASS.
 ///
 /// Kept free of BASS imports so formatting and codec naming are unit-testable.
-struct StreamInfo: Equatable {
+struct StreamInfo: Equatable, Sendable {
     let codec: String
     let frequency: Int
     let channels: Int

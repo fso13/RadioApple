@@ -2,7 +2,7 @@ import Foundation
 
 /// Resolves the current track from station APIs (SomaFM, Radio Paradise),
 /// an Icecast status page, or in-band ICY metadata.
-final class NowPlayingLookup {
+final class NowPlayingLookup: @unchecked Sendable {
     static let shared = NowPlayingLookup()
 
     private static let userAgent = "RadioMac/1.0"

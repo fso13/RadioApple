@@ -446,7 +446,7 @@ struct ToggleRow: View {
     var subtitle: String?
     let isOn: Bool
     var isEnabled: Bool = true
-    let onChange: (Bool) -> Void
+    let onChange: @MainActor @Sendable (Bool) -> Void
 
     @Environment(\.palette) private var palette
 

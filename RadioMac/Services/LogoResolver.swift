@@ -6,7 +6,7 @@ import Foundation
 /// 1. asks Radio Browser for a favicon matching the stream,
 /// 2. tries the station homepage from ICY metadata,
 /// 3. falls back to a favicon for the stream's brand domain.
-final class LogoResolver {
+final class LogoResolver: @unchecked Sendable {
     static let shared = LogoResolver()
 
     private let radioBrowser = "https://de1.api.radio-browser.info"

@@ -12,6 +12,7 @@ import Foundation
 ///
 /// Both write only inside the sandbox container, so they work without granting
 /// the app access to the user's folders.
+@MainActor
 enum DebugHarness {
     static func handle(
         arguments: [String],
@@ -39,8 +40,12 @@ enum DebugHarness {
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
 
         var delay: TimeInterval = 1.6
-        func after(_ block: @escaping () -> Void) {
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: block)
+        func after(_ block: @escaping @MainActor () -> Void) {
+            let wait = delay
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000))
+                block()
+            }
             delay += 0.7
         }
 
@@ -84,7 +89,10 @@ enum DebugHarness {
         // the panel out after the second show.
         after {
             window.hide()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.03) { window.showMainWindow() }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 30_000_000)
+                window.showMainWindow()
+            }
         }
         after {
             DebugLog.write("hide/show race: visible=\(window.isVisible)")
@@ -148,7 +156,10 @@ enum DebugHarness {
             }
             lines.append("== play \(station.name) <\(station.url)>")
             player.play(station)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 10) { step(index + 1) }
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 10_000_000_000)
+                step(index + 1)
+            }
         }
 
         step(0)

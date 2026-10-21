@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A single radio stream in the library.
-struct RadioStation: Identifiable, Hashable, Codable {
+struct RadioStation: Identifiable, Hashable, Codable, Sendable {
     var id: String
     var name: String
     var url: String

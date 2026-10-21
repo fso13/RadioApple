@@ -48,7 +48,7 @@ private func bassEndSyncCallback(
 ///
 /// A single serial queue owns every BASS handle; state changes are forwarded to
 /// the main queue through the `on…` closures so SwiftUI can observe them.
-final class RadioEngine {
+final class RadioEngine: @unchecked Sendable {
     static let shared = RadioEngine()
 
     var onStateChange: ((RadioPlaybackState) -> Void)?
@@ -161,16 +161,16 @@ final class RadioEngine {
     }
 
     /// Reads the current stream's audio properties on the BASS queue.
-    func fetchStreamInfo(completion: @escaping (StreamInfo?) -> Void) {
+    func fetchStreamInfo(completion: @escaping @MainActor (StreamInfo?) -> Void) {
         queue.async { [weak self] in
             guard let self, self.stream != 0 else {
-                DispatchQueue.main.async { completion(nil) }
+                Task { @MainActor in completion(nil) }
                 return
             }
 
             var info = BASS_CHANNELINFO()
             guard BASS_ChannelGetInfo(self.stream, &info) != 0 else {
-                DispatchQueue.main.async { completion(nil) }
+                Task { @MainActor in completion(nil) }
                 return
             }
 
@@ -188,7 +188,7 @@ final class RadioEngine {
                 bitrateKbps: hasBitrate && bitrate > 0 ? Int(bitrate.rounded()) : nil,
                 bufferMilliseconds: Int(BASS_GetConfig(DWORD(BASS_CONFIG_BUFFER)))
             )
-            DispatchQueue.main.async { completion(snapshot) }
+            Task { @MainActor in completion(snapshot) }
         }
     }
 

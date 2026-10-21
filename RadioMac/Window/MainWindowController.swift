@@ -3,6 +3,7 @@ import Combine
 import SwiftUI
 
 /// Services and UI state shared by the status item and the panel.
+@MainActor
 final class AppEnvironment {
     let settings: AppSettings
     let theme: ThemeService
@@ -35,12 +36,14 @@ final class AppEnvironment {
 
 /// Borderless panel that can still take keyboard focus (needed for search and
 /// the single-key shortcuts).
+@MainActor
 final class RadioPanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
 }
 
 /// Owns the frameless 420×680 panel and the show/hide animation.
+@MainActor
 final class MainWindowController: NSWindowController {
     static let panelSize = NSSize(width: 780, height: 660)
 
@@ -209,12 +212,14 @@ final class MainWindowController: NSWindowController {
             panel.animator().alphaValue = 0
         } completionHandler: { [weak self] in
             // A re-show during the fade-out bumps the generation and keeps the panel.
-            guard let self, self.visibilityGeneration == generation else { return }
-            self.panel.orderOut(nil)
-            self.panel.alphaValue = 1
-            self.isHiding = false
-            self.environment.router.route = .main
-            self.environment.mainModel.resetAfterHide()
+            Task { @MainActor in
+                guard let self, self.visibilityGeneration == generation else { return }
+                self.panel.orderOut(nil)
+                self.panel.alphaValue = 1
+                self.isHiding = false
+                self.environment.router.route = .main
+                self.environment.mainModel.resetAfterHide()
+            }
         }
     }
 

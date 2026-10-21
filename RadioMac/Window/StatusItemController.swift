@@ -2,6 +2,7 @@ import AppKit
 import Combine
 
 /// Menu-bar item: left click toggles the panel, right click shows the action menu.
+@MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let environment: AppEnvironment

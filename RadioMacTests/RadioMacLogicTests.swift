@@ -4,6 +4,7 @@ import XCTest
 
 /// Ports the behaviour that was covered by `test/widget_test.dart` in the
 /// Flutter build, plus a few checks for persistence and the shipped catalog.
+@MainActor
 final class RadioMacLogicTests: XCTestCase {
     // MARK: - Genres
 

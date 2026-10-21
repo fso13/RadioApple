@@ -278,7 +278,7 @@ def build() -> tuple[str, str]:
         "GCC_NO_COMMON_BLOCKS = YES;",
         "MACOSX_DEPLOYMENT_TARGET = 14.0;",
         "SDKROOT = macosx;",
-        "SWIFT_VERSION = 5.0;",
+        "SWIFT_VERSION = 6.0;",
     ]
     target_settings = [
         "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;",
@@ -302,7 +302,8 @@ def build() -> tuple[str, str]:
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",
         'PRODUCT_NAME = "$(TARGET_NAME)";',
         "SWIFT_OBJC_BRIDGING_HEADER = RadioMac/Bridging/Bridging-Header.h;",
-        "SWIFT_STRICT_CONCURRENCY = minimal;",
+        "SWIFT_STRICT_CONCURRENCY = complete;",
+        "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
     ]
 
     def config(identifier: str, name: str, extra: list[str]) -> str:
@@ -325,8 +326,9 @@ def build() -> tuple[str, str]:
             "MACOSX_DEPLOYMENT_TARGET = 14.0;",
             "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMacTests;",
             'PRODUCT_NAME = "$(TARGET_NAME)";',
-            "SWIFT_STRICT_CONCURRENCY = minimal;",
-            "SWIFT_VERSION = 5.0;",
+            "SWIFT_STRICT_CONCURRENCY = complete;",
+            "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
+            "SWIFT_VERSION = 6.0;",
             'TEST_HOST = "$(BUILT_PRODUCTS_DIR)/RadioMac.app/Contents/MacOS/RadioMac";',
             "LD_RUNPATH_SEARCH_PATHS = (",
             '\t"$(inherited)",',

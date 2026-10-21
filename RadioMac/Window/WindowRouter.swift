@@ -11,6 +11,7 @@ enum WindowSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
+@MainActor
 final class WindowRouter: ObservableObject {
     @Published var route: WindowRoute = .main
     @Published var sheet: WindowSheet?
