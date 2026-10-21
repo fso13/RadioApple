@@ -213,7 +213,7 @@ final class LastFmService: ObservableObject {
                 switch status {
                 case .playing:
                     self.handleNowPlaying()
-                case .idle, .error, .paused:
+                case .idle, .error, .paused, .reconnecting:
                     self.finalizeTrack()
                 case .loading:
                     break

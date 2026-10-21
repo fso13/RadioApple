@@ -232,6 +232,17 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testReconnectPolicyBackoff() {
+        let policy = ReconnectPolicy()
+        XCTAssertEqual(policy.maxAttempts, 4)
+        XCTAssertEqual(policy.delay(forAttempt: 0), 1)
+        XCTAssertEqual(policy.delay(forAttempt: 1), 2)
+        XCTAssertEqual(policy.delay(forAttempt: 2), 5)
+        XCTAssertEqual(policy.delay(forAttempt: 3), 10)
+        XCTAssertNil(policy.delay(forAttempt: 4))
+        XCTAssertNil(policy.delay(forAttempt: -1))
+    }
+
     func testICYMetadataParsing() {
         let bytes = Array("StreamTitle='Artist - Song';".utf8)
         XCTAssertEqual(ICYMetadataReader.title(from: bytes), "Artist - Song")

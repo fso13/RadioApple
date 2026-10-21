@@ -27,6 +27,13 @@ enum DebugHarness {
             runPlaytest(output: scratchDirectory(named: "").appendingPathComponent(name), environment: environment)
             return true
         }
+        if let name = value(after: "-reconnecttest", in: arguments) {
+            runReconnectTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                environment: environment
+            )
+            return true
+        }
         if let name = value(after: "-eqtest", in: arguments) {
             runEqualizerTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name),
@@ -127,6 +134,52 @@ enum DebugHarness {
     // MARK: - Playback smoke test
 
     private static var playtestCancellables: Set<AnyCancellable> = []
+
+    private static func runReconnectTest(output: URL, environment: AppEnvironment) {
+        let player = environment.player
+        let previousEngine = environment.settings.audioEnginePreference
+        environment.settings.setAudioEnginePreference(.bass)
+        player.stop()
+        playtestCancellables.removeAll()
+
+        var lines: [String] = []
+        let started = Date()
+        func stamp() -> String {
+            String(format: "%5.1fs", Date().timeIntervalSince(started))
+        }
+
+        player.$status
+            .sink { status in
+                lines.append("[\(stamp())] state=\(status.rawValue) attempts=\(player.reconnectAttempts) error=\(player.errorMessage ?? "-")")
+            }
+            .store(in: &playtestCancellables)
+
+        let station = RadioStation(
+            id: "reconnect-test",
+            name: "Reconnect Test",
+            url: "https://127.0.0.1:1/nope",
+            genre: "Test"
+        )
+        lines.append("== reconnect \(station.url)")
+        player.play(station)
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 22_000_000_000)
+            lines.append("[22.0s] before manual retry state=\(player.status.rawValue) attempts=\(player.reconnectAttempts)")
+            player.retryNow()
+
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            lines.append("[25.0s] after manual retry state=\(player.status.rawValue) attempts=\(player.reconnectAttempts)")
+            player.stop()
+            environment.settings.setAudioEnginePreference(previousEngine)
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output,
+                atomically: true,
+                encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
+    }
 
     private static func runEqualizerTest(output: URL, environment: AppEnvironment) {
         let player = environment.player

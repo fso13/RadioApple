@@ -6,11 +6,11 @@ import Foundation
 @MainActor
 final class RadioPlayerService: ObservableObject {
     enum Status: String, Sendable {
-        case idle, loading, playing, paused, error
+        case idle, loading, playing, paused, reconnecting, error
 
         var isActive: Bool {
             switch self {
-            case .playing, .paused, .loading: return true
+            case .playing, .paused, .loading, .reconnecting: return true
             case .idle, .error: return false
             }
         }
@@ -23,6 +23,7 @@ final class RadioPlayerService: ObservableObject {
     @Published private(set) var errorMessage: String?
     @Published private(set) var volume: Double
     @Published private(set) var activeEngineName = "BASS"
+    @Published private(set) var reconnectAttempts = 0
 
     private enum AudioEngineKind {
         case bass
@@ -41,6 +42,10 @@ final class RadioPlayerService: ObservableObject {
     private var nowPlayingGeneration = 0
     private var icyLive = false
     private var cancellables: Set<AnyCancellable> = []
+    private var wantsPlayback = false
+    private let reconnectPolicy = ReconnectPolicy()
+    private var reconnectTask: Task<Void, Never>?
+    private var stableTask: Task<Void, Never>?
 
     init(
         settings: AppSettings,
@@ -123,6 +128,13 @@ final class RadioPlayerService: ObservableObject {
     // MARK: - Transport
 
     func play(_ station: RadioStation) {
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        stableTask?.cancel()
+        stableTask = nil
+        reconnectAttempts = 0
+        wantsPlayback = true
+
         self.station = station
         nowPlaying = nil
         streamInfo = nil
@@ -133,9 +145,16 @@ final class RadioPlayerService: ObservableObject {
         syncSystemNowPlaying()
 
         settings.setLastStationID(station.id)
+        beginPlayback(station)
+    }
+
+    private func beginPlayback(_ station: RadioStation) {
+        errorMessage = nil
+        status = .loading
         restartNowPlayingPoll()
 
         guard let url = station.streamURL else {
+            wantsPlayback = false
             status = .error
             errorMessage = "Некорректная ссылка на поток"
             stopNowPlayingPoll()
@@ -161,6 +180,18 @@ final class RadioPlayerService: ObservableObject {
         }
     }
 
+    /// Manual retry from the error state.
+    func retryNow() {
+        guard let station else { return }
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        stableTask?.cancel()
+        stableTask = nil
+        reconnectAttempts = 0
+        wantsPlayback = true
+        beginPlayback(station)
+    }
+
     func togglePlayPause() {
         switch status {
         case .playing:
@@ -174,6 +205,11 @@ final class RadioPlayerService: ObservableObject {
 
     func pause() {
         guard status == .playing else { return }
+        wantsPlayback = false
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        stableTask?.cancel()
+        stableTask = nil
         switch activeEngine {
         case .bass: bassEngine.pause()
         case .native: nativeEngine.pause()
@@ -190,6 +226,7 @@ final class RadioPlayerService: ObservableObject {
     }
 
     private func resumeActive() {
+        wantsPlayback = true
         switch activeEngine {
         case .bass: bassEngine.resume()
         case .native: nativeEngine.resume()
@@ -199,6 +236,12 @@ final class RadioPlayerService: ObservableObject {
     }
 
     func stop() {
+        wantsPlayback = false
+        reconnectAttempts = 0
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        stableTask?.cancel()
+        stableTask = nil
         stopNowPlayingPoll()
         nowPlayingGeneration += 1
         activeEngine = nil
@@ -236,11 +279,37 @@ final class RadioPlayerService: ObservableObject {
         from kind: AudioEngineKind
     ) {
         guard activeEngine == kind else { return }
+
+        if state == .error {
+            if wantsPlayback, station != nil {
+                scheduleReconnect()
+                return
+            }
+            status = .error
+            if errorMessage == nil {
+                errorMessage = "Не удалось открыть поток"
+            }
+            stopNowPlayingPoll()
+            syncSystemNowPlaying()
+            return
+        }
+
+        if state == .idle {
+            if wantsPlayback, station != nil {
+                scheduleReconnect()
+                return
+            }
+            if status == .error { return }
+        }
+
         let next = Status(rawValue: state.rawValue) ?? .idle
-        // Keep the error banner until the user dismisses or retries.
-        if next == .idle, status == .error { return }
-        if next == .error, errorMessage == nil {
-            errorMessage = "Не удалось открыть поток"
+        if next == .playing {
+            reconnectTask?.cancel()
+            reconnectTask = nil
+            scheduleStableReset()
+            if errorMessage?.hasPrefix("Переподключение") == true {
+                errorMessage = nil
+            }
         }
         guard next != status else { return }
         status = next
@@ -249,11 +318,54 @@ final class RadioPlayerService: ObservableObject {
             refreshStreamInfoIfNeeded()
         case .idle, .error:
             streamInfo = nil
-        case .loading, .paused:
+        case .loading, .paused, .reconnecting:
             break
         }
-        if next == .error { stopNowPlayingPoll() }
         syncSystemNowPlaying()
+    }
+
+    private func scheduleReconnect() {
+        guard wantsPlayback, let station else { return }
+        guard reconnectTask == nil else { return }
+
+        reconnectTask?.cancel()
+        stableTask?.cancel()
+
+        guard let delay = reconnectPolicy.delay(forAttempt: reconnectAttempts) else {
+            wantsPlayback = false
+            status = .error
+            errorMessage = "Не удалось переподключиться. Проверьте сеть и нажмите «Повторить»."
+            reconnectTask = nil
+            stopNowPlayingPoll()
+            syncSystemNowPlaying()
+            return
+        }
+
+        reconnectAttempts += 1
+        status = .reconnecting
+        errorMessage = "Переподключение… \(reconnectAttempts)/\(reconnectPolicy.maxAttempts)"
+        syncSystemNowPlaying()
+
+        let stationID = station.id
+        reconnectTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard let self, !Task.isCancelled else { return }
+            self.reconnectTask = nil
+            guard self.wantsPlayback, self.station?.id == stationID else { return }
+            self.beginPlayback(station)
+        }
+    }
+
+    private func scheduleStableReset() {
+        stableTask?.cancel()
+        stableTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 10_000_000_000)
+            guard let self, !Task.isCancelled, self.status == .playing else { return }
+            self.reconnectAttempts = 0
+            if self.errorMessage?.hasPrefix("Переподключение") == true {
+                self.errorMessage = nil
+            }
+        }
     }
 
     private func refreshStreamInfoIfNeeded(force: Bool = false) {

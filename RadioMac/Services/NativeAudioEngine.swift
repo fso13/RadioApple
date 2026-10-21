@@ -23,6 +23,9 @@ final class NativeAudioEngine {
     private var volume: Double = 0.8
     private var currentURL: URL?
     private let icyReader = ICYMetadataReader()
+    private var metadataOutput: AVPlayerItemMetadataOutput?
+    private var metadataDelegate: HLSMetadataDelegate?
+    private var lastMetadata: String?
 
     func play(url: URL) {
         stopObservers()
@@ -38,9 +41,20 @@ final class NativeAudioEngine {
         self.player = player
         currentURL = url
         wantsPlayback = true
+        lastMetadata = nil
+
+        let output = AVPlayerItemMetadataOutput(identifiers: nil)
+        let delegate = HLSMetadataDelegate()
+        delegate.onTitle = { [weak self] raw in
+            Task { @MainActor in self?.emitMetadata(raw) }
+        }
+        output.setDelegate(delegate, queue: .main)
+        item.add(output)
+        metadataOutput = output
+        metadataDelegate = delegate
 
         icyReader.onTitle = { [weak self] raw in
-            Task { @MainActor in self?.onMetadata?(raw) }
+            Task { @MainActor in self?.emitMetadata(raw) }
         }
         startICYIfNeeded()
 
@@ -68,6 +82,7 @@ final class NativeAudioEngine {
         wantsPlayback = false
         icyReader.stop()
         currentURL = nil
+        lastMetadata = nil
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
@@ -143,6 +158,11 @@ final class NativeAudioEngine {
     }
 
     private func stopObservers() {
+        if let metadataOutput {
+            item?.remove(metadataOutput)
+        }
+        metadataOutput = nil
+        metadataDelegate = nil
         itemStatusObservation?.invalidate()
         timeControlObservation?.invalidate()
         itemStatusObservation = nil
@@ -189,6 +209,13 @@ final class NativeAudioEngine {
         @unknown default:
             break
         }
+    }
+
+    private func emitMetadata(_ raw: String) {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed != lastMetadata else { return }
+        lastMetadata = trimmed
+        onMetadata?(trimmed)
     }
 
     private func handleFailure(_ message: String) {

@@ -561,6 +561,8 @@ struct SettingsView: View {
         case .loading: return "Подключение"
         case .playing: return "Эфир"
         case .paused: return "Пауза"
+        case .reconnecting:
+            return "Переподключение… \(player.reconnectAttempts)/4"
         case .error: return "Ошибка"
         }
     }

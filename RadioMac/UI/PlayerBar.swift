@@ -61,7 +61,19 @@ struct PlayerBar: View {
                     .frame(width: 76)
                     .accessibilityLabel("Громкость")
 
-                    if player.isPlaying {
+                    if player.status == .error {
+                        CircleIconButton(
+                            systemName: "arrow.clockwise",
+                            size: 10,
+                            help: "Повторить",
+                            action: player.retryNow
+                        )
+                    } else if player.status == .reconnecting {
+                        Text("RECONNECT")
+                            .font(Typeface.monoSmall)
+                            .tracking(1.1)
+                            .foregroundStyle(palette.textSecondary)
+                    } else if player.isPlaying {
                         LiveIndicator()
                     } else {
                         Text("OFF AIR")
@@ -125,7 +137,7 @@ struct PlayerBar: View {
                     .fill(palette.accentFill.opacity(canPlay ? 1 : 0.3))
                     .frame(width: 32, height: 32)
 
-                if player.status == .loading {
+                if player.status == .loading || player.status == .reconnecting {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .controlSize(.mini)
@@ -153,6 +165,9 @@ struct PlayerBar: View {
     }
 
     private var subtitle: String {
+        if player.status == .reconnecting {
+            return player.errorMessage ?? "Переподключение…"
+        }
         if player.status == .error {
             return player.errorMessage ?? "Не удалось открыть поток"
         }
