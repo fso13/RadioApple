@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-10-21
+
+### Добавлено
+
+- GitHub Actions: CI с тестами, сборка дистрибутива, релизы с заметками и GitHub Pages.
+- Статический анализ: SwiftLint, CodeQL, actionlint, ShellCheck и проверка
+  синхронности Xcode-проекта.
+- CVE-проверки: OSV-Scanner, Dependency Review, SBOM + Grype, Dependabot
+  и SHA-256 вендорных BASS-библиотек.
+- Статический сайт с автоподстановкой последнего релиза и локальным превью.
+
+### Исправлено
+
+- Релизный workflow: совместимость с Bash 3.2 (пустые массивы), обновление
+  существующего релиза и заметки со ссылками на скачивание.
+- Справка приведена к новой навигации, транспорту и эквалайзеру.
+
 ## [1.0.0] — 2026-10-21
 
 ### Добавлено
@@ -18,8 +35,6 @@
 - Метаданные трека: ICY, Icecast, SomaFM, Radio Paradise, обложки iTunes.
 - Автозапуск через `SMAppService`, миграция настроек из Flutter-версии.
 - Фирменная иконка приложения, фон установщика и окно DMG с перетаскиванием.
-- CI/CD: сборка дистрибутива, релизы с заметками из changelog, GitHub Pages,
-  статический анализ и проверки CVE/SBOM.
 
 ### Изменено
 
@@ -34,5 +49,6 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/fso13/RadioApple/releases/tag/v1.0.1
 [1.0.0]: https://github.com/fso13/RadioApple/releases/tag/v1.0.0

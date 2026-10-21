@@ -26,7 +26,7 @@ def extract_section(changelog: pathlib.Path, version: str) -> str | None:
         return None
     text = changelog.read_text(encoding="utf-8")
     pattern = re.compile(
-        rf"^##\s*\[?v?{re.escape(version)}\]?[^\n]*\n(.*?)(?=^##\s|\Z)",
+        rf"^##\s*\[?v?{re.escape(version)}\]?(?=\s|$)[^\n]*\n(.*?)(?=^##\s|\Z)",
         re.MULTILINE | re.DOTALL,
     )
     match = pattern.search(text)
@@ -36,7 +36,13 @@ def extract_section(changelog: pathlib.Path, version: str) -> str | None:
     return body or None
 
 
-def build_body(version: str, repo: str, tag: str, section: str) -> str:
+def build_body(
+    version: str,
+    repo: str,
+    tag: str,
+    section: str,
+    previous_tag: str | None = None,
+) -> str:
     base = f"https://github.com/{repo}/releases/download/{tag}"
     lines = [
         "## Скачать",
@@ -57,6 +63,11 @@ def build_body(version: str, repo: str, tag: str, section: str) -> str:
         "---",
         f"Полный список изменений: [CHANGELOG.md](https://github.com/{repo}/blob/main/CHANGELOG.md).",
     ]
+    if previous_tag:
+        lines.append(
+            f"Сравнение: [{previous_tag}...{tag}]"
+            f"(https://github.com/{repo}/compare/{previous_tag}...{tag})."
+        )
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -65,6 +76,7 @@ def main() -> int:
     parser.add_argument("--version", required=True)
     parser.add_argument("--repo", required=True, help="owner/name")
     parser.add_argument("--tag", default=None)
+    parser.add_argument("--previous-tag", default=None)
     parser.add_argument("--changelog", default="CHANGELOG.md")
     parser.add_argument("--output", default=None)
     args = parser.parse_args()
@@ -74,12 +86,22 @@ def main() -> int:
     section = extract_section(pathlib.Path(args.changelog), version)
     if not section:
         print(
-            f"warning: no changelog section for {version}; use --generate-notes",
+            f"warning: no changelog section for {version}; using a compare link",
             file=sys.stderr,
         )
-        return 2
+        if args.previous_tag:
+            section = (
+                "Полный список изменений: "
+                f"[сравнение {args.previous_tag}...{tag}]"
+                f"(https://github.com/{args.repo}/compare/{args.previous_tag}...{tag})."
+            )
+        else:
+            section = (
+                "Первый публичный релиз. История изменений — в "
+                f"[CHANGELOG.md](https://github.com/{args.repo}/blob/main/CHANGELOG.md)."
+            )
 
-    body = build_body(version, args.repo, tag, section)
+    body = build_body(version, args.repo, tag, section, args.previous_tag)
     if args.output:
         pathlib.Path(args.output).write_text(body, encoding="utf-8")
     else:

@@ -148,25 +148,29 @@ jobs:
           upload-release-assets: false
 
       - name: Prepare release notes
-        id: notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
-          if python3 scripts/release_notes.py --version "$VERSION" \
-              --repo "$GITHUB_REPOSITORY" --output release-notes.md; then
-            if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
-              if [[ -n "${APPLE_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
-                printf '\nСборка подписана Developer ID и нотарифицирована.\n' >> release-notes.md
-              else
-                printf '\nСборка подписана Developer ID, без нотарификации.\n' >> release-notes.md
-              fi
-            else
-              printf '\nСборка подписана ad-hoc: при первом запуске может потребоваться xattr -dr com.apple.quarantine /Applications/RadioMac.app.\n' >> release-notes.md
-            fi
-            echo "mode=file" >> "$GITHUB_OUTPUT"
+          PREV="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
+          if [[ -n "$PREV" ]]; then
+            python3 scripts/release_notes.py --version "$VERSION" \
+              --repo "$GITHUB_REPOSITORY" --previous-tag "$PREV" \
+              --output release-notes.md
           else
-            echo "mode=generated" >> "$GITHUB_OUTPUT"
+            python3 scripts/release_notes.py --version "$VERSION" \
+              --repo "$GITHUB_REPOSITORY" --output release-notes.md
+          fi
+
+          if [[ -n "${DEVELOPER_ID_APPLICATION:-}" ]]; then
+            if [[ -n "${APPLE_ID:-}" && -n "${APPLE_APP_PASSWORD:-}" ]]; then
+              printf '\nСборка подписана Developer ID и нотарифицирована.\n' >> release-notes.md
+            else
+              printf '\nСборка подписана Developer ID, без нотарификации.\n' >> release-notes.md
+            fi
+          else
+            printf '\nСборка подписана ad-hoc: при первом запуске может потребоваться xattr -dr com.apple.quarantine /Applications/RadioMac.app.\n' >> release-notes.md
           fi
 
       - name: Publish release
@@ -175,7 +179,6 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           TAG: ${{ steps.version.outputs.tag }}
           PRERELEASE: ${{ steps.version.outputs.prerelease }}
-          NOTES_MODE: ${{ steps.notes.outputs.mode }}
           EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
@@ -191,30 +194,33 @@ jobs:
           else
             FLAGS+=(--latest)
           fi
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            # `gh release edit` has no --generate-notes: keep the existing body
-            # when the changelog had no section for this version.
-            EDIT=(--title "RadioMac ${VERSION}")
-            EDIT+=("${FLAGS[@]}")
-            if [[ "$NOTES_MODE" == "file" ]]; then
-              EDIT+=(--notes-file release-notes.md)
+          TARGET=()
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+              TAG_SHA="$(git rev-list -n 1 "$TAG")"
+              if [[ "$TAG_SHA" != "$GITHUB_SHA" ]]; then
+                echo "::warning::Tag $TAG points to $TAG_SHA, while this run builds $GITHUB_SHA."
+              fi
+            else
+              TARGET=(--target "$GITHUB_SHA")
             fi
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            EDIT=(--title "RadioMac ${VERSION}")
+            EDIT+=(${FLAGS[@]+"${FLAGS[@]}"})
+            EDIT+=(--notes-file release-notes.md)
             gh release upload "$TAG" "${ASSETS[@]}" --clobber
             gh release edit "$TAG" "${EDIT[@]}"
           else
-            TARGET=()
-            if [[ "$EVENT_NAME" == "workflow_dispatch" ]] \
-              && ! git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-              TARGET=(--target "$GITHUB_SHA")
-            fi
-            if [[ "$NOTES_MODE" == "file" ]]; then
-              NOTES=(--notes-file release-notes.md)
-            else
-              NOTES=(--generate-notes)
-            fi
+            NOTES=(--notes-file release-notes.md)
+            # Bash 3.2 (the default on macOS runners) treats "${EMPTY[@]}" as an
+            # unbound variable under `set -u`; TARGET is empty on tag pushes.
             gh release create "$TAG" "${ASSETS[@]}" \
               --title "RadioMac ${VERSION}" \
-              "${TARGET[@]}" "${FLAGS[@]}" "${NOTES[@]}"
+              ${TARGET[@]+"${TARGET[@]}"} \
+              ${FLAGS[@]+"${FLAGS[@]}"} \
+              ${NOTES[@]+"${NOTES[@]}"}
           fi
 
       - name: Summary
