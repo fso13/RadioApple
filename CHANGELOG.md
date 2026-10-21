@@ -21,12 +21,10 @@
   Release workflow обновляет cask вместе с релизом.
 - Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи приложения
   из build settings/GitHub Secrets, сессия в Keychain, отключение одной кнопкой.
-- Audio engine: AVPlayer для HLS и выбор «Авто / BASS / AVPlayer»; BASS остаётся
-  для MP3/AAC и ICY.
-- Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке; BASS_FX удалён.
-- Удалены BASS_FX и BASS_AAC плагины; AAC/HLS идут через AVPlayer, EQ — нативный DSP.
-- AVPlayer: автоматический AAC, HLS timed metadata и ICY side-channel; HLS/AAC
-  играют без libbass_aac.
+- Audio engine: AVPlayer для HLS, AAC и MP3; BASS полностью удалена.
+- Эквалайзер: нативный 10-полосный Biquad DSP в AVPlayer audio tap; BASS_FX/BASS удалены.
+- Удалены BASS, BASS_FX и BASS_AAC; HLS/AAC/MP3 идут через AVPlayer, EQ — нативный DSP.
+- AVPlayer: HLS/AAC/MP3, HLS timed metadata и ICY side-channel.
 - Автопереподключение: статус «Переподключение…», backoff 1/2/5/10 с, лимит попыток
   и ручной retry.
 - Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`

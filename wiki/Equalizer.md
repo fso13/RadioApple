@@ -40,14 +40,11 @@
 `eq_custom_gains`) хранится в `UserDefaults` и переживает перезапуск. Переключение
 эквалайзера не перезапускает поток — звук меняется на лету.
 
-## Нативный DSP
+## Нативный DSP в AVPlayer
 
-Эквалайзер реализован встроенным 10-полосным Biquad DSP в BASS-колбэке. BASS_FX
-удалён из проекта, поэтому ошибка 41 больше не влияет на EQ: полосы, пресеты и
-сохранение работают на всех поддерживаемых Mac.
-
-В режиме AVPlayer (HLS/AAC) эквалайзер пока недоступен — там отдельный аудиодвижок;
-переключите движок на BASS в настройках, если нужен EQ.
+Эквалайзер реализован встроенным 10-полосным Biquad DSP в `MTAudioProcessingTap`,
+который AVPlayer применяет к PCM до вывода. Это работает для HLS, AAC и MP3;
+перезапуск станции не нужен. BASS_FX/BASS полностью удалены из проекта.
 
 ## Где это в коде
 
@@ -55,7 +52,7 @@
 | --- | --- |
 | `RadioMac/Models/EqualizerPreset.swift` | полосы, частоты, пресеты, клампинг |
 | `RadioMac/Services/EqualizerService.swift` | состояние, применение, сохранение |
-| `RadioMac/Services/RadioEngine.swift` | DSP-колбэк и применение нативного EQ |
+| `RadioMac/Services/AVAudioMixTap.swift` | MTAudioProcessingTap и DSP-колбэк |
 | `RadioMac/UI/EqualizerView.swift` | интерфейс и фейдеры |
 
 См. также [Настройки](Settings) и [Решение проблем](Troubleshooting).

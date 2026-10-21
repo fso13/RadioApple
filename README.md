@@ -2,7 +2,7 @@
 
 Плеер интернет-радио для macOS, который живёт в меню-баре: без иконки в Dock, с эфиром,
 который продолжается после закрытия окна. Написан на **Swift / SwiftUI + AppKit** поверх
-аудиодвижка [BASS](https://www.un4seen.com/).
+нативного аудиодвижка AVFoundation/AVPlayer.
 
 Интерфейс — светлый редакционный минимализм: бумажный фон, одна краска (чернила), крупная
 типографика и таблица станций. Вдохновлено шотом
@@ -40,8 +40,8 @@ Flutter-приложение больше не лежит в `main`: оно со
 
 - macOS 14 (Sonoma) или новее
 - Xcode 16.4+ (Swift 6 language mode; проверено на Xcode 27 / Swift 6.4)
-- Apple Silicon или Intel: универсальный `libbass.dylib`; EQ — нативный DSP,
-  AAC/HLS — AVPlayer. Отдельные BASS_FX/BASS_AAC плагины больше не нужны.
+- Apple Silicon или Intel: всё аудио идёт через системный AVFoundation/AVPlayer;
+  внешние аудиобиблиотеки не требуются.
 
 ## Сборка и запуск
 
@@ -102,14 +102,13 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут. API-ключи
   встраиваются при сборке из GitHub Secrets, сессия хранится в Keychain;
   отключение одной кнопкой.
-- **Audio engine**: «Авто» играет HLS и AAC через AVPlayer, MP3 — через BASS;
-  можно принудительно выбрать BASS или AVPlayer. HLS-метаданные приходят через
-  `AVPlayerItemMetadataOutput`, для прогрессивных AVPlayer-потоков ICY читается
-  отдельным side-channel; EQ пока доступен в BASS.
+- **Audio engine**: HLS, AAC и MP3 играют через AVPlayer. HLS-метаданные приходят
+  через `AVPlayerItemMetadataOutput`, для прогрессивных потоков ICY читается
+  отдельным side-channel.
 - **Автопереподключение**: при обрыве статус «Переподключение…», backoff 1/2/5/10 с,
   4 попытки, кнопка «Повторить» и восстановление без выбора станции заново.
-- **Нативный эквалайзер**: 10-полосный Biquad DSP в BASS-потоке; заменяет BASS_FX
-  на macOS 27 / Apple Silicon, где плагин не загружается. В AVPlayer EQ пока нет.
+- **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
+  AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
   выборке, громкость, эквалайзер, LIVE. Если ничего не выбрано, Play включает первую станцию.
 - **Метаданные трека**: ICY-теги, Icecast `status-json.xsl`, API SomaFM и Radio Paradise,
@@ -180,8 +179,7 @@ scripts/make_installer.sh --version 1.1.0
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
 окружение в `.build/tools/dmgbuild-venv` при первом запуске из закреплённого
-`scripts/requirements-installer.txt`. Перед упаковкой проверяются SHA-256 вендорных
-библиотек (`scripts/verify_third_party.sh`, ключ `--skip-verify` отключает проверку).
+`scripts/requirements-installer.txt`. Перед упаковкой проверяется SHA-256 исходных файлов проекта.
 Если Python или сеть недоступны, соберётся обычный образ без фона. Фон и иконки лежат
 в `installer/` и пересобираются `scripts/make_brand_assets.py` (`scripts/requirements-dev.txt`).
 
@@ -210,7 +208,8 @@ RadioMac/
   Models/                     RadioStation (Codable, ключи как во Flutter), NowPlaying + парсер, EQ-пресеты, StreamInfo
   Data/                       встроенный каталог (47 станций) и справка
   Services/
-    RadioEngine.swift         обёртка BASS: потоки, ICY, стоп/пауза, эквалайзер
+    NativeAudioEngine.swift   AVPlayer: потоки, ICY, HLS-метаданные, EQ tap
+    AVAudioMixTap.swift       MTAudioProcessingTap + нативный эквалайзер
     RadioPlayerService.swift  состояние плеера, опрос метаданных, Now Playing
     StationLibrary.swift      библиотека станций, избранное, логотипы, персистентность
     EqualizerService.swift    полосы, пресеты, дебаунс записи
@@ -238,7 +237,6 @@ RadioMac/
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
 RadioMacTests/                24 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
-ThirdParty/BASS/              bass.h, libbass.dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
@@ -253,7 +251,6 @@ scripts/install.sh            установка из терминала
 scripts/make_installer.sh     сборка DMG + PKG (подпись, нотарификация)
 scripts/dmg_settings.py       раскладка окна установки для dmgbuild
 scripts/make_brand_assets.py  генерация иконки приложения и фона установщика
-scripts/verify_third_party.sh проверка SHA-256 вендорных библиотек
 scripts/release_notes.py      тело релиза из CHANGELOG
 scripts/check_site.py         проверка ссылок и alt-текстов сайта
 scripts/preview_site.sh       локальный сервер сайта
@@ -271,10 +268,9 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 `NSStatusItem`; клавиатуру обрабатывает локальный монитор событий (`KeyboardRouter`), поэтому
 однобуквенные шорткаты не конфликтуют с вводом в текстовые поля.
 
-`RadioEngine` — единственный владелец BASS-хэндлов: всё выполняется на последовательной
-очереди, состояние и ICY-теги приходят в UI через замыкания на main-очереди. Плеер не
-перезапускает поток при изменении эквалайзера — в отличие от Flutter-версии, где каждое
-движение ползунка пересоздавало поток.
+`NativeAudioEngine` — единственный владелец AVPlayer и audio tap: состояние, ICY-теги
+и HLS-метаданные приходят в UI через замыкания на main-очереди. Плеер не перезапускает
+поток при изменении эквалайзера.
 
 ### Отличия от Flutter-версии
 
@@ -295,7 +291,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
 | `codeql.yml` | push/PR, расписание | CodeQL для Swift |
-| `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 вендорных библиотек |
+| `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
 CodeQL собирает нативный проект через autobuild: Flutter-папки `macos/` с Podfile
@@ -362,14 +358,13 @@ wiki-репозиторий только после первой страниц�
 
 Политика и процесс описаны в [SECURITY.md](SECURITY.md). Вкратце: CodeQL и SwiftLint
 в CI, OSV-Scanner и Dependency Review для зависимостей, SBOM приложения + Grype для
-известных CVE, Dependabot для actions и Python-инструментов, SHA-256 манифест для
-вендорных BASS-библиотек.
+известных CVE, Dependabot для actions и Python-инструментов.
 
 ## Ограничения
 
-- **Эквалайзер.** Работает нативный 10-полосный Biquad DSP в BASS; BASS_FX удалён.
-  В режиме AVPlayer эквалайзер пока недоступен.
-- **AAC.** «Авто» отправляет AAC на AVPlayer; `libbass_aac` удалён.
+- **Эквалайзер.** 10-полосный Biquad DSP работает в AVPlayer audio tap для HLS,
+  AAC и MP3. BASS_FX/BASS_AAC и сама BASS удалены из проекта.
+- **AAC/MP3.** Играют через AVPlayer; внешние кодеки не нужны.
 - **HLS.** Потоки `.m3u8` играют через AVPlayer; трек-метаданные приходят через
   `AVPlayerItemMetadataOutput`, когда станция их отдаёт.
 - Песочница включена: приложение пишет только в свой контейнер
@@ -413,7 +408,7 @@ python3 scripts/generate_xcodeproj.py
 
 ## Сторонние компоненты
 
-`ThirdParty/BASS` — библиотека BASS 2.4 и аддоны с сайта un4seen developments.
-BASS бесплатна для некоммерческого использования, см. `bass.txt`.
+Проект использует только системные фреймворки Apple: AVFoundation, MediaToolbox,
+AudioToolbox и SwiftUI/AppKit.
 Визуальный референс — [Office Radio app](https://dribbble.com/shots/19641552-Office-Radio-app)
 (дизайн Marko Kolić / PROTOTYP); реализация, графика и иконки — оригинальные.

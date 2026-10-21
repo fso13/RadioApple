@@ -79,7 +79,6 @@ scripts/make_installer.sh --version 1.1.0
 
 Скрипт:
 
-1. Проверяет SHA-256 вендорных библиотек (`scripts/verify_third_party.sh`).
 2. Собирает Release (если не `--skip-build`).
 3. Готовит `.app`, подписывает dylib и приложение (ad-hoc или Developer ID).
 4. Рисует окно DMG через dmgbuild, ставит фон, иконки и иконку тома.
@@ -126,8 +125,8 @@ Development team, для релиза — Developer ID с профилем, гд
 
 - Ошибки SwiftUI-макросов (`swift-plugin-server`) обычно означают, что сборка идёт
   в ограниченной среде; собирайте через Xcode или `xcodebuild`.
-- `ThirdParty/BASS` должен лежать рядом с проектом: пути заданы относительно
-  `PROJECT_DIR`.
+- Внешние аудиобиблиотеки не нужны: используются системные AVFoundation,
+  MediaToolbox и AudioToolbox.
 - Если Xcode просит команду разработчика, проверьте **Settings → Accounts** и
   **Signing & Capabilities**. Для локальной сборки достаточно ad-hoc подписи.
 

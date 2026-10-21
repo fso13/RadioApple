@@ -17,8 +17,7 @@
 ## Зависимости
 
 - Пакетных менеджеров в рантайме нет: только системные фреймворки macOS.
-- `ThirdParty/BASS` — вендорные бинарники BASS 2.4 (un4seen). Их целостность проверяется
-  по `ThirdParty/BASS/SHA256SUMS` в CI (`scripts/verify_third_party.sh`).
+- Внешних аудиобиблиотек нет: аудио идёт через системный AVFoundation/AVPlayer.
 - Python-инструменты сборки закреплены: `scripts/requirements-installer.txt` (dmgbuild)
   и `scripts/requirements-dev.txt` (Pillow). Обновления приходят через Dependabot.
 
@@ -33,10 +32,10 @@
 | SBOM + Grype | `.github/workflows/security.yml` | SBOM приложения и скан известных CVE (critical) |
 | Dependency Review | `.github/workflows/security.yml` | блокировка PR с уязвимыми зависимостями |
 | Dependabot | `.github/dependabot.yml` | обновления actions и pip-инструментов |
-| Целостность BASS | CI, сборка дистрибутива | SHA-256 вендорных бинарников |
+| Аудио | AVFoundation | системный AVPlayer без сторонних бинарников |
 
 SBOM публикуется как артефакт релиза (`RadioMac-<версия>.spdx.json`). Он описывает
-само приложение и его компоненты; вендорные C-библиотеки BASS не индексируются OSV/NVD,
+само приложение и его компоненты; системные фреймворки Apple не индексируются OSV/NVD,
 поэтому для них действует контроль SHA-256 и ручная проверка обновлений un4seen.
 Результаты сканов загружаются в *Security → Code scanning*.
 

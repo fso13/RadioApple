@@ -12,7 +12,7 @@
 | `release.yml` | тег `v*`, вручную | сборка, подпись, нотарификация, SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, сверка `.xcodeproj`, сайт и вики |
 | `codeql.yml` | push/PR, расписание | CodeQL для Swift |
-| `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 BASS |
+| `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
 > **CodeQL и Flutter-папка.** В репозитории остаётся Flutter-версия с `macos/Podfile`.

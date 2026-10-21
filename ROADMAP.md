@@ -11,7 +11,7 @@
 
 > ✅ RM-25: код и тесты готовы; OAuth/scrobble нужно проверить с ключами Last.fm.
 >
-> 🚧 RM-27, этап 4: AVPlayer для HLS/AAC, HLS timed metadata, ICY side-channel, нативный Biquad EQ и удаление BASS_FX/BASS_AAC; EQ для AVPlayer и удаление BASS — следующие этапы.
+> ✅ RM-27: AVPlayer для HLS/AAC/MP3, HLS timed metadata, ICY side-channel, нативный Biquad EQ через audio tap; BASS/BASS_FX/BASS_AAC удалены.
 >
 > ⚠️ RM-18 и RM-19 требуют Apple Developer team и provisioning profile:
 > без него `com.apple.security.application-groups` (App Groups) и iCloud не работают.
@@ -61,7 +61,7 @@
 | RM-24 | **Панель информации о потоке** | Кодек, битрейт, sample rate, каналы, размер буфера и сервер; копирование диагностики для issue. |
 | RM-25 ✅ | **Last.fm scrobbling** | Opt-in OAuth, отправка now-playing и scrobble, отключение одной кнопкой. |
 | RM-26 ✅ | **Группы и порядок станций** | Свои группы/теги, drag-reorder, фильтр по группе; сохраняется в библиотеке. |
-| RM-27 🚧 | **Audio engine 2.0** | Стратегический эпик: AVAudioEngine/AVPlayer вместо BASS, нативные EQ/HLS/AAC, меньше зависимостей. Может закрыть RM-01…RM-03. |
+| RM-27 ✅ | **Audio engine 2.0** | AVPlayer для HLS/AAC/MP3, нативный EQ через `MTAudioProcessingTap`, HLS-метаданные, ICY; BASS и плагины удалены. |
 
 ## Порядок работы
 

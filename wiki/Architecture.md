@@ -1,8 +1,8 @@
 # Архитектура
 
 RadioMac — нативное приложение на **Swift 6** (SwiftUI + AppKit, strict concurrency), без внешних
-пакетных зависимостей. Аудио: BASS 2.4 для MP3/AAC/ICY/EQ, AVPlayer — для HLS;
-вендорные библиотеки лежат в `ThirdParty/BASS`.
+пакетных зависимостей. Аудио: AVPlayer для HLS/AAC/MP3, ICY side-channel и
+нативный EQ через `MTAudioProcessingTap`; внешних аудиобиблиотек нет.
 
 ## Слои
 
@@ -17,7 +17,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 │ Services: player, library, EQ, metadata,    │
 │ logos, now playing, theme, login item       │
 ├─────────────────────────────────────────────┤
-│ RadioEngine (BASS), UserDefaults, сеть      │
+│ NativeAudioEngine (AVPlayer), UserDefaults   │
 └─────────────────────────────────────────────┘
 ```
 
@@ -37,8 +37,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 
 | Сервис | Ответственность |
 | --- | --- |
-| `RadioEngine` | единственный владелец BASS-хэндлов, потоки, ICY, стоп/пауза, EQ |
-| `NativeEqualizer` | 10-полосный Biquad DSP в BASS-колбэке, fallback без BASS_FX |
+| `NativeAudioEngine` | AVPlayer, ICY, HLS-метаданные, стоп/пауза, EQ tap |
+| `NativeEqualizer` | 10-полосный Biquad DSP для audio tap AVPlayer |
 | `NativeAudioEngine` | AVPlayer для HLS/AAC: play/pause/stop, громкость, KVO-состояния |
 | `ICYMetadataReader` | side-channel ICY `StreamTitle` для прогрессивных AVPlayer-потоков |
 | `HLSMetadataDelegate` | HLS timed metadata через `AVPlayerItemMetadataOutput` |
@@ -64,16 +64,14 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 
 - Проект собирается в **Swift 6** с `SWIFT_STRICT_CONCURRENCY = complete` и
   `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`.
-- UI, модели состояния и сервисы изолированы `@MainActor`. `RadioEngine` —
-  единственный nonisolated остров: он владеет последовательной `workQueue` и
-  помечен `@unchecked Sendable`; BASS-колбэки возвращаются в UI через
+- UI, модели состояния и сервисы изолированы `@MainActor`. `NativeAudioEngine`
+  владеет AVPlayer; его callbacks и метаданные возвращаются в UI через
   `Task { @MainActor in ... }`.
 - `NowPlayingLookup` и `LogoResolver` помечены `@unchecked Sendable`: их кэши
   используются только из асинхронных задач плеера/библиотеки.
-- BASS вызывается только на последовательной `workQueue` — никаких гонок за хэндлы.
+- EQ-буферы AVPlayer обрабатываются в realtime-колбэке без аллокаций.
 - AVPlayer живёт на главном акторе; его KVO-состояния приходят через `Task { @MainActor in }`.
-- `RadioPlayerService` выбирает движок по настройке `audio_engine` и URL:
-  `.m3u8`/AAC → AVPlayer, MP3 → BASS.
+- `RadioPlayerService` всегда использует AVPlayer; отдельной настройки движка нет.
 - При ошибке или неожиданном `idle` включается `ReconnectPolicy`; после 10 секунд
   стабильного эфира счётчик попыток сбрасывается.
 - AVPlayer не отдаёт ICY: для `.aac`/`.mp3` открывается второй запрос с
@@ -97,7 +95,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `alarm_settings` | расписание будильника |
 | `diagnostics_enabled` | согласие на локальный журнал |
 | `lastfm_enabled` | согласие на Last.fm |
-| `audio_engine` | automatic / bass / native |
+| `audio_engine` | удалён: всегда AVPlayer |
 | `native_migration_v1` | флаг миграции из Flutter |
 
 Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
@@ -133,5 +131,5 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 - [RadioMacApp.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/RadioMacApp.swift)
 - [AppDelegate.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/AppDelegate.swift)
 - [MainWindowController.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Window/MainWindowController.swift)
-- [RadioEngine.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/RadioEngine.swift)
+- [NativeAudioEngine.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/NativeAudioEngine.swift)
 - [RadioPlayerService.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/RadioPlayerService.swift)

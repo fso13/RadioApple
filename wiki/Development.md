@@ -11,7 +11,6 @@ RadioMac/                 исходники приложения
   Window/                 статус-итем, панель, клавиатура, роутинг, debug-харнесс
   Resources/              Info.plist, entitlements, ассеты
 RadioMacTests/            24 логических тестов
-ThirdParty/BASS/          BASS и аддоны + SHA256SUMS
 site/                     статический сайт для GitHub Pages
 wiki/                     исходники этой вики
 scripts/                  сборка, установка, генерация проекта, проверки

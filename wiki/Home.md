@@ -1,7 +1,7 @@
 # RadioMac
 
 **Интернет-радио в меню-баре macOS.** Нативное приложение на Swift / SwiftUI + AppKit
-поверх аудиодвижка [BASS](https://www.un4seen.com/). Без иконки в Dock: окно открывается
+поверх AVFoundation/AVPlayer. Без иконки в Dock: окно открывается
 по клику на иконку в меню-баре, а эфир продолжается после его закрытия.
 
 [![CI](https://github.com/fso13/RadioApple/actions/workflows/ci.yml/badge.svg)](https://github.com/fso13/RadioApple/actions/workflows/ci.yml)
@@ -34,8 +34,8 @@
 - **Будильник-радио** с расписанием по дням недели и плавным нарастанием.
 - **Локальная диагностика** с opt-in журналом и обнаружением аварийных завершений.
 - **Last.fm** — opt-in OAuth, now-playing и scrobble; ключи в Keychain.
-- **AVPlayer для HLS и AAC** с переключением BASS/AVPlayer; HLS timed metadata,
-  ICY side-channel; EQ пока на BASS.
+- **AVPlayer для HLS, AAC и MP3**; HLS timed metadata, ICY side-channel и
+  нативный EQ через audio tap.
 - **Автопереподключение** с backoff 1/2/5/10 с и ручным retry.
 - **Диагностика потока**: кодек, битрейт, частота, каналы, буфер и сервер.
 - **Светлая и тёмная темы** — одна монохромная система в двух инверсиях.
@@ -65,7 +65,6 @@
 - Исходники: [github.com/fso13/RadioApple](https://github.com/fso13/RadioApple).
 - Flutter-версия сохранена в `lib/` и `macos/` для сравнения; актуальная — нативная.
 - Язык Swift 6 (strict concurrency), цель macOS 14, универсальная сборка (arm64 + x86_64).
-- Лицензия BASS и аддонов — в `ThirdParty/BASS/bass.txt`.
 
 ---
 

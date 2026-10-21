@@ -59,7 +59,7 @@ RadioMac показывает не только название станции,
 
 - `RadioMac/Services/NowPlayingLookup.swift`
 - `RadioMac/Services/LogoResolver.swift`
-- `RadioMac/Services/RadioEngine.swift`
+- `RadioMac/Services/NativeAudioEngine.swift`
 
 ## Где это в коде
 
