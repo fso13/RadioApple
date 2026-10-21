@@ -25,6 +25,7 @@ struct RootView: View {
     @ObservedObject var library: StationLibrary
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var equalizer: EqualizerService
+    @ObservedObject var alarm: AlarmService
     @ObservedObject var toasts: ToastCenter
 
     let onClose: () -> Void
@@ -51,6 +52,7 @@ struct RootView: View {
                         theme: theme,
                         equalizer: equalizer,
                         player: player,
+                        alarm: alarm,
                         library: library,
                         toasts: toasts,
                         onBack: { router.route = .main },

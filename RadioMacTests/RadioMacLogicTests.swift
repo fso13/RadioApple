@@ -231,6 +231,71 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testAlarmScheduleAndFade() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+
+        let base = calendar.date(
+            from: DateComponents(year: 2026, month: 10, day: 19, hour: 8, minute: 0)
+        )!
+        let weekday = calendar.component(.weekday, from: base)
+        let alarm = AlarmSettings(
+            enabled: true,
+            hour: 9,
+            minute: 0,
+            weekdays: [weekday],
+            stationID: "test-station",
+            fadeInSeconds: 30
+        )
+
+        let today = alarm.nextFireDate(after: base, calendar: calendar)
+        XCTAssertEqual(
+            today,
+            calendar.date(bySettingHour: 9, minute: 0, second: 0, of: base)
+        )
+
+        let later = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: base)!
+        let nextWeek = alarm.nextFireDate(after: later, calendar: calendar)
+        XCTAssertEqual(
+            nextWeek,
+            calendar.date(byAdding: .day, value: 7, to: today!)
+        )
+
+        XCTAssertNil(
+            AlarmSettings(
+                enabled: false,
+                hour: 9,
+                minute: 0,
+                weekdays: [weekday],
+                stationID: nil,
+                fadeInSeconds: 30
+            ).nextFireDate(after: base, calendar: calendar)
+        )
+        XCTAssertNil(
+            AlarmSettings(
+                enabled: true,
+                hour: 9,
+                minute: 0,
+                weekdays: [],
+                stationID: nil,
+                fadeInSeconds: 30
+            ).nextFireDate(after: base, calendar: calendar)
+        )
+
+        guard let data = try? JSONEncoder().encode(alarm),
+              let decoded = try? JSONDecoder().decode(AlarmSettings.self, from: data)
+        else {
+            return XCTFail("alarm settings roundtrip failed")
+        }
+        XCTAssertEqual(decoded, alarm)
+
+        XCTAssertEqual(AlarmService.fadeVolume(target: 0.8, elapsed: 0, duration: 30), 0, accuracy: 0.0001)
+        XCTAssertEqual(AlarmService.fadeVolume(target: 0.8, elapsed: 15, duration: 30), 0.4, accuracy: 0.0001)
+        XCTAssertEqual(AlarmService.fadeVolume(target: 0.8, elapsed: 30, duration: 30), 0.8, accuracy: 0.0001)
+        XCTAssertEqual(AlarmService.fadeVolume(target: 0.8, elapsed: 60, duration: 30), 0.8, accuracy: 0.0001)
+        XCTAssertEqual(AlarmService.fadeVolume(target: 0.8, elapsed: 1, duration: 0), 0.8, accuracy: 0.0001)
+    }
+
     func testStationGroupsPersistAndReorder() {
         let defaults = scratchDefaults()
         let library = StationLibrary(defaults: defaults)

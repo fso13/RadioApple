@@ -7,6 +7,7 @@ struct SettingsView: View {
     @ObservedObject var theme: ThemeService
     @ObservedObject var equalizer: EqualizerService
     @ObservedObject var player: RadioPlayerService
+    @ObservedObject var alarm: AlarmService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
 
@@ -113,6 +114,37 @@ struct SettingsView: View {
                         isEnabled: launchAtLoginSupported,
                         onChange: { setAutoStart($0) }
                     )
+                }
+
+                section("Будильник") {
+                    ToggleRow(
+                        title: "Включён",
+                        subtitle: alarmSubtitle,
+                        isOn: alarm.settings.enabled,
+                        onChange: { alarm.setEnabled($0) }
+                    )
+                    Hairline()
+                    alarmTimeRow
+                    Hairline()
+                    alarmWeekdayRow
+                    Hairline()
+                    alarmStationRow
+                    Hairline()
+                    InfoRow(label: "Следующий", value: alarmNextText)
+
+                    Text("Будильник работает, пока RadioMac запущен. После сна может сработать с задержкой до 10 минут.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, Space.m)
+
+                    if alarm.notificationDenied {
+                        Text("Уведомления запрещены в системных настройках. Будильник всё равно сработает, пока приложение запущено.")
+                            .font(Typeface.caption)
+                            .foregroundStyle(palette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.bottom, Space.m)
+                    }
                 }
 
                 section("Звук") {
@@ -253,6 +285,147 @@ struct SettingsView: View {
     }
 
     // MARK: - State
+
+    private var alarmSubtitle: String {
+        guard alarm.settings.enabled else {
+            return "Разбудит радио в выбранное время"
+        }
+        if alarm.settings.weekdays.isEmpty {
+            return "Выберите хотя бы один день"
+        }
+        return "Плавное нарастание за \(alarm.settings.fadeInSeconds) секунд"
+    }
+
+    private var alarmNextText: String {
+        guard alarm.settings.enabled else { return "Выключен" }
+        guard !alarm.settings.weekdays.isEmpty else { return "Выберите дни" }
+        guard let next = alarm.nextFireDate else { return "Нет ближайшего запуска" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "EEEE, d MMMM, HH:mm"
+        return formatter.string(from: next)
+    }
+
+    private var alarmStationName: String {
+        if let id = alarm.settings.stationID, let station = library.byID(id) {
+            return station.name
+        }
+        return "Последняя играющая"
+    }
+
+    private var alarmTimeBinding: Binding<Date> {
+        Binding(
+            get: {
+                var components = Calendar.current.dateComponents(
+                    [.year, .month, .day],
+                    from: Date()
+                )
+                components.hour = alarm.settings.hour
+                components.minute = alarm.settings.minute
+                return Calendar.current.date(from: components) ?? Date()
+            },
+            set: { date in
+                let components = Calendar.current.dateComponents([.hour, .minute], from: date)
+                alarm.setTime(
+                    hour: components.hour ?? 7,
+                    minute: components.minute ?? 30
+                )
+            }
+        )
+    }
+
+    private var alarmTimeRow: some View {
+        HStack {
+            Text("Время")
+                .font(Typeface.body)
+                .foregroundStyle(palette.textSecondary)
+            Spacer()
+            DatePicker(
+                "",
+                selection: alarmTimeBinding,
+                displayedComponents: .hourAndMinute
+            )
+            .labelsHidden()
+            .datePickerStyle(.field)
+            .frame(width: 96)
+        }
+        .padding(.vertical, Space.m - 2)
+        .disabled(!alarm.settings.enabled)
+        .opacity(alarm.settings.enabled ? 1 : 0.5)
+    }
+
+    private var alarmWeekdayRow: some View {
+        VStack(alignment: .leading, spacing: Space.xs) {
+            Text("ДНИ")
+                .font(Typeface.overline)
+                .tracking(1.2)
+                .foregroundStyle(palette.textTertiary)
+
+            HStack(spacing: Space.l) {
+                ForEach(AlarmSettings.weekdayOrder, id: \.self) { weekday in
+                    let selected = alarm.settings.weekdays.contains(weekday)
+                    Button {
+                        alarm.toggleWeekday(weekday)
+                    } label: {
+                        VStack(spacing: 4) {
+                            Text(AlarmSettings.shortLabel(for: weekday))
+                                .font(selected ? Typeface.captionMedium : Typeface.caption)
+                                .foregroundStyle(
+                                    selected ? palette.textPrimary : palette.textTertiary
+                                )
+                            Rectangle()
+                                .fill(selected ? palette.textPrimary : Color.clear)
+                                .frame(height: 1)
+                        }
+                        .fixedSize(horizontal: true, vertical: false)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!alarm.settings.enabled)
+                    .accessibilityLabel(AlarmSettings.fullLabel(for: weekday))
+                    .accessibilityAddTraits(selected ? .isSelected : [])
+                }
+                Spacer(minLength: 0)
+            }
+        }
+        .padding(.vertical, Space.m)
+        .opacity(alarm.settings.enabled ? 1 : 0.5)
+    }
+
+    private var alarmStationRow: some View {
+        HStack {
+            Text("Станция")
+                .font(Typeface.body)
+                .foregroundStyle(palette.textSecondary)
+            Spacer()
+            Menu {
+                Button("Последняя играющая") {
+                    alarm.setStation(nil)
+                }
+                Divider()
+                ForEach(library.stations) { station in
+                    Button(station.name) {
+                        alarm.setStation(station.id)
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(alarmStationName)
+                        .font(Typeface.captionMedium)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 9, weight: .medium))
+                }
+                .foregroundStyle(palette.textPrimary)
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .disabled(!alarm.settings.enabled)
+        }
+        .padding(.vertical, Space.m - 2)
+        .opacity(alarm.settings.enabled ? 1 : 0.5)
+    }
 
     private var playerStatusText: String {
         switch player.status {

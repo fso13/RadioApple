@@ -9,6 +9,7 @@ final class AppEnvironment {
     let library: StationLibrary
     let equalizer: EqualizerService
     let player: RadioPlayerService
+    let alarm: AlarmService
     let toasts = ToastCenter()
     let router = WindowRouter()
     let mainModel: MainViewModel
@@ -20,10 +21,12 @@ final class AppEnvironment {
         library = StationLibrary()
         equalizer = EqualizerService()
         player = RadioPlayerService(settings: settings, library: library, equalizer: equalizer)
+        alarm = AlarmService(library: library, player: player)
         mainModel = MainViewModel(library: library)
 
         library.load()
         player.start()
+        alarm.start()
     }
 }
 
@@ -93,6 +96,7 @@ final class MainWindowController: NSWindowController {
             library: environment.library,
             player: environment.player,
             equalizer: environment.equalizer,
+            alarm: environment.alarm,
             toasts: environment.toasts,
             onClose: { [weak self] in self?.hide() },
             onQuit: { NSApp.terminate(nil) }

@@ -73,11 +73,6 @@ enum DebugHarness {
         after { }
         after { }
         after { window.snapshotPanel(to: directory.appendingPathComponent("08-playing.png")) }
-        after { environment.router.route = .settings }
-        after {
-            window.snapshotPanel(to: directory.appendingPathComponent("10-stream-info.png"))
-        }
-        after { environment.router.route = .main }
         after { environment.player.stop() }
         after { environment.theme.setPreference(.dark) }
         after { window.snapshotPanel(to: directory.appendingPathComponent("06-dark.png")) }
