@@ -1,3 +1,4 @@
 # Development tooling: installer layout plus brand asset rendering.
 -r requirements-installer.txt
+# 13.0.0 fixes the OSV advisories affecting 12.3.0.
 Pillow==13.0.0

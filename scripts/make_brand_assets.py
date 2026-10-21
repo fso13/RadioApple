@@ -8,7 +8,7 @@
 The generated PNGs are committed, so this script is only needed when the branding
 changes. It uses Pillow:
 
-    /path/to/python3 -m pip install Pillow
+    python3 -m pip install -r scripts/requirements-dev.txt
     python3 scripts/make_brand_assets.py
 """
 

@@ -264,6 +264,10 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 вендорных библиотек |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
+CodeQL собирает нативный проект вручную (`build-mode: manual`): в репозитории остаётся
+Flutter-папка `macos/` с Podfile, и autobuild пытался делать `pod install` вместо
+сборки `RadioMac.xcodeproj`.
+
 ### Как выпустить релиз
 
 1. Добавьте в `CHANGELOG.md` секцию `## [1.0.1] — 2026-11-01`.

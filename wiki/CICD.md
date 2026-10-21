@@ -15,6 +15,11 @@
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 BASS |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
+> **CodeQL и Flutter-папка.** В репозитории остаётся Flutter-версия с `macos/Podfile`.
+> Поэтому CodeQL использует `build-mode: manual` и собирает нативный
+> `RadioMac.xcodeproj` через `xcodebuild`. Autobuild находил старый Flutter-проект
+> и пытался выполнить `pod install`, что приводило к падению.
+
 ## CI
 
 `ci.yml` собирает Debug и запускает XCTest. Если тесты падают, `xcresult` уходит
