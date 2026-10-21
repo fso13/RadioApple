@@ -61,6 +61,16 @@
   скопировать, очистить или показать в Finder.
 - Файл: `~/Library/Containers/com.fso13.radioMac/Data/Library/Application Support/RadioMac/diagnostics.log`.
 
+## Last.fm
+
+- Создайте API-ключи на [last.fm/api/account/create](https://www.last.fm/api/account/create)
+  и вставьте их в **Настройки → Last.fm**.
+- Включите скробблинг, нажмите «Открыть Last.fm», авторизуйте RadioMac в браузере
+  и вернитесь в приложение, затем «Готово».
+- Now-playing отправляется при смене трека, scrobble — после 4 минут прослушивания.
+- Ключи и сессия хранятся в Keychain; выключение и отключение аккаунта — одной кнопкой.
+- Без ключей и авторизации запросы к Last.fm не выполняются.
+
 ## Библиотека
 
 - Показывает количество станций.

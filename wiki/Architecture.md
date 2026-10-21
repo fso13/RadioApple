@@ -49,6 +49,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `LaunchAtLogin` | `SMAppService.mainApp` |
 | `AlarmService` | расписание будильника, fade-in, уведомления, wake catch-up |
 | `DiagnosticsService` | opt-in локальный журнал и обнаружение аварийных завершений |
+| `LastFmService` | opt-in Last.fm OAuth, now-playing, scrobble, Keychain |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.
@@ -82,6 +83,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `eq_enabled`, `eq_preset`, `eq_gains`, `eq_custom_gains` | эквалайзер |
 | `alarm_settings` | расписание будильника |
 | `diagnostics_enabled` | согласие на локальный журнал |
+| `lastfm_enabled` | согласие на Last.fm |
 | `native_migration_v1` | флаг миграции из Flutter |
 
 Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные

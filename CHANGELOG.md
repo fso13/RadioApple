@@ -19,6 +19,8 @@
   аудит `@MainActor`/`Sendable`; предупреждения компилятора считаются ошибками.
 - Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`;
   Release workflow обновляет cask вместе с релизом.
+- Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи и сессия
+  в Keychain, отключение одной кнопкой.
 
 ### Безопасность
 
