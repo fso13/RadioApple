@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import WidgetKit
 
 /// Glue between the audio engine, the station library, track metadata and the
 /// system Now Playing tile.
@@ -68,6 +69,13 @@ final class RadioPlayerService: ObservableObject {
 
         nativeEngine.setEQEnabled(equalizer.enabled)
         nativeEngine.setEQGains(equalizer.gains)
+
+        Publishers.CombineLatest3($station, $status, $nowPlaying)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.publishSharedState()
+            }
+            .store(in: &cancellables)
         NowPlayingCenter.shared.configure(
             onPlay: { [weak self] in self?.resumeOrPlay() },
             onPause: { [weak self] in self?.pause() },
@@ -232,6 +240,18 @@ final class RadioPlayerService: ObservableObject {
         volume = min(1, max(0, value))
         nativeEngine.setVolume(effectiveVolume(for: station))
         settings.setVolume(volume)
+    }
+
+    private func publishSharedState() {
+        let state = SharedPlaybackState(
+            stationID: station?.id ?? "",
+            stationName: station?.name ?? "",
+            track: nowPlaying?.trayLine,
+            isPlaying: status == .playing,
+            updatedAt: Date()
+        )
+        state.save()
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func effectiveVolume(for station: RadioStation?) -> Double {

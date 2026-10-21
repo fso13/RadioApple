@@ -139,6 +139,15 @@ if [[ -n "$IDENTITY" ]]; then
     while IFS= read -r -d '' dylib; do
         /usr/bin/codesign --force --options runtime --timestamp --sign "$IDENTITY" "$dylib"
     done < <(find "$APP/Contents/Frameworks" -name '*.dylib' -print0 2>/dev/null)
+    # Widget extensions are nested code too; sign them before the app.
+    if [[ -d "$APP/Contents/PlugIns" ]]; then
+        while IFS= read -r -d '' appex; do
+            /usr/bin/codesign --force --options runtime --timestamp \
+                --entitlements "$ROOT/RadioMacWidget/RadioMacWidget.entitlements" \
+                --sign "$IDENTITY" "$appex"
+        done < <(find "$APP/Contents/PlugIns" -name '*.appex' -print0 2>/dev/null)
+    fi
+
     # Sparkle ships nested XPC services, Autoupdate and the framework itself.
     # Sign from the inside out before signing the app container.
     if [[ -d "$APP/Contents/Frameworks/Sparkle.framework" ]]; then

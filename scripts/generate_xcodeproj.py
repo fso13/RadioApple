@@ -21,6 +21,7 @@ INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
 ENTITLEMENTS = SOURCES_DIR / "Resources" / "RadioMac.entitlements"
 TESTS_DIR = ROOT / "RadioMacTests"
 UI_TESTS_DIR = ROOT / "RadioMacUITests"
+WIDGET_DIR = ROOT / "RadioMacWidget"
 
 FILE_IDS: dict[str, str] = {}
 _counter = 0
@@ -75,7 +76,16 @@ def build() -> tuple[str, str]:
     sources = sorted(SOURCES_DIR.rglob("*.swift"))
     test_sources = sorted(TESTS_DIR.glob("*.swift")) if TESTS_DIR.exists() else []
     ui_test_sources = sorted(UI_TESTS_DIR.glob("*.swift")) if UI_TESTS_DIR.exists() else []
-    all_files = [*sources, *test_sources, *ui_test_sources, ASSETS, INFO_PLIST, ENTITLEMENTS]
+    shared_state = SOURCES_DIR / "Services" / "SharedPlaybackState.swift"
+    widget_sources = sorted(WIDGET_DIR.glob("*.swift")) + [shared_state]
+    widget_info = WIDGET_DIR / "Info.plist"
+    widget_entitlements = WIDGET_DIR / "RadioMacWidget.entitlements"
+    # The shared state is already an app source; keep one PBX file reference.
+    all_files = list(dict.fromkeys([
+        *sources, *test_sources, *ui_test_sources, *widget_sources,
+        ASSETS, INFO_PLIST, ENTITLEMENTS, widget_info, widget_entitlements,
+    ]))
+    assert shared_state.exists(), f"missing file: {shared_state}"
     for path in all_files:
         assert path.exists(), f"missing file: {path}"
         FILE_IDS[str(path)] = new_id("F1")
@@ -111,6 +121,19 @@ def build() -> tuple[str, str]:
     ui_release = new_id("D5")
     ui_dependency = new_id("A9")
     ui_proxy = new_id("B9")
+    widget_target = new_id("A7")
+    widget_product = new_id("F1")
+    widget_group = new_id("A3")
+    widget_sources_phase = new_id("C4")
+    widget_frameworks_phase = new_id("C4")
+    widget_resources_phase = new_id("C4")
+    widget_embed_phase = new_id("C4")
+    widget_embed_build = new_id("B2")
+    widget_configs = new_id("E6")
+    widget_debug = new_id("D5")
+    widget_release = new_id("D5")
+    widget_dependency = new_id("A9")
+    widget_proxy = new_id("B9")
 
     folder_groups = {
         name: new_id("A3") for name in ["Models", "Data", "Services", "Intents", "UI", "Window", "Resources"]
@@ -136,6 +159,7 @@ def build() -> tuple[str, str]:
     source_build_files = [build_file(path) for path in sources]
     test_build_files = [build_file(path) for path in test_sources]
     ui_test_build_files = [build_file(path) for path in ui_test_sources]
+    widget_build_files = [build_file(path) for path in widget_sources]
     asset_build_file = build_file(ASSETS)
 
     # ------------------------------------------------------------------ sections
@@ -149,6 +173,11 @@ def build() -> tuple[str, str]:
     build_section.append(
         f"\t\t{sparkle_build} /* Sparkle in Frameworks */ = {{isa = PBXBuildFile; "
         f"productRef = {sparkle_product} /* Sparkle */; }};"
+    )
+    build_section.append(
+        f"\t\t{widget_embed_build} /* RadioMacWidget.appex in Embed App Extensions */ = "
+        f"{{isa = PBXBuildFile; fileRef = {widget_product} /* RadioMacWidget.appex */; "
+        "settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };"
     )
     build_section.append("/* End PBXBuildFile section */")
 
@@ -183,6 +212,11 @@ def build() -> tuple[str, str]:
         f'explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = {PROJECT_NAME}UITests.xctest; '
         "sourceTree = BUILT_PRODUCTS_DIR; };"
     )
+    file_section.append(
+        f"\t\t{widget_product} /* RadioMacWidget.appex */ = {{isa = PBXFileReference; "
+        'explicitFileType = "wrapper.app-extension"; includeInIndex = 0; '
+        "path = RadioMacWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };"
+    )
     file_section.append("/* End PBXFileReference section */")
 
     def files_in(folder: str) -> list[str]:
@@ -198,6 +232,7 @@ def build() -> tuple[str, str]:
                 f"{source_group} /* RadioMac */",
                 f"{tests_group} /* {PROJECT_NAME}Tests */",
                 f"{ui_group} /* {PROJECT_NAME}UITests */",
+                f"{widget_group} /* RadioMacWidget */",
                 f"{products_group} /* Products */",
             ],
         )
@@ -234,6 +269,7 @@ def build() -> tuple[str, str]:
                 f"{product_ref} /* {PROJECT_NAME}.app */",
                 f"{tests_product} /* {PROJECT_NAME}Tests.xctest */",
                 f"{ui_product} /* {PROJECT_NAME}UITests.xctest */",
+                f"{widget_product} /* RadioMacWidget.appex */",
             ],
             name="Products",
         )
@@ -243,6 +279,14 @@ def build() -> tuple[str, str]:
     )
     group_section.append(
         group(ui_group, [ref(path) for path in ui_test_sources], path="RadioMacUITests")
+    )
+    group_section.append(
+        group(
+            widget_group,
+            [ref(path) for path in widget_sources if path.parent == WIDGET_DIR]
+                + [ref(widget_info), ref(widget_entitlements)],
+            path="RadioMacWidget"
+        )
     )
     group_section.append("/* End PBXGroup section */")
 
@@ -257,27 +301,47 @@ def build() -> tuple[str, str]:
         phase(sources_phase, "PBXSourcesBuildPhase", source_build_files),
         phase(tests_sources_phase, "PBXSourcesBuildPhase", test_build_files),
         phase(ui_sources_phase, "PBXSourcesBuildPhase", ui_test_build_files),
+        phase(widget_sources_phase, "PBXSourcesBuildPhase", widget_build_files),
         "/* End PBXSourcesBuildPhase section */",
         "/* Begin PBXContainerItemProxy section */",
         f"\t\t{tests_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
         f"proxyType = 1; remoteGlobalIDString = {target_id}; remoteInfo = {PROJECT_NAME}; }};",
         f"\t\t{ui_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
         f"proxyType = 1; remoteGlobalIDString = {target_id}; remoteInfo = {PROJECT_NAME}; }};",
+        f"\t\t{widget_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
+        f"proxyType = 1; remoteGlobalIDString = {widget_target}; remoteInfo = RadioMacWidget; }};",
         "/* End PBXContainerItemProxy section */",
         "/* Begin PBXTargetDependency section */",
         f"\t\t{tests_dependency} = {{isa = PBXTargetDependency; target = {target_id}; "
         f"targetProxy = {tests_proxy}; }};",
         f"\t\t{ui_dependency} = {{isa = PBXTargetDependency; target = {target_id}; "
         f"targetProxy = {ui_proxy}; }};",
+        f"\t\t{widget_dependency} = {{isa = PBXTargetDependency; target = {widget_target}; "
+        f"targetProxy = {widget_proxy}; }};",
         "/* End PBXTargetDependency section */",
         "/* Begin PBXResourcesBuildPhase section (tests) */",
         phase(tests_resources_phase, "PBXResourcesBuildPhase", []),
         phase(ui_resources_phase, "PBXResourcesBuildPhase", []),
+        phase(widget_resources_phase, "PBXResourcesBuildPhase", []),
         "/* End PBXResourcesBuildPhase section (tests) */",
         "/* Begin PBXFrameworksBuildPhase section (tests) */",
         phase(tests_frameworks_phase, "PBXFrameworksBuildPhase", []),
         phase(ui_frameworks_phase, "PBXFrameworksBuildPhase", []),
+        phase(widget_frameworks_phase, "PBXFrameworksBuildPhase", []),
         "/* End PBXFrameworksBuildPhase section (tests) */",
+        "/* Begin PBXCopyFilesBuildPhase section (widget) */",
+        "\t\t" + widget_embed_phase + " /* Embed App Extensions */ = {",
+        "\t\t\tisa = PBXCopyFilesBuildPhase;",
+        "\t\t\tbuildActionMask = 2147483647;",
+        "\t\t\tfiles = (",
+        f"\t\t\t\t{widget_embed_build} /* RadioMacWidget.appex in Embed App Extensions */,",
+        "\t\t\t);",
+        "\t\t\tdstPath = \"\";",
+        "\t\t\tdstSubfolderSpec = 13;",
+        "\t\t\tname = \"Embed App Extensions\";",
+        "\t\t\trunOnlyForDeploymentPostprocessing = 0;",
+        "\t\t};",
+        "/* End PBXCopyFilesBuildPhase section (widget) */",
     ])
 
     project_settings = [
@@ -374,6 +438,32 @@ def build() -> tuple[str, str]:
         lines.extend(["\t\t\t};", f"\t\t\tname = {name};", "\t\t};"])
         return "\n".join(lines)
 
+    def config_widget(identifier: str, name: str) -> str:
+        settings = [
+            "APPLICATION_EXTENSION_API_ONLY = YES;",
+            "CODE_SIGN_ENTITLEMENTS = RadioMacWidget/RadioMacWidget.entitlements;",
+            'CODE_SIGN_IDENTITY = "-";',
+            "CODE_SIGN_STYLE = Manual;",
+            "CURRENT_PROJECT_VERSION = 3;",
+            "GENERATE_INFOPLIST_FILE = NO;",
+            "INFOPLIST_FILE = RadioMacWidget/Info.plist;",
+            "LD_RUNPATH_SEARCH_PATHS = (",
+            '\t"$(inherited)",',
+            '\t"@executable_path/../../../../Frameworks",',
+            ");",
+            "MARKETING_VERSION = 1.1.0;",
+            "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac.widget;",
+            'PRODUCT_NAME = "$(TARGET_NAME)";',
+            "SKIP_INSTALL = YES;",
+            "SWIFT_STRICT_CONCURRENCY = complete;",
+            "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
+            "SWIFT_VERSION = 6.0;",
+        ]
+        lines = [f"\t\t{identifier} /* {name} */ = {{", "\t\t\tisa = XCBuildConfiguration;", "\t\t\tbuildSettings = {"]
+        lines.extend(f"\t\t\t\t{entry}" for entry in settings)
+        lines.extend(["\t\t\t};", f"\t\t\tname = {name};", "\t\t};"])
+        return "\n".join(lines)
+
     config_section = "\n".join([
         "/* Begin XCBuildConfiguration section */",
         config(project_debug, "Debug", [
@@ -400,6 +490,8 @@ def build() -> tuple[str, str]:
         config_tests(tests_release, "Release"),
         config_ui_tests(ui_debug, "Debug"),
         config_ui_tests(ui_release, "Release"),
+        config_widget(widget_debug, "Debug"),
+        config_widget(widget_release, "Release"),
         "/* End XCBuildConfiguration section */",
     ])
 
@@ -429,6 +521,12 @@ def build() -> tuple[str, str]:
         "\t\t\tdefaultConfigurationIsVisible = 0;",
         "\t\t\tdefaultConfigurationName = Release;",
         "\t\t};",
+        f"\t\t{widget_configs} /* Build configuration list for PBXNativeTarget \"RadioMacWidget\" */ = {{",
+        "\t\t\tisa = XCConfigurationList;",
+        f"\t\t\tbuildConfigurations = ({widget_debug} /* Debug */, {widget_release} /* Release */);",
+        "\t\t\tdefaultConfigurationIsVisible = 0;",
+        "\t\t\tdefaultConfigurationName = Release;",
+        "\t\t};",
         "/* End XCConfigurationList section */",
     ])
 
@@ -441,9 +539,10 @@ def build() -> tuple[str, str]:
         f"\t\t\t\t{sources_phase} /* Sources */,",
         f"\t\t\t\t{frameworks_phase} /* Frameworks */,",
         f"\t\t\t\t{resources_phase} /* Resources */,",
+        f"\t\t\t\t{widget_embed_phase} /* Embed App Extensions */,",
         "\t\t\t);",
         "\t\t\tbuildRules = ();",
-        "\t\t\tdependencies = ();",
+        f"\t\t\tdependencies = ({widget_dependency} /* PBXTargetDependency */,);",
         f"\t\t\tname = {PROJECT_NAME};",
         f"\t\t\tproductName = {PROJECT_NAME};",
         f"\t\t\tproductReference = {product_ref} /* {PROJECT_NAME}.app */;",
@@ -482,6 +581,21 @@ def build() -> tuple[str, str]:
         f"\t\t\tproductReference = {ui_product} /* {PROJECT_NAME}UITests.xctest */;",
         '\t\t\tproductType = "com.apple.product-type.bundle.ui-testing";',
         "\t\t};",
+        f"\t\t{widget_target} /* RadioMacWidget */ = {{",
+        "\t\t\tisa = PBXNativeTarget;",
+        f"\t\t\tbuildConfigurationList = {widget_configs};",
+        "\t\t\tbuildPhases = (",
+        f"\t\t\t\t{widget_sources_phase} /* Sources */,",
+        f"\t\t\t\t{widget_frameworks_phase} /* Frameworks */,",
+        f"\t\t\t\t{widget_resources_phase} /* Resources */,",
+        "\t\t\t);",
+        "\t\t\tbuildRules = ();",
+        "\t\t\tdependencies = ();",
+        "\t\t\tname = RadioMacWidget;",
+        "\t\t\tproductName = RadioMacWidget;",
+        f"\t\t\tproductReference = {widget_product} /* RadioMacWidget.appex */;",
+        '\t\t\tproductType = "com.apple.product-type.app-extension";',
+        "\t\t};",
         "/* End PBXNativeTarget section */",
     ])
 
@@ -511,7 +625,7 @@ def build() -> tuple[str, str]:
         "\t\t\t);",
         '\t\t\tprojectDirPath = "";',
         '\t\t\tprojectRoot = "";',
-        f"\t\t\ttargets = ({target_id} /* {PROJECT_NAME} */, {tests_target} /* {PROJECT_NAME}Tests */, {ui_target} /* {PROJECT_NAME}UITests */);",
+        f"\t\t\ttargets = ({target_id} /* {PROJECT_NAME} */, {tests_target} /* {PROJECT_NAME}Tests */, {ui_target} /* {PROJECT_NAME}UITests */, {widget_target} /* RadioMacWidget */);",
         "\t\t};",
         "/* End PBXProject section */",
     ])
@@ -564,7 +678,7 @@ def build() -> tuple[str, str]:
         "}",
         "",
     ])
-    return document, (target_id, tests_target, ui_target)
+    return document, (target_id, tests_target, ui_target, widget_target)
 
 
 SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
@@ -595,6 +709,15 @@ SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
                BlueprintIdentifier = "{ui_test_target_id}"
                BuildableName = "RadioMacUITests.xctest"
                BlueprintName = "RadioMacUITests"
+               ReferencedContainer = "container:RadioMac.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{widget_target_id}"
+               BuildableName = "RadioMacWidget.appex"
+               BlueprintName = "RadioMacWidget"
                ReferencedContainer = "container:RadioMac.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -653,7 +776,7 @@ SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
 
 
 def main() -> int:
-    document, (target_id, tests_target, ui_target) = build()
+    document, (target_id, tests_target, ui_target, widget_target) = build()
     project_dir = ROOT / f"{PROJECT_NAME}.xcodeproj"
     project_dir.mkdir(exist_ok=True)
     (project_dir / "project.pbxproj").write_text(document, encoding="utf-8")
@@ -663,7 +786,8 @@ def main() -> int:
     (scheme_dir / f"{PROJECT_NAME}.xcscheme").write_text(
         SCHEME.replace("{target_id}", target_id)
         .replace("{test_target_id}", tests_target)
-        .replace("{ui_test_target_id}", ui_target),
+        .replace("{ui_test_target_id}", ui_target)
+        .replace("{widget_target_id}", widget_target),
         encoding="utf-8",
     )
     print(f"wrote {project_dir} (app {target_id}, tests {tests_target}, ui {ui_target})")

@@ -23,6 +23,7 @@ final class RadioMacLogicTests: XCTestCase {
     func testRadioURLPauseAndOpenCommands() {
         XCTAssertEqual(RadioURLCommand.parse(URL(string: "radiomac://pause")!), .pause)
         XCTAssertEqual(RadioURLCommand.parse(URL(string: "radiomac://open")!), .open)
+        XCTAssertEqual(RadioURLCommand.parse(URL(string: "radiomac://toggle")!), .toggle)
     }
 
     func testRadioURLRejectsUnknownAndEmptyCommands() {
@@ -721,6 +722,23 @@ final class RadioMacLogicTests: XCTestCase {
         model.setFilter(.all)
         XCTAssertTrue(model.canReorder)
         XCTAssertTrue(model.visible.contains { $0.id == grouped.id })
+    }
+
+    func testSharedPlaybackStateRoundTrip() {
+        let state = SharedPlaybackState(
+            stationID: "shared-test",
+            stationName: "Shared Radio",
+            track: "Artist — Track",
+            isPlaying: true,
+            updatedAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        state.save()
+        let loaded = SharedPlaybackState.load()
+        XCTAssertEqual(loaded?.stationID, "shared-test")
+        XCTAssertEqual(loaded?.stationName, "Shared Radio")
+        XCTAssertEqual(loaded?.track, "Artist — Track")
+        XCTAssertEqual(loaded?.isPlaying, true)
+        try? FileManager.default.removeItem(at: SharedPlaybackState.fileURL)
     }
 
     func testStreamInfoFormattingAndCodecs() {

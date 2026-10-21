@@ -52,6 +52,8 @@ final class AppRuntime {
             }
         case .pause:
             environment?.player.pause()
+        case .toggle:
+            environment?.player.togglePlayPause()
         case .open:
             showWindowAction?()
         }

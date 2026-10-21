@@ -4,6 +4,7 @@ import Foundation
 enum RadioURLCommand: Equatable, Sendable {
     case play(id: String)
     case pause
+    case toggle
     case open
 
     static let scheme = "radiomac"
@@ -26,6 +27,8 @@ enum RadioURLCommand: Equatable, Sendable {
             return .play(id: id)
         case "pause":
             return .pause
+        case "toggle":
+            return .toggle
         case "open":
             return .open
         default:
