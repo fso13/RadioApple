@@ -117,6 +117,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   при старте RadioMac; сохраняются в библиотеке.
 - **Автообновление**: Sparkle 2, appcast в latest release, EdDSA-подпись и проверка
   обновлений из приложения; ключ подписи хранится в GitHub Secrets.
+- **Мини-плеер**: левый клик по иконке в меню-баре открывает поповер с обложкой,
+  названием, play/pause, громкостью и быстрым выбором станции — без основного окна.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -248,6 +250,7 @@ RadioMac/
     StationEditorView.swift   редактор станции
     RadioBrowserView.swift    поиск Radio Browser, превью и добавление
     StationTransferView.swift импорт/экспорт станций и drag-and-drop
+    MiniPlayerView.swift      поповер в меню-баре
     BrandMark.swift           логотип и глиф
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
