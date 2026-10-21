@@ -57,6 +57,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `DiagnosticsService` | opt-in локальный журнал и обнаружение аварийных завершений |
 | `LastFmService` | opt-in Last.fm OAuth, now-playing, scrobble, Keychain |
 | `AppRuntime` / `RadioIntents` | App Intents, Shortcuts и URL-команды к библиотеке/плееру |
+| `RadioBrowserService` | поиск Radio Browser, пагинация и модель станции |
+| `RadioBrowserView` | превью и добавление найденных станций без дублей |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.

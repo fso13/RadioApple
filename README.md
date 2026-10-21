@@ -56,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (27 XCTest-кейсов, host-приложение):
+Тесты (29 XCTest-кейсов, host-приложение):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -109,6 +109,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   4 попытки, кнопка «Повторить» и восстановление без выбора станции заново.
 - **Автоматизация**: App Intents и Shortcuts («Играть станцию», «Пауза», «Открыть
   RadioMac»), URL `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
+- **Radio Browser**: поиск станций по названию, жанру и стране, превью потока,
+  добавление в библиотеку и защита от дублей по URL/external ID.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -215,6 +217,7 @@ RadioMac/
     AVAudioMixTap.swift       MTAudioProcessingTap + нативный эквалайзер
     RadioPlayerService.swift  состояние плеера, опрос метаданных, Now Playing
     StationLibrary.swift      библиотека станций, избранное, логотипы, персистентность
+    RadioBrowserService.swift поиск и пагинация Radio Browser
     EqualizerService.swift    полосы, пресеты, дебаунс записи
     NowPlayingLookup.swift    SomaFM / Radio Paradise / Icecast / ICY + обложки iTunes
     LogoResolver.swift        Radio Browser и favicon-фолбэки
@@ -235,11 +238,12 @@ RadioMac/
     HelpView.swift            документация
     EqualizerView.swift       эквалайзер
     StationEditorView.swift   редактор станции
+    RadioBrowserView.swift    поиск Radio Browser, превью и добавление
     BrandMark.swift           логотип и глиф
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                27 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
+RadioMacTests/                29 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
@@ -289,7 +293,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 27 тестов, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 29 тестов, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |

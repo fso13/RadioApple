@@ -29,6 +29,8 @@
   и ручной retry.
 - Автоматизация: App Intents/Shortcuts («Играть станцию», «Пауза», «Открыть»), URL
   `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
+- Radio Browser: поиск по названию/жанру/стране, превью, добавление в библиотеку
+  и защита от дублей по URL/external ID.
 - Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`
   и теге `flutter-legacy-1.0`. CodeQL переведён на autobuild.
 
