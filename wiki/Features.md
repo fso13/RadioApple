@@ -37,6 +37,12 @@ AVPlayer-потоки — через ICY side-channel. При обрыве вк�
 общий плеер. ICY-метаданные для прогрессивных потоков читаются отдельным side-channel;
 нативный эквалайзер работает через audio tap AVPlayer.
 
+## App Intents, Shortcuts и URL scheme
+
+RadioMac публикует команды «Играть станцию», «Пауза» и «Открыть RadioMac» в
+Shortcuts. Станцию можно передать параметром; подсказки берутся из библиотеки.
+URL-схема: `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
+
 ## Last.fm
 
 Opt-in скробблинг: API-ключи пользователя, OAuth-авторизация в браузере, now-playing

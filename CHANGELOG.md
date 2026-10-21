@@ -27,6 +27,8 @@
 - AVPlayer: HLS/AAC/MP3, HLS timed metadata и ICY side-channel.
 - Автопереподключение: статус «Переподключение…», backoff 1/2/5/10 с, лимит попыток
   и ручной retry.
+- Автоматизация: App Intents/Shortcuts («Играть станцию», «Пауза», «Открыть»), URL
+  `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
 - Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`
   и теге `flutter-legacy-1.0`. CodeQL переведён на autobuild.
 
