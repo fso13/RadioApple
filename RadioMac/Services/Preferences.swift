@@ -14,6 +14,7 @@ enum DefaultsKey {
     static let eqGains = "eq_gains"
     static let eqCustomGains = "eq_custom_gains"
     static let alarmSettings = "alarm_settings"
+    static let diagnosticsEnabled = "diagnostics_enabled"
     static let migrationFlag = "native_migration_v1"
 
     /// `shared_preferences` on macOS stores every entry with this prefix.

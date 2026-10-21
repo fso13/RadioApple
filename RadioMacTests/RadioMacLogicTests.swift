@@ -231,6 +231,46 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testDiagnosticsStoreAndRedaction() {
+        let directory = FileManager.default.temporaryDirectory
+            .appendingPathComponent("radiomac-diag-\(UUID().uuidString)", isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let store = DiagnosticsStore(directory: directory, limitBytes: 10_000)
+        let first = Date(timeIntervalSince1970: 1_700_000_000)
+
+        XCTAssertNil(store.beginSession(now: first))
+        store.append("2026-01-01T00:00:00Z [app] start")
+        XCTAssertEqual(store.readLines(), ["2026-01-01T00:00:00Z [app] start"])
+
+        let second = first.addingTimeInterval(60)
+        let previous = store.beginSession(now: second)
+        XCTAssertNotNil(previous)
+        if let previous {
+            XCTAssertEqual(previous.timeIntervalSince1970, first.timeIntervalSince1970, accuracy: 1)
+        }
+
+        store.endSession()
+        XCTAssertNil(store.beginSession(now: second.addingTimeInterval(60)))
+        store.clear()
+        XCTAssertTrue(store.readLines().isEmpty)
+
+        XCTAssertEqual(
+            DiagnosticsService.redact("stream https://example.com/live.mp3?token=secret failed"),
+            "stream https://example.com failed"
+        )
+        XCTAssertEqual(DiagnosticsService.redact("no urls here"), "no urls here")
+
+        let line = DiagnosticsService.line(
+            date: first,
+            category: "error",
+            message: "https://example.com/stream?x=1 timeout"
+        )
+        XCTAssertTrue(line.contains("[error]"))
+        XCTAssertTrue(line.contains("https://example.com"))
+        XCTAssertFalse(line.contains("x=1"))
+    }
+
     func testAlarmScheduleAndFade() {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = TimeZone(secondsFromGMT: 0)!

@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var equalizer: EqualizerService
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var alarm: AlarmService
+    @ObservedObject var diagnostics: DiagnosticsService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
 
@@ -24,6 +25,7 @@ struct SettingsView: View {
     @State private var launchAtLoginSupported = true
     @State private var confirmRestore = false
     @State private var confirmQuit = false
+    @State private var showDiagnostics = false
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -74,6 +76,11 @@ struct SettingsView: View {
             }
         } message: {
             Text("Встроенные станции вернутся к исходным. Ваши добавленные станции останутся.")
+        }
+        .sheet(isPresented: $showDiagnostics) {
+            DiagnosticsView(diagnostics: diagnostics) {
+                showDiagnostics = false
+            }
         }
         .alert("Завершить работу?", isPresented: $confirmQuit) {
             Button("Отмена", role: .cancel) {}
@@ -189,6 +196,45 @@ struct SettingsView: View {
                     .padding(.vertical, Space.m)
                 }
 
+                section("Диагностика") {
+                    ToggleRow(
+                        title: "Локальный журнал",
+                        subtitle: diagnostics.isEnabled
+                            ? "Пишет события в контейнер приложения"
+                            : "Выключен · данные никуда не отправляются",
+                        isOn: diagnostics.isEnabled,
+                        onChange: { diagnostics.setEnabled($0) }
+                    )
+                    Hairline()
+                    HStack(spacing: Space.l) {
+                        TextButton(
+                            title: "Открыть журнал",
+                            systemImage: "doc.text.magnifyingglass"
+                        ) {
+                            showDiagnostics = true
+                        }
+                        TextButton(title: "Показать в Finder", systemImage: "folder") {
+                            revealDiagnostics()
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, Space.m)
+
+                    if let crash = diagnostics.lastCrashDate {
+                        Text("Прошлый сеанс завершился аварийно: \(crashText(crash)).")
+                            .font(Typeface.caption)
+                            .foregroundStyle(palette.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                            .padding(.bottom, Space.m)
+                    }
+
+                    Text("Журнал хранится только на этом Mac. URL обрезаются до домена, данные никуда не отправляются.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, Space.m)
+                }
+
                 section("Библиотека") {
                     SettingsRow(
                         title: "Каталог станций",
@@ -285,6 +331,20 @@ struct SettingsView: View {
     }
 
     // MARK: - State
+
+    private func crashText(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "ru_RU")
+        formatter.dateFormat = "d MMMM, HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func revealDiagnostics() {
+        let target = diagnostics.hasLog
+            ? diagnostics.logURL
+            : diagnostics.logURL.deletingLastPathComponent()
+        NSWorkspace.shared.activateFileViewerSelecting([target])
+    }
 
     private var alarmSubtitle: String {
         guard alarm.settings.enabled else {
