@@ -97,23 +97,9 @@ struct RadioBrowserView: View {
                         row(item)
                         Hairline()
                     }
-                    loadMoreRow
                 }
             }
         }
-    }
-
-    private var loadMoreRow: some View {
-        TextButton(
-            title: service.hasMore ? "Показать ещё" : "Больше нет",
-            systemImage: "arrow.down",
-            iconPosition: .trailing
-        ) {
-            service.loadMore()
-        }
-        .disabled(!service.hasMore)
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, Space.m)
     }
 
     private func row(_ item: RadioBrowserStation) -> some View {

@@ -92,11 +92,8 @@ final class RadioBrowserService: ObservableObject {
     @Published private(set) var results: [RadioBrowserStation] = []
     @Published private(set) var isLoading = false
     @Published private(set) var errorText: String = ""
-    @Published private(set) var hasMore = false
 
-    private static let pageSize = 10
     private var task: Task<Void, Never>?
-    private var query = (name: "", genre: "", country: "")
 
     func search(name: String, genre: String, country: String) {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -106,57 +103,33 @@ final class RadioBrowserService: ObservableObject {
         guard !name.isEmpty || !genre.isEmpty || !country.isEmpty else {
             task?.cancel()
             results = []
-            hasMore = false
             isLoading = false
             errorText = RadioBrowserError.emptyQuery.errorDescription ?? ""
             return
         }
 
-        query = (name, genre, country)
-        results = []
-        hasMore = false
-        start(reset: true)
-    }
-
-    func loadMore() {
-        guard hasMore, !isLoading else { return }
-        start(reset: false)
-    }
-
-    private func start(reset: Bool) {
         task?.cancel()
         isLoading = true
         errorText = ""
-        let query = query
-        let offset = reset ? 0 : results.count
-
-        task = Task.detached(priority: .userInitiated) { [weak self] in
+        task = Task { @MainActor [weak self] in
             do {
                 let stations = try await Self.fetch(
-                    name: query.name,
-                    genre: query.genre,
-                    country: query.country,
-                    limit: Self.pageSize,
-                    offset: offset
+                    name: name,
+                    genre: genre,
+                    country: country
                 )
-                guard !Task.isCancelled else { return }
-                await MainActor.run {
-                    guard let self else { return }
-                    self.results = reset ? stations : self.results + stations
-                    self.hasMore = stations.count == Self.pageSize
-                    self.isLoading = false
-                    if reset, stations.isEmpty {
-                        self.errorText = RadioBrowserError.noResults.errorDescription ?? ""
-                    }
+                guard !Task.isCancelled, let self else { return }
+                results = stations
+                isLoading = false
+                if stations.isEmpty {
+                    errorText = RadioBrowserError.noResults.errorDescription ?? ""
                 }
             } catch is CancellationError {
                 return
             } catch {
-                await MainActor.run {
-                    guard let self else { return }
-                    self.isLoading = false
-                    self.errorText = error.localizedDescription
-                }
+                guard let self else { return }
+                isLoading = false
+                errorText = error.localizedDescription
             }
         }
     }
@@ -170,16 +143,13 @@ final class RadioBrowserService: ObservableObject {
     nonisolated private static func fetch(
         name: String,
         genre: String,
-        country: String,
-        limit: Int,
-        offset: Int
+        country: String
     ) async throws -> [RadioBrowserStation] {
         var components = URLComponents(
             string: "https://de1.api.radio-browser.info/json/stations/search"
         )!
         var items = [
-            URLQueryItem(name: "limit", value: String(limit)),
-            URLQueryItem(name: "offset", value: String(offset)),
+            URLQueryItem(name: "limit", value: "10"),
             URLQueryItem(name: "hidebroken", value: "true"),
             URLQueryItem(name: "order", value: "clickcount"),
             URLQueryItem(name: "reverse", value: "true"),
