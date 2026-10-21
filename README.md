@@ -131,8 +131,9 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 | Что | Где | Как использовать |
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
-| **Образ** | `dist/RadioMac-1.0.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.0.0.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
+| **Образ** | `dist/RadioMac-1.0.1.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-1.0.1.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -141,6 +142,20 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 Образ открывается окном с перетаскиванием: тёмная иконка приложения слева, папка «Программы»
 справа, подсказка и стрелка на фоне. Иконки расставлены по фону (170 и 470 pt), у тома своя
 иконка, окно без панелей и сайдбара. Данные при обновлении сохраняются — bundle id не меняется.
+
+### Homebrew
+
+```bash
+brew tap fso13/tap
+brew trust fso13/tap               # Homebrew 7+
+brew install --cask radiomac
+```
+
+Cask ставит последний стабильный релиз из
+[`fso13/homebrew-tap`](https://github.com/fso13/homebrew-tap); Release workflow
+обновляет `Casks/radiomac.rb` после публикации. Если Gatekeeper блокирует
+ad-hoc сборку, используйте `brew install --cask --no-quarantine radiomac`
+или разрешите запуск в System Settings → Privacy & Security.
 
 ```bash
 scripts/install.sh                  # сборка + установка в /Applications + запуск

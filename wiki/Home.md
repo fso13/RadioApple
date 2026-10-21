@@ -11,6 +11,7 @@
 
 ## Скачать
 
+- [Homebrew](https://github.com/fso13/homebrew-tap): `brew trust fso13/tap && brew tap fso13/tap && brew install --cask radiomac`.
 - [Последний релиз](https://github.com/fso13/RadioApple/releases/latest) — DMG, PKG,
   контрольные суммы и SBOM.
 - [Сайт проекта](https://fso13.github.io/RadioApple/) — обзор и скриншоты.

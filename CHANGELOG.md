@@ -17,6 +17,8 @@
   копирование и очистка. Данные не отправляются, URL обрезаются до домена.
 - Swift 6: проект переведён на языковой режим Swift 6, strict concurrency complete,
   аудит `@MainActor`/`Sendable`; предупреждения компилятора считаются ошибками.
+- Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`;
+  Release workflow обновляет cask вместе с релизом.
 
 ### Безопасность
 
