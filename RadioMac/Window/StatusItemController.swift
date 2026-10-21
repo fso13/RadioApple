@@ -1,11 +1,13 @@
 import AppKit
 import Combine
+import SwiftUI
 
 /// Menu-bar item: left click toggles the panel, right click shows the action menu.
 @MainActor
 final class StatusItemController: NSObject, NSMenuDelegate {
     private let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
     private let environment: AppEnvironment
+    private let popover = NSPopover()
     private var cancellables: Set<AnyCancellable> = []
 
     var onToggleWindow: (() -> Void)?
@@ -20,6 +22,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         self.environment = environment
         super.init()
         configureButton()
+        configurePopover()
         observePlayer()
         refreshTooltip()
     }
@@ -44,6 +47,33 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         button.toolTip = "RadioMac"
     }
 
+    private func configurePopover() {
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentSize = NSSize(width: 320, height: 430)
+        popover.contentViewController = NSHostingController(
+            rootView: MiniPlayerView(
+                player: environment.player,
+                library: environment.library,
+                theme: environment.theme,
+                onOpenWindow: { [weak self] in
+                    self?.popover.performClose(nil)
+                    self?.onShowWindow?()
+                }
+            )
+        )
+    }
+
+    private func togglePopover() {
+        guard let button = statusItem.button else { return }
+        if popover.isShown {
+            popover.performClose(nil)
+        } else {
+            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+            NSApp.activate(ignoringOtherApps: true)
+        }
+    }
+
     private func observePlayer() {
         let player = environment.player
         let publisher = Publishers.MergeMany(
@@ -63,7 +93,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         if NSApp.currentEvent?.type == .rightMouseUp {
             presentMenu()
         } else {
-            onToggleWindow?()
+            togglePopover()
         }
     }
 
