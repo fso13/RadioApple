@@ -59,7 +59,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (22 XCTest-кейсов, host-приложение):
+Тесты (23 XCTest-кейсов, host-приложение):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -104,8 +104,9 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Swift 6**: язык проекта, strict concurrency complete и warnings as errors.
 - **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут; ключи в Keychain,
   отключение одной кнопкой.
-- **Audio engine**: «Авто» играет HLS через AVPlayer, остальное — через BASS;
-  можно принудительно выбрать BASS или AVPlayer. ICY пока доступен в BASS.
+- **Audio engine**: «Авто» играет HLS и AAC через AVPlayer, MP3 — через BASS;
+  можно принудительно выбрать BASS или AVPlayer. Для прогрессивных AVPlayer-потоков
+  ICY-метаданные читаются отдельным side-channel; EQ пока доступен в BASS.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в BASS-потоке; заменяет BASS_FX
   на macOS 27 / Apple Silicon, где плагин не загружается. В AVPlayer EQ пока нет.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -235,7 +236,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                22 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
+RadioMacTests/                23 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
@@ -288,7 +289,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 22 теста, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 23 теста, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |

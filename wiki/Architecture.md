@@ -39,7 +39,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | --- | --- |
 | `RadioEngine` | единственный владелец BASS-хэндлов, потоки, ICY, стоп/пауза, EQ |
 | `NativeEqualizer` | 10-полосный Biquad DSP в BASS-колбэке, fallback без BASS_FX |
-| `NativeAudioEngine` | AVPlayer для HLS: play/pause/stop, громкость, KVO-состояния |
+| `NativeAudioEngine` | AVPlayer для HLS/AAC: play/pause/stop, громкость, KVO-состояния |
+| `ICYMetadataReader` | side-channel ICY `StreamTitle` для прогрессивных AVPlayer-потоков |
 | `RadioPlayerService` | состояние плеера, громкость, опрос метаданных, Now Playing |
 | `StationLibrary` | каталог, избранное, добавление/удаление, логотипы, персистентность |
 | `EqualizerService` | полосы, пресеты, дебаунс записи |
@@ -69,7 +70,10 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
   используются только из асинхронных задач плеера/библиотеки.
 - BASS вызывается только на последовательной `workQueue` — никаких гонок за хэндлы.
 - AVPlayer живёт на главном акторе; его KVO-состояния приходят через `Task { @MainActor in }`.
-- `RadioPlayerService` выбирает движок по настройке `audio_engine` и URL: `.m3u8` → AVPlayer.
+- `RadioPlayerService` выбирает движок по настройке `audio_engine` и URL:
+  `.m3u8`/AAC → AVPlayer, MP3 → BASS.
+- AVPlayer не отдаёт ICY: для `.aac`/`.mp3` открывается второй запрос с
+  `Icy-MetaData: 1`, аудио отбрасывается, `StreamTitle` уходит в Now Playing.
 - Результаты и ICY-метаданные приходят в UI на main-акторе.
 - Метаданные и обложки загружаются асинхронно (`URLSession`, `async/await`),
   с проверкой поколения, чтобы ответ старой станции не перетёр новый трек.

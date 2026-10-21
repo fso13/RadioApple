@@ -25,6 +25,8 @@
   для MP3/AAC и ICY.
 - Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке как fallback вместо
   BASS_FX (ошибка 41 на macOS 27 / Apple Silicon).
+- AVPlayer: автоматический AAC, ICY-метаданные через side-channel; HLS/AAC играют
+  без libbass_aac.
 
 ### Безопасность
 
