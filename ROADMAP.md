@@ -9,6 +9,10 @@
 
 ✅ — реализовано, тесты 18/18.
 
+> ⚠️ RM-18 и RM-19 требуют Apple Developer team и provisioning profile:
+> без него `com.apple.security.application-groups` (App Groups) и iCloud не работают.
+> Ad-hoc сборка падает с «requires a provisioning profile».
+
 Каждый ID — кандидат в карточку GitHub Project
 [RadioMac #11](https://github.com/users/fso13/projects/11). В колонке «Результат» —
 критерий готовности.
@@ -45,7 +49,7 @@
 | ID | Задача | Результат |
 | --- | --- | --- |
 | RM-18 | **iCloud-синхронизация** | Станции, избранное и настройки синхронизируются между Mac; разрешение конфликтов и opt-in. |
-| RM-19 | **Виджет и Control Center** | Виджет macOS 14+ с текущей станцией и play/pause; элемент управления в Control Center на поддерживаемых версиях. |
+| RM-19 ⚠️ | **Виджет и Control Center** | Виджет macOS 14+ с текущей станцией и play/pause; элемент управления в Control Center на поддерживаемых версиях. |
 | RM-20 ✅ | **Будильник-радио** | Расписание по дням недели, выбор станции, плавное нарастание громкости, уведомление. |
 | RM-21 ✅ | **Homebrew Cask** | `brew install --cask radiomac`; формула/тап обновляется вместе с релизом. |
 | RM-22 ✅ | **Swift 6 strict concurrency** | Языковой режим Swift 6, аудит `@MainActor`, отсутствие предупреждений конкурентности; warnings as errors в CI. |
