@@ -93,12 +93,27 @@ enum AudioMixTapFactory {
         )
 
         var tap: MTAudioProcessingTap?
-        let status = MTAudioProcessingTapCreate(
+        let status: OSStatus
+#if compiler(>=6.2)
+        status = MTAudioProcessingTapCreate(
             kCFAllocatorDefault,
             &callbacks,
             kMTAudioProcessingTapCreationFlag_PreEffects,
             &tap
         )
+#else
+        // Xcode 16 imports the out-parameter as Unmanaged.
+        var unmanagedTap: Unmanaged<MTAudioProcessingTap>?
+        status = MTAudioProcessingTapCreate(
+            kCFAllocatorDefault,
+            &callbacks,
+            kMTAudioProcessingTapCreationFlag_PreEffects,
+            &unmanagedTap
+        )
+        if let unmanagedTap {
+            tap = unmanagedTap.takeRetainedValue()
+        }
+#endif
         guard status == noErr, let tap else {
             Unmanaged<NativeTapContext>.fromOpaque(clientInfo).release()
             return nil
