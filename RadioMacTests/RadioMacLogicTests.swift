@@ -194,6 +194,65 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertTrue(reloaded.autoStartEnabled)
     }
 
+    func testRadioBrowserStationDecoding() throws {
+        let json = """
+        [{
+          "stationuuid": "abc-123",
+          "name": "Jazz FM",
+          "url": "http://example.com/stream.mp3",
+          "url_resolved": "https://example.com/stream.mp3",
+          "favicon": "https://example.com/logo.png",
+          "tags": "jazz, smooth",
+          "country": "Germany",
+          "codec": "MP3",
+          "bitrate": 128
+        }]
+        """
+        let items = try JSONDecoder().decode([RadioBrowserStation].self, from: Data(json.utf8))
+        XCTAssertEqual(items.count, 1)
+        let item = try XCTUnwrap(items.first)
+        XCTAssertEqual(item.streamURL, "https://example.com/stream.mp3")
+        XCTAssertEqual(item.genre, "jazz")
+        XCTAssertTrue(item.details.contains("Germany"))
+        XCTAssertTrue(item.details.contains("128 kbps"))
+
+        let station = item.asRadioStation()
+        XCTAssertEqual(station.externalID, "abc-123")
+        XCTAssertEqual(station.url, "https://example.com/stream.mp3")
+        XCTAssertEqual(station.genre, "jazz")
+    }
+
+    func testStationLibraryProtectsAgainstDuplicates() {
+        let defaults = scratchDefaults()
+        let library = StationLibrary(defaults: defaults)
+        library.load()
+        let initialCount = library.stations.count
+
+        let first = library.add(
+            name: "Jazz FM",
+            url: "https://example.com/live/",
+            genre: "jazz",
+            externalID: "external-1"
+        )
+        let sameURL = library.add(
+            name: "Jazz FM Copy",
+            url: "https://EXAMPLE.com/live",
+            genre: "jazz",
+            externalID: "external-2"
+        )
+        let sameExternalID = library.add(
+            name: "Jazz FM Another URL",
+            url: "https://another.example.com/live",
+            genre: "jazz",
+            externalID: "external-1"
+        )
+
+        XCTAssertEqual(first.id, sameURL.id)
+        XCTAssertEqual(first.id, sameExternalID.id)
+        XCTAssertEqual(library.stations.count, initialCount + 1)
+        XCTAssertTrue(library.isDuplicate(url: "https://example.com/live", externalID: "external-1"))
+    }
+
     func testStationLibrarySeedsEditsAndPersists() {
         let defaults = scratchDefaults()
         let library = StationLibrary(defaults: defaults)

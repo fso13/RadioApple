@@ -11,6 +11,8 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
     var logoURL: String?
     var isFavorite: Bool
     var builtIn: Bool
+    /// Stable identifier from an external catalog such as Radio Browser.
+    var externalID: String?
 
     init(
         id: String,
@@ -21,7 +23,8 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         group: String? = nil,
         logoURL: String? = nil,
         isFavorite: Bool = false,
-        builtIn: Bool = false
+        builtIn: Bool = false,
+        externalID: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -32,6 +35,7 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         self.logoURL = logoURL
         self.isFavorite = isFavorite
         self.builtIn = builtIn
+        self.externalID = externalID
     }
 
     var hasComment: Bool {
@@ -55,7 +59,7 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
     // MARK: - JSON
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, url, genre, comment, group, logoUrl, isFavorite, builtIn
+        case id, name, url, genre, comment, group, logoUrl, isFavorite, builtIn, externalId
     }
 
     init(from decoder: Decoder) throws {
@@ -71,6 +75,9 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         logoURL = RadioStation.emptyToNil(try container.decodeIfPresent(String.self, forKey: .logoUrl))
         isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
         builtIn = try container.decodeIfPresent(Bool.self, forKey: .builtIn) ?? false
+        externalID = RadioStation.emptyToNil(
+            try container.decodeIfPresent(String.self, forKey: .externalId)
+        )
     }
 
     func encode(to encoder: Encoder) throws {
@@ -84,6 +91,7 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         try container.encodeIfPresent(logoURL, forKey: .logoUrl)
         try container.encode(isFavorite, forKey: .isFavorite)
         try container.encode(builtIn, forKey: .builtIn)
+        try container.encodeIfPresent(externalID, forKey: .externalId)
     }
 
     private static func emptyToNil(_ value: String?) -> String? {

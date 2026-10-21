@@ -94,16 +94,26 @@ final class StationLibrary: ObservableObject {
         genre: String,
         comment: String? = nil,
         group: String? = nil,
-        logoURL: String? = nil
+        logoURL: String? = nil,
+        externalID: String? = nil
     ) -> RadioStation {
+        let trimmedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedExternalID = Self.emptyToNil(externalID)
+        if let existing = stations.first(where: {
+            Self.sameStream($0, url: trimmedURL, externalID: trimmedExternalID)
+        }) {
+            return existing
+        }
+
         let station = RadioStation(
             id: UUID().uuidString,
             name: name.trimmingCharacters(in: .whitespacesAndNewlines),
-            url: url.trimmingCharacters(in: .whitespacesAndNewlines),
+            url: trimmedURL,
             genre: GenreCatalog.normalize(genre),
             comment: Self.emptyToNil(comment),
             group: normalizeGroup(group),
-            logoURL: Self.emptyToNil(logoURL)
+            logoURL: Self.emptyToNil(logoURL),
+            externalID: trimmedExternalID
         )
         stations.append(station)
         persist()
@@ -111,6 +121,38 @@ final class StationLibrary: ObservableObject {
             resolveLogo(for: station)
         }
         return station
+    }
+
+    func isDuplicate(url: String, externalID: String? = nil) -> Bool {
+        stations.contains {
+            Self.sameStream($0, url: url, externalID: Self.emptyToNil(externalID))
+        }
+    }
+
+    private static func sameStream(
+        _ station: RadioStation,
+        url: String,
+        externalID: String?
+    ) -> Bool {
+        if let externalID,
+           let stored = station.externalID,
+           stored.caseInsensitiveCompare(externalID) == .orderedSame {
+            return true
+        }
+        return normalizedURL(station.url) == normalizedURL(url)
+    }
+
+    static func normalizedURL(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var components = URLComponents(string: trimmed) else {
+            return trimmed.lowercased()
+        }
+        components.scheme = components.scheme?.lowercased()
+        components.host = components.host?.lowercased()
+        if components.path.count > 1, components.path.hasSuffix("/") {
+            components.path = String(components.path.dropLast())
+        }
+        return components.url?.absoluteString ?? trimmed.lowercased()
     }
 
     func update(_ updated: RadioStation) {

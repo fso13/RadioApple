@@ -16,6 +16,7 @@ struct MainView: View {
 
     @FocusState private var searchFocused: Bool
     @State private var pendingDelete: RadioStation?
+    @State private var showRadioBrowser = false
 
     @Environment(\.palette) private var palette
 
@@ -44,6 +45,9 @@ struct MainView: View {
         .onChange(of: player.status) { _, newValue in
             guard newValue == .error else { return }
             toasts.show(player.consumeError() ?? "Не удалось открыть поток", kind: .error)
+        }
+        .sheet(isPresented: $showRadioBrowser) {
+            RadioBrowserView(library: library, player: player, toasts: toasts)
         }
         .sheet(item: $model.editor) { request in
             StationEditorView(existing: request.station, genres: editorGenres) { draft in
@@ -122,6 +126,9 @@ struct MainView: View {
                         .truncationMode(.tail)
                 }
                 Spacer()
+                TextButton(title: "Radio Browser", systemImage: "globe") {
+                    showRadioBrowser = true
+                }
                 PrimaryButton(title: "Добавить станцию", systemImage: "plus") {
                     model.newStation()
                 }

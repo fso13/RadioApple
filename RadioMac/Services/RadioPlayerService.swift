@@ -116,7 +116,7 @@ final class RadioPlayerService: ObservableObject {
 
     // MARK: - Transport
 
-    func play(_ station: RadioStation) {
+    func play(_ station: RadioStation, persist: Bool = true) {
         reconnectTask?.cancel()
         reconnectTask = nil
         stableTask?.cancel()
@@ -133,7 +133,9 @@ final class RadioPlayerService: ObservableObject {
         status = .loading
         syncSystemNowPlaying()
 
-        settings.setLastStationID(station.id)
+        if persist {
+            settings.setLastStationID(station.id)
+        }
         beginPlayback(station)
     }
 

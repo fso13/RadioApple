@@ -76,6 +76,12 @@ enum DebugHarness {
             )
             return true
         }
+        if let name = value(after: "-rbtest", in: arguments) {
+            runRadioBrowserTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name)
+            )
+            return true
+        }
         if let name = value(after: "-nativeeqhls", in: arguments) {
             runNativeTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name),
@@ -262,6 +268,32 @@ enum DebugHarness {
                 to: output,
                 atomically: true,
                 encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
+    }
+
+    private static func runRadioBrowserTest(output: URL) {
+        let service = RadioBrowserService()
+        service.search(name: "jazz", genre: "", country: "")
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 6_000_000_000)
+            let firstPage = service.results.count
+            service.loadMore()
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            var lines = [
+                "error=\(service.errorText)",
+                "loading=\(service.isLoading)",
+                "first=\(firstPage)",
+                "count=\(service.results.count)",
+                "hasMore=\(service.hasMore)",
+            ]
+            for item in service.results.prefix(5) {
+                lines.append("\(item.name) | \(item.country ?? "-") | \(item.streamURL ?? "-")")
+            }
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output, atomically: true, encoding: .utf8
             )
             NSApp.terminate(nil)
         }
