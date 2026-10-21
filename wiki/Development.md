@@ -10,7 +10,7 @@ RadioMac/                 исходники приложения
   UI/                     SwiftUI-экраны и дизайн-система
   Window/                 статус-итем, панель, клавиатура, роутинг, debug-харнесс
   Resources/              Info.plist, entitlements, ассеты
-RadioMacTests/            13 логических тестов
+RadioMacTests/            16 логических тестов
 ThirdParty/BASS/          BASS и аддоны + SHA256SUMS
 site/                     статический сайт для GitHub Pages
 wiki/                     исходники этой вики
@@ -35,7 +35,7 @@ APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
 
 Файлы: `01-main.png`, `02-settings.png`, `03-equalizer.png`, `04-editor.png`,
 `05-favorites.png`, `06-dark.png`, `07-reshown.png`, `08-playing.png`,
-`09-settings-dark.png`. Харнесс сам переключает темы, открывает листы и запускает
+`09-settings-dark.png`, `10-stream-info.png`. Харнесс сам переключает темы, открывает листы и запускает
 станцию, затем завершает приложение.
 
 `-playtest <файл>` запускает три потока (MP3, AAC, MP3) и записывает результат

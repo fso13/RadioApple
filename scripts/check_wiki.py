@@ -13,6 +13,7 @@ WIKI = ROOT / "wiki"
 SPECIAL = {"_Sidebar.md", "_Footer.md"}
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
 EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "tel:", "data:", "#")
+FILE_SUFFIXES = (".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg", ".pdf")
 
 
 def page_files() -> dict[str, pathlib.Path]:
@@ -28,6 +29,10 @@ def check_links(pages: dict[str, pathlib.Path]) -> list[str]:
                 continue
             page = target.split("#", 1)[0]
             if not page:
+                continue
+            if page.lower().endswith(FILE_SUFFIXES):
+                if not (WIKI / page).is_file():
+                    problems.append(f"{path.name}: missing local file '{target}'")
                 continue
             page = page.removesuffix(".md")
             if page not in pages:

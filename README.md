@@ -15,6 +15,7 @@
 
 Сайт: [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) ·
 [Вики](https://github.com/fso13/RadioApple/wiki) ·
+[Планы развития](ROADMAP.md) ·
 [Релизы](https://github.com/fso13/RadioApple/releases)
 
 | Главный экран | Тёмная тема |
@@ -58,7 +59,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (13 XCTest-кейсов, host-приложение):
+Тесты (16 XCTest-кейсов, host-приложение):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -92,6 +93,10 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   «Все» и «Избранное». Обложка текущей станции/трека — рядом.
 - **Таблица станций**: номер, название и подпись, жанр, избранное, меню ⋮ и контекстное меню;
   поиск (⌘F) с подчёркиванием, счётчик в шапке, кнопка «Добавить станцию».
+- **Группы и порядок**: необязательная группа в редакторе станции, фильтр групп в навигации
+  и перетаскивание строк в режиме «Все», чтобы изменить порядок.
+- **Диагностика потока**: кодек, битрейт, частота, каналы, буфер и сервер в настройках;
+  кнопка «Скопировать диагностику» для issue.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
   выборке, громкость, эквалайзер, LIVE. Если ничего не выбрано, Play включает первую станцию.
 - **Метаданные трека**: ICY-теги, Icecast `status-json.xsl`, API SomaFM и Radio Paradise,
@@ -174,7 +179,7 @@ RadioMac.xcodeproj            проект Xcode (приложение + тес�
 RadioMac/
   RadioMacApp.swift           @main, запуск NSApplication как accessory-агента
   AppDelegate.swift           статус-итем, окно, меню правки для ⌘C/⌘V
-  Models/                     RadioStation (Codable, ключи как во Flutter), NowPlaying + парсер, EQ-пресеты
+  Models/                     RadioStation (Codable, ключи как во Flutter), NowPlaying + парсер, EQ-пресеты, StreamInfo
   Data/                       встроенный каталог (47 станций) и справка
   Services/
     RadioEngine.swift         обёртка BASS: потоки, ICY, стоп/пауза, эквалайзер
@@ -204,13 +209,14 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                13 логических тестов (парсер, каталог, миграция, хранилище)
+RadioMacTests/                16 логических тестов (парсер, каталог, группы, поток)
 ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
 wiki/                         исходники вики (публикуются scripts/publish_wiki.sh)
 CHANGELOG.md                  история версий (источник заметок к релизу)
+ROADMAP.md                    приоритетный бэклог фич и задач
 SECURITY.md                   политика безопасности и процесс CVE
 Install RadioMac.command      лаунчер: собрать → установить → запустить
 installer/                    фон окна установки и иконка тома
@@ -256,7 +262,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 13 тестов, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 16 тестов, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -352,7 +358,7 @@ wiki-репозиторий только после первой страниц�
 
 ```bash
 APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
-open -n "$APP" --args -snapshot shots     # 01-main … 09-settings-dark
+open -n "$APP" --args -snapshot shots     # 01-main … 10-stream-info
 open -n "$APP" --args -playtest playtest.txt
 
 ls ~/Library/Containers/com.fso13.radioMac/Data/tmp/shots
