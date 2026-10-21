@@ -21,6 +21,8 @@
   Release workflow обновляет cask вместе с релизом.
 - Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи и сессия
   в Keychain, отключение одной кнопкой.
+- Audio engine: AVPlayer для HLS и выбор «Авто / BASS / AVPlayer»; BASS остаётся
+  для MP3/AAC, ICY и эквалайзера.
 
 ### Безопасность
 

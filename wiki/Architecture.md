@@ -1,7 +1,8 @@
 # Архитектура
 
 RadioMac — нативное приложение на **Swift 6** (SwiftUI + AppKit, strict concurrency), без внешних
-пакетных зависимостей. Аудио — BASS 2.4, вендорные библиотеки лежат в `ThirdParty/BASS`.
+пакетных зависимостей. Аудио: BASS 2.4 для MP3/AAC/ICY/EQ, AVPlayer — для HLS;
+вендорные библиотеки лежат в `ThirdParty/BASS`.
 
 ## Слои
 
@@ -37,6 +38,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | Сервис | Ответственность |
 | --- | --- |
 | `RadioEngine` | единственный владелец BASS-хэндлов, потоки, ICY, стоп/пауза, EQ |
+| `NativeAudioEngine` | AVPlayer для HLS: play/pause/stop, громкость, KVO-состояния |
 | `RadioPlayerService` | состояние плеера, громкость, опрос метаданных, Now Playing |
 | `StationLibrary` | каталог, избранное, добавление/удаление, логотипы, персистентность |
 | `EqualizerService` | полосы, пресеты, дебаунс записи |
@@ -65,6 +67,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 - `NowPlayingLookup` и `LogoResolver` помечены `@unchecked Sendable`: их кэши
   используются только из асинхронных задач плеера/библиотеки.
 - BASS вызывается только на последовательной `workQueue` — никаких гонок за хэндлы.
+- AVPlayer живёт на главном акторе; его KVO-состояния приходят через `Task { @MainActor in }`.
+- `RadioPlayerService` выбирает движок по настройке `audio_engine` и URL: `.m3u8` → AVPlayer.
 - Результаты и ICY-метаданные приходят в UI на main-акторе.
 - Метаданные и обложки загружаются асинхронно (`URLSession`, `async/await`),
   с проверкой поколения, чтобы ответ старой станции не перетёр новый трек.
@@ -84,6 +88,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `alarm_settings` | расписание будильника |
 | `diagnostics_enabled` | согласие на локальный журнал |
 | `lastfm_enabled` | согласие на Last.fm |
+| `audio_engine` | automatic / bass / native |
 | `native_migration_v1` | флаг миграции из Flutter |
 
 Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
