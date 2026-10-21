@@ -17,6 +17,7 @@ struct MainView: View {
     @FocusState private var searchFocused: Bool
     @State private var pendingDelete: RadioStation?
     @State private var showRadioBrowser = false
+    @State private var showTransfer = false
 
     @Environment(\.palette) private var palette
 
@@ -48,6 +49,9 @@ struct MainView: View {
         }
         .sheet(isPresented: $showRadioBrowser) {
             RadioBrowserView(library: library, player: player, toasts: toasts)
+        }
+        .sheet(isPresented: $showTransfer) {
+            StationTransferView(library: library, toasts: toasts)
         }
         .sheet(item: $model.editor) { request in
             StationEditorView(existing: request.station, genres: editorGenres) { draft in
@@ -126,6 +130,9 @@ struct MainView: View {
                         .truncationMode(.tail)
                 }
                 Spacer()
+                TextButton(title: "Импорт/экспорт", systemImage: "arrow.up.arrow.down") {
+                    showTransfer = true
+                }
                 TextButton(title: "Radio Browser", systemImage: "globe") {
                     showRadioBrowser = true
                 }

@@ -253,6 +253,89 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertTrue(library.isDuplicate(url: "https://example.com/live", externalID: "external-1"))
     }
 
+    func testStationTransferM3URoundTrip() throws {
+        let source = RadioStation(
+            id: "m3u-1",
+            name: "Jazz FM",
+            url: "https://example.com/jazz",
+            genre: "jazz",
+            group: "Утро",
+            logoURL: "https://example.com/logo.png",
+            isFavorite: true
+        )
+        let data = try StationTransfer.export(stations: [source], format: .m3u)
+        let parsed = try StationTransfer.parse(data: data, format: .m3u)
+        XCTAssertEqual(parsed.count, 1)
+        XCTAssertEqual(parsed[0].name, "Jazz FM")
+        XCTAssertEqual(parsed[0].url, "https://example.com/jazz")
+        XCTAssertEqual(parsed[0].group, "Утро")
+        XCTAssertEqual(parsed[0].logoURL, "https://example.com/logo.png")
+    }
+
+    func testStationTransferOPMLRoundTrip() throws {
+        let source = RadioStation(
+            id: "opml-1",
+            name: "Radio & Jazz",
+            url: "https://example.com/stream",
+            genre: "jazz",
+            comment: "Комментарий",
+            group: "Jazz"
+        )
+        let data = try StationTransfer.export(stations: [source], format: .opml)
+        let parsed = try StationTransfer.parse(data: data, format: .opml)
+        XCTAssertEqual(parsed.count, 1)
+        XCTAssertEqual(parsed[0].name, "Radio & Jazz")
+        XCTAssertEqual(parsed[0].url, "https://example.com/stream")
+        XCTAssertEqual(parsed[0].group, "Jazz")
+        XCTAssertEqual(parsed[0].comment, "Комментарий")
+    }
+
+    func testStationTransferJSONWrapper() throws {
+        let json = """
+        {"stations": [
+          {"id": "json-1", "name": "JSON Radio", "url": "https://example.com/json", "genre": "rock"}
+        ]}
+        """
+        let parsed = try StationTransfer.parse(data: Data(json.utf8), format: .json)
+        XCTAssertEqual(parsed.count, 1)
+        XCTAssertEqual(parsed[0].name, "JSON Radio")
+        XCTAssertEqual(parsed[0].url, "https://example.com/json")
+    }
+
+    func testReplaceImportPreservesBuiltInsAndFavorites() {
+        let defaults = scratchDefaults()
+        let library = StationLibrary(defaults: defaults)
+        library.load()
+        let builtIn = try! XCTUnwrap(library.stations.first(where: { $0.builtIn }))
+        let custom = library.add(
+            name: "Custom",
+            url: "https://example.com/custom",
+            genre: "rock"
+        )
+        library.toggleFavorite(id: custom.id)
+        let imported = RadioStation(
+            id: "custom-imported",
+            name: "Custom Imported",
+            url: "https://example.com/custom",
+            genre: "rock"
+        )
+        let fresh = RadioStation(
+            id: "fresh-imported",
+            name: "Fresh",
+            url: "https://example.com/fresh",
+            genre: "jazz"
+        )
+
+        let result = library.importStations([imported, fresh], mode: .replace)
+        XCTAssertEqual(result.added, 2)
+        XCTAssertNotNil(library.byID(builtIn.id))
+        XCTAssertNil(library.byID(custom.id))
+        let restored = library.stations.first { $0.url == "https://example.com/custom" }
+        XCTAssertEqual(restored?.name, "Custom Imported")
+        XCTAssertEqual(restored?.isFavorite, true)
+        XCTAssertTrue(library.stations.contains { $0.url == "https://example.com/fresh" })
+    }
+
     func testStationLibrarySeedsEditsAndPersists() {
         let defaults = scratchDefaults()
         let library = StationLibrary(defaults: defaults)

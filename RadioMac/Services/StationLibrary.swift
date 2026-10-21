@@ -155,6 +155,66 @@ final class StationLibrary: ObservableObject {
         return components.url?.absoluteString ?? trimmed.lowercased()
     }
 
+    @discardableResult
+    func importStations(
+        _ imported: [RadioStation],
+        mode: StationImportMode
+    ) -> StationImportResult {
+        var result = StationImportResult()
+        let favoriteURLs = Set(
+            stations.filter(\.isFavorite).map { Self.normalizedURL($0.url) }
+        )
+
+        if mode == .replace {
+            stations.removeAll { !$0.builtIn }
+        }
+
+        for source in imported {
+            let url = source.url.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let parsed = URL(string: url),
+                  parsed.scheme?.isEmpty == false,
+                  parsed.host?.isEmpty == false
+            else {
+                result.skipped += 1
+                continue
+            }
+
+            if let index = stations.firstIndex(where: {
+                Self.sameStream($0, url: url, externalID: source.externalID)
+            }) {
+                let shouldFavorite = source.isFavorite
+                    || favoriteURLs.contains(Self.normalizedURL(url))
+                if shouldFavorite, !stations[index].isFavorite {
+                    stations[index].isFavorite = true
+                    result.favoritesUpdated += 1
+                }
+                result.skipped += 1
+                continue
+            }
+
+            let added = add(
+                name: source.name,
+                url: url,
+                genre: source.genre,
+                comment: source.comment,
+                group: source.group,
+                logoURL: source.logoURL,
+                externalID: source.externalID
+            )
+            if source.isFavorite || favoriteURLs.contains(Self.normalizedURL(url)) {
+                if let index = stations.firstIndex(where: { $0.id == added.id }),
+                   !stations[index].isFavorite {
+                    stations[index].isFavorite = true
+                    result.favoritesUpdated += 1
+                }
+            }
+            result.added += 1
+        }
+
+        persist()
+        return result
+    }
+
     func update(_ updated: RadioStation) {
         guard let index = stations.firstIndex(where: { $0.id == updated.id }) else { return }
         var next = updated
