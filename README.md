@@ -162,8 +162,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
-| **Образ** | `dist/RadioMac-1.2.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.2.0.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Образ** | `dist/RadioMac-1.2.1.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-1.2.1.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -197,7 +197,7 @@ scripts/install.sh --skip-build     # установить уже собранн
 ```bash
 scripts/make_installer.sh                 # Release (universal) + dist/*.dmg + dist/*.pkg
 scripts/make_installer.sh --skip-build    # только упаковать
-scripts/make_installer.sh --version 1.2.0
+scripts/make_installer.sh --version 1.2.1
 ```
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
@@ -331,12 +331,12 @@ CodeQL собирает нативный проект через autobuild: Flut
 
 ### Как выпустить релиз
 
-1. Добавьте в `CHANGELOG.md` секцию `## [1.2.0] — 2026-10-21`.
+1. Добавьте в `CHANGELOG.md` секцию `## [1.2.1] — 2026-10-21`.
 2. Поставьте тег и отправьте его:
 
    ```bash
-   git tag v1.2.0
-   git push origin v1.2.0
+   git tag v1.2.1
+   git push origin v1.2.1
    ```
 
 3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,

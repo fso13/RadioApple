@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [1.2.1] — 2026-10-21
+
+### Исправлено
+
+- Sparkle 2 в sandbox: включён `SUEnableInstallerLauncherService` и добавлены
+  mach-lookup исключения `com.fso13.radioMac-spks`/`-spki`. Установщик обновлений
+  снова запускается; первая установка 1.2.1 с 1.1.0 выполняется вручную, потому
+  что в 1.1.0 этих ключей ещё не было.
+
 ## [1.2.0] — 2026-10-21
 
 ### Добавлено
@@ -107,7 +116,8 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.2.1...HEAD
+[1.2.1]: https://github.com/fso13/RadioApple/releases/tag/v1.2.1
 [1.2.0]: https://github.com/fso13/RadioApple/releases/tag/v1.2.0
 [1.1.0]: https://github.com/fso13/RadioApple/releases/tag/v1.1.0
 [1.0.1]: https://github.com/fso13/RadioApple/releases/tag/v1.0.1

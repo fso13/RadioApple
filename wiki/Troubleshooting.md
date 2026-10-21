@@ -55,6 +55,14 @@ xattr -dr com.apple.quarantine /Applications/RadioMac.app
 для HLS, AAC и MP3. Перезапуск станции при смене настроек не нужен.
 Подробнее — в разделе [Эквалайзер](Equalizer).
 
+## Ошибка при обновлении Sparkle
+
+Если Sparkle показывает «An error occurred while launching the installer», проверьте
+`SUEnableInstallerLauncherService` в Info.plist и mach-lookup entitlements
+`<bundle-id>-spks` / `<bundle-id>-spki`. В 1.2.1 это исправлено. Установленные 1.1.0 и 1.2.0 не умеют запускать
+sandbox-installer: первый раз установите 1.2.1 вручную (DMG/PKG/Homebrew),
+дальнейшие обновления пойдут через Sparkle.
+
 ## Поток оборвался
 
 Плеер сам показывает «Переподключение…» и повторяет попытки через 1, 2, 5 и 10 секунд
