@@ -33,9 +33,14 @@ jobs:
 
       - name: Build (manual)
         run: |
+          # CodeQL's Swift extractor currently hangs on the Swift 6 build.
+          # CI and Distribution still build with the project's Swift 6 mode;
+          # this compatibility build keeps the analyzer usable.
           xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \
             -configuration Debug -destination 'platform=macOS' \
             -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            SWIFT_VERSION=5.0 SWIFT_STRICT_CONCURRENCY=complete \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=NO \
             ONLY_ACTIVE_ARCH=YES build
 
       - name: Analyze
