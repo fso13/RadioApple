@@ -232,6 +232,40 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testNativeEqualizerIdentityAndBoost() {
+        let equalizer = NativeEqualizer()
+        equalizer.configure(
+            enabled: true,
+            gains: Array(repeating: 0, count: 10),
+            sampleRate: 44_100,
+            channels: 2
+        )
+        var identity: [Float] = [0.1, -0.2, 0.3, -0.4]
+        let originalIdentity = identity
+        identity.withUnsafeMutableBytes { buffer in
+            guard let base = buffer.baseAddress else { return }
+            equalizer.process(buffer: base, length: buffer.count)
+        }
+        XCTAssertEqual(identity, originalIdentity)
+
+        var gains = [Double](repeating: 0, count: 10)
+        gains[5] = 12
+        equalizer.configure(enabled: true, gains: gains, sampleRate: 44_100, channels: 2)
+
+        var signal: [Float] = []
+        for index in 0..<1_024 {
+            let value = Float(sin(2 * Double.pi * 1_000 * Double(index) / 44_100))
+            signal.append(value)
+            signal.append(value)
+        }
+        let before = signal
+        signal.withUnsafeMutableBytes { buffer in
+            guard let base = buffer.baseAddress else { return }
+            equalizer.process(buffer: base, length: buffer.count)
+        }
+        XCTAssertNotEqual(signal, before)
+    }
+
     func testAudioEnginePreferenceSelection() {
         let hls = URL(string: "https://example.com/live.m3u8")!
         let mp3 = URL(string: "https://example.com/live.mp3")!

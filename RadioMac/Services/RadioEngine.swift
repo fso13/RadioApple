@@ -44,6 +44,18 @@ private func bassEndSyncCallback(
     engine.queue.async { engine.handleEndSync() }
 }
 
+private func bassDSPCallback(
+    _ handle: HDSP,
+    _ channel: DWORD,
+    _ buffer: UnsafeMutableRawPointer?,
+    _ length: DWORD,
+    _ user: UnsafeMutableRawPointer?
+) {
+    guard let buffer, let user else { return }
+    let engine = Unmanaged<RadioEngine>.fromOpaque(user).takeUnretainedValue()
+    engine.processNativeEQ(buffer: buffer, length: Int(length))
+}
+
 /// Internet radio playback on top of the BASS library (un4seen).
 ///
 /// A single serial queue owns every BASS handle; state changes are forwarded to
@@ -56,8 +68,9 @@ final class RadioEngine: @unchecked Sendable {
     var onICYURL: ((String) -> Void)?
     var onPlaybackError: ((String) -> Void)?
 
-    /// Set once during initialisation; BASS_FX is required for the equalizer.
-    var isEqualizerAvailable: Bool { fxAvailable }
+    /// BASS_FX is used when available; otherwise a native biquad DSP handles
+    /// the equalizer, so the UI stays functional on macOS 27 / Apple Silicon.
+    var isEqualizerAvailable: Bool { true }
 
     fileprivate let queue = DispatchQueue(label: "radio_mac.bass")
     private let streamLock = NSLock()
@@ -72,6 +85,8 @@ final class RadioEngine: @unchecked Sendable {
     private var pluginsLoaded = false
     private var fxAvailable = false
     private var eqHandle: HFX = 0
+    private var dspHandle: HDSP = 0
+    private let nativeEQ = NativeEqualizer()
 
     private var eqEnabled = false
     private var gains: [Float] = Array(repeating: 0, count: 10)
@@ -267,24 +282,61 @@ final class RadioEngine: @unchecked Sendable {
 
     private func setupEQOnStream() {
         guard stream != 0 else { return }
-        removeEQFromStream()
 
         eqLock.lock()
         let enabled = eqEnabled
         let currentGains = gains
         eqLock.unlock()
 
-        guard enabled, fxAvailable else { return }
-
-        eqHandle = BASS_ChannelSetFX(stream, DWORD(BASS_FX_BFX_PEAKEQ), 0)
-        guard eqHandle != 0 else {
-            NSLog("RadioMac: EQ FX failed (%d)", BASS_ErrorGetCode())
+        guard enabled else {
+            removeEQFromStream()
             return
         }
 
-        for index in 0..<min(currentGains.count, Self.frequencies.count) {
-            applyEQBand(index: index, gain: currentGains[index])
+        if fxAvailable {
+            removeNativeDSP()
+            if eqHandle == 0 {
+                eqHandle = BASS_ChannelSetFX(stream, DWORD(BASS_FX_BFX_PEAKEQ), 0)
+            }
+            guard eqHandle != 0 else {
+                NSLog("RadioMac: EQ FX failed (%d)", BASS_ErrorGetCode())
+                return
+            }
+            for index in 0..<min(currentGains.count, Self.frequencies.count) {
+                applyEQBand(index: index, gain: currentGains[index])
+            }
+            return
         }
+
+        removeFXFromStream()
+        ensureNativeDSP()
+        guard dspHandle != 0 else { return }
+
+        var info = BASS_CHANNELINFO()
+        let hasInfo = BASS_ChannelGetInfo(stream, &info) != 0
+        nativeEQ.configure(
+            enabled: true,
+            gains: currentGains.map(Double.init),
+            sampleRate: hasInfo ? Int(info.freq) : 44_100,
+            channels: hasInfo ? Int(info.chans) : 2
+        )
+    }
+
+    private func ensureNativeDSP() {
+        guard stream != 0, dspHandle == 0 else { return }
+        dspHandle = BASS_ChannelSetDSP(
+            stream,
+            bassDSPCallback,
+            Unmanaged.passUnretained(self).toOpaque(),
+            0
+        )
+        if dspHandle == 0 {
+            NSLog("RadioMac: native EQ DSP failed (%d)", BASS_ErrorGetCode())
+        }
+    }
+
+    func processNativeEQ(buffer: UnsafeMutableRawPointer, length: Int) {
+        nativeEQ.process(buffer: buffer, length: length)
     }
 
     private func applyEQBand(index: Int, gain: Float) {
@@ -300,10 +352,23 @@ final class RadioEngine: @unchecked Sendable {
     }
 
     private func removeEQFromStream() {
+        removeFXFromStream()
+        removeNativeDSP()
+    }
+
+    private func removeFXFromStream() {
         if stream != 0, eqHandle != 0 {
             BASS_ChannelRemoveFX(stream, eqHandle)
         }
         eqHandle = 0
+    }
+
+    private func removeNativeDSP() {
+        if stream != 0, dspHandle != 0 {
+            BASS_ChannelRemoveDSP(stream, dspHandle)
+        }
+        dspHandle = 0
+        nativeEQ.setEnabled(false)
     }
 
     // MARK: - Transport
@@ -391,6 +456,8 @@ final class RadioEngine: @unchecked Sendable {
     private func freeStream() {
         guard stream != 0 else { return }
         eqHandle = 0
+        dspHandle = 0
+        nativeEQ.setEnabled(false)
         BASS_StreamFree(stream)
         stream = 0
     }

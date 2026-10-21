@@ -27,6 +27,13 @@ enum DebugHarness {
             runPlaytest(output: scratchDirectory(named: "").appendingPathComponent(name), environment: environment)
             return true
         }
+        if let name = value(after: "-eqtest", in: arguments) {
+            runEqualizerTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                environment: environment
+            )
+            return true
+        }
         if let name = value(after: "-nativetest", in: arguments) {
             runNativeTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name),
@@ -111,6 +118,70 @@ enum DebugHarness {
     // MARK: - Playback smoke test
 
     private static var playtestCancellables: Set<AnyCancellable> = []
+
+    private static func runEqualizerTest(output: URL, environment: AppEnvironment) {
+        let player = environment.player
+        let equalizer = environment.equalizer
+        let previousEngine = environment.settings.audioEnginePreference
+        let previousEnabled = equalizer.enabled
+        let previousPreset = equalizer.presetID
+        let previousGains = equalizer.gains
+
+        environment.settings.setAudioEnginePreference(.bass)
+        player.stop()
+        playtestCancellables.removeAll()
+
+        var lines: [String] = []
+        let started = Date()
+        func stamp() -> String {
+            String(format: "%5.1fs", Date().timeIntervalSince(started))
+        }
+
+        player.$status
+            .sink { status in
+                lines.append("[\(stamp())] state=\(status.rawValue) engine=\(player.activeEngineName) eq=\(equalizer.enabled) supported=\(equalizer.isSupported)")
+            }
+            .store(in: &playtestCancellables)
+
+        guard let station = environment.library.byID("rock-nashe")
+            ?? environment.library.stations.first
+        else {
+            try? "no station\n".write(to: output, atomically: true, encoding: .utf8)
+            NSApp.terminate(nil)
+            return
+        }
+
+        lines.append("== eq \(station.name) <\(station.url)>")
+        player.play(station)
+
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            equalizer.setEnabled(true)
+            equalizer.setBand(5, value: 8)
+            equalizer.setBand(0, value: 4)
+            lines.append("[ 2.0s] eq enabled on native DSP")
+
+            try? await Task.sleep(nanoseconds: 8_000_000_000)
+            lines.append("[10.0s] final state=\(player.status.rawValue) eq=\(equalizer.enabled) supported=\(equalizer.isSupported)")
+            player.stop()
+            equalizer.applyPreset(previousPreset)
+            for (index, gain) in previousGains.enumerated() {
+                equalizer.setBand(index, value: gain)
+            }
+            if previousEnabled {
+                equalizer.setEnabled(true)
+            } else {
+                equalizer.setEnabled(false)
+            }
+            environment.settings.setAudioEnginePreference(previousEngine)
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output,
+                atomically: true,
+                encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
+    }
 
     private static func runNativeTest(output: URL, environment: AppEnvironment) {
         let player = environment.player
