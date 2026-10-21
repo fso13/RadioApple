@@ -9,13 +9,20 @@
 [Office Radio app](https://dribbble.com/shots/19641552-Office-Radio-app) Марко Колича
 ([PROTOTYP](https://dribbble.com/prototyp)); вёрстка, иконки и графика — свои.
 
+[![CI](https://github.com/fso13/RadioApple/actions/workflows/ci.yml/badge.svg)](https://github.com/fso13/RadioApple/actions/workflows/ci.yml)
+[![Security](https://github.com/fso13/RadioApple/actions/workflows/security.yml/badge.svg)](https://github.com/fso13/RadioApple/actions/workflows/security.yml)
+[![Pages](https://github.com/fso13/RadioApple/actions/workflows/pages.yml/badge.svg)](https://github.com/fso13/RadioApple/actions/workflows/pages.yml)
+
+Сайт: [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) ·
+Релизы: [github.com/fso13/RadioApple/releases](https://github.com/fso13/RadioApple/releases)
+
 | Главный экран | Тёмная тема |
 | --- | --- |
-| ![Главный экран](docs/screenshots/main-light.jpg) | ![Тёмная тема](docs/screenshots/main-dark.jpg) |
+| ![Главный экран](site/assets/screenshots/main-light.jpg) | ![Тёмная тема](site/assets/screenshots/main-dark.jpg) |
 
 | Настройки | Эквалайзер | Новая станция |
 | --- | --- | --- |
-| ![Настройки](docs/screenshots/settings.jpg) | ![Эквалайзер](docs/screenshots/equalizer.jpg) | ![Редактор станции](docs/screenshots/station-editor.jpg) |
+| ![Настройки](site/assets/screenshots/settings.jpg) | ![Эквалайзер](site/assets/screenshots/equalizer.jpg) | ![Редактор станции](site/assets/screenshots/station-editor.jpg) |
 
 ## Две реализации в репозитории
 
@@ -71,7 +78,7 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 
 | Светлая тема | Тёмная тема |
 | --- | --- |
-| ![Настройки, светлая](docs/screenshots/settings.jpg) | ![Настройки, тёмная](docs/screenshots/settings-dark.jpg) |
+| ![Настройки, светлая](site/assets/screenshots/settings.jpg) | ![Настройки, тёмная](site/assets/screenshots/settings-dark.jpg) |
 
 ## Возможности
 
@@ -112,12 +119,13 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 
 | Что | Где | Как использовать |
 | --- | --- | --- |
+| **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Образ** | `dist/RadioMac-1.0.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
 | **Установщик** | `dist/RadioMac-1.0.0.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
-![Окно установки](docs/screenshots/installer-window.png)
+![Окно установки](site/assets/screenshots/installer-window.png)
 
 Образ открывается окном с перетаскиванием: тёмная иконка приложения слева, папка «Программы»
 справа, подсказка и стрелка на фоне. Иконки расставлены по фону (170 и 470 pt), у тома своя
@@ -137,9 +145,11 @@ scripts/make_installer.sh --version 1.1.0
 ```
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
-окружение в `.build/tools/dmgbuild-venv` при первом запуске. Если Python или сеть недоступны,
-соберётся обычный образ без фона. Фон и иконки лежат в `installer/` и пересобираются
-`scripts/make_brand_assets.py` (нужен Pillow).
+окружение в `.build/tools/dmgbuild-venv` при первом запуске из закреплённого
+`scripts/requirements-installer.txt`. Перед упаковкой проверяются SHA-256 вендорных
+библиотек (`scripts/verify_third_party.sh`, ключ `--skip-verify` отключает проверку).
+Если Python или сеть недоступны, соберётся обычный образ без фона. Фон и иконки лежат
+в `installer/` и пересобираются `scripts/make_brand_assets.py` (`scripts/requirements-dev.txt`).
 
 ### Подпись и нотарификация
 
@@ -194,7 +204,12 @@ RadioMac/
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
 RadioMacTests/                13 логических тестов (парсер, каталог, миграция, хранилище)
-ThirdParty/BASS/              bass.h, bass_fx_shim.h и три dylib от un4seen
+ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
+.github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
+.github/dependabot.yml        обновления GitHub Actions и Python-инструментов
+site/                         статический сайт для GitHub Pages
+CHANGELOG.md                  история версий (источник заметок к релизу)
+SECURITY.md                   политика безопасности и процесс CVE
 Install RadioMac.command      лаунчер: собрать → установить → запустить
 installer/                    фон окна установки и иконка тома
 dist/                         готовые .dmg/.pkg и контрольные суммы
@@ -202,6 +217,11 @@ scripts/install.sh            установка из терминала
 scripts/make_installer.sh     сборка DMG + PKG (подпись, нотарификация)
 scripts/dmg_settings.py       раскладка окна установки для dmgbuild
 scripts/make_brand_assets.py  генерация иконки приложения и фона установщика
+scripts/verify_third_party.sh проверка SHA-256 вендорных библиотек
+scripts/release_notes.py      тело релиза из CHANGELOG
+scripts/check_site.py         проверка ссылок и alt-текстов сайта
+scripts/preview_site.sh       локальный сервер сайта
+scripts/requirements-*.txt    закреплённые версии Python-инструментов
 scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов на диске
 ```
 
@@ -227,6 +247,73 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 - Переключение станций вперёд/назад в текущей выборке и запуск первой станции кнопкой Play.
 - Анимации появления/скрытия окна, затухание списков, уважение Reduce Motion.
 - `-snapshot` / `-playtest` — отладочные утилиты (только Debug), см. ниже.
+
+## CI/CD
+
+| Workflow | Триггер | Что делает |
+| --- | --- | --- |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 13 тестов, xcresult при падении |
+| `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
+| `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
+| `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта |
+| `codeql.yml` | push/PR, расписание | CodeQL для Swift |
+| `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 вендорных библиотек |
+| `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
+
+### Как выпустить релиз
+
+1. Добавьте в `CHANGELOG.md` секцию `## [1.0.1] — 2026-11-01`.
+2. Поставьте тег и отправьте его:
+
+   ```bash
+   git tag v1.0.1
+   git push origin v1.0.1
+   ```
+
+3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,
+   сгенерирует SBOM, возьмёт заметки из changelog и создаст GitHub Release со ссылками
+   на скачивание и контрольными суммами. Ручной запуск: *Actions → Release → Run workflow*,
+   версия без префикса `v`.
+
+Если секции для версии нет, GitHub сгенерирует заметки из коммитов. Артефакты
+`dist/RadioMac-<версия>.dmg`, `.pkg`, `SHA256SUMS.txt` и `.spdx.json` прикладываются к релизу.
+
+### Подпись и нотарификация в CI
+
+Без секретов релиз собирается ad-hoc, и это явно написано в заметках. Для Developer ID
+добавьте в *Settings → Secrets and variables → Actions*:
+
+| Секрет | Назначение |
+| --- | --- |
+| `BUILD_CERTIFICATE_BASE64` | `.p12` с сертификатами Developer ID Application/Installer в base64 |
+| `P12_PASSWORD` | пароль `.p12` |
+| `KEYCHAIN_PASSWORD` | пароль временной keychain |
+| `DEVELOPER_ID_APPLICATION` | `Developer ID Application: Имя (TEAMID)` |
+| `DEVELOPER_ID_INSTALLER` | `Developer ID Installer: Имя (TEAMID)` |
+| `APPLE_ID`, `APPLE_TEAM_ID`, `APPLE_APP_PASSWORD` | нотарификация через `notarytool` |
+
+Сертификат импортируется во временную keychain только на время job; подпись и нотарификация
+включаются автоматически, если секреты заданы. Нотарификация PKG выполняется только при
+наличии `DEVELOPER_ID_INSTALLER`.
+
+### Сайт и GitHub Pages
+
+Сайт лежит в `site/` (светлая/тёмная тема, скриншоты, клавиши, установка) и публикуется
+workflow `pages.yml`. Один раз включите *Settings → Pages → Build and deployment →
+Source: **GitHub Actions***. Кнопка скачивания подтягивает последний релиз через GitHub API,
+поэтому сайт не нужно пересобирать после каждого релиза.
+
+```bash
+scripts/preview_site.sh            # http://127.0.0.1:8000
+python3 scripts/check_site.py      # ссылки, alt-тексты, обязательные блоки
+```
+
+### Безопасность
+
+Политика и процесс описаны в [SECURITY.md](SECURITY.md). Вкратце: CodeQL и SwiftLint
+в CI, OSV-Scanner и Dependency Review для зависимостей, SBOM приложения + Grype для
+известных CVE, Dependabot для actions и Python-инструментов, SHA-256 манифест для
+вендорных BASS-библиотек.
 
 ## Ограничения
 

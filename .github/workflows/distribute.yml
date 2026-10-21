@@ -1,0 +1,48 @@
+name: Distribution build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: distribution-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  package:
+    name: DMG + PKG
+    runs-on: macos-15
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Verify vendored binaries
+        run: scripts/verify_third_party.sh
+
+      - name: Build (Release, universal)
+        run: |
+          xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \
+            -configuration Release -derivedDataPath .build/DerivedData \
+            ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO build
+
+      - name: Build DMG and PKG
+        run: scripts/make_installer.sh --skip-build
+
+      - name: Checksums
+        run: cat dist/SHA256SUMS.txt
+
+      - name: Upload distribution
+        uses: actions/upload-artifact@v7
+        with:
+          name: RadioMac-distribution
+          path: dist/
+          retention-days: 14
+          if-no-files-found: error

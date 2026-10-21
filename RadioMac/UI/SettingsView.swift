@@ -33,21 +33,24 @@ struct SettingsView: View {
     var body: some View {
         PanelSurface {
             VStack(spacing: 0) {
-                PanelHeader(onBack: {
-                    if showHelp {
-                        showHelp = false
-                        expandedHelpID = nil
-                    } else {
-                        onBack()
+                PanelHeader(
+                    onBack: {
+                        if showHelp {
+                            showHelp = false
+                            expandedHelpID = nil
+                        } else {
+                            onBack()
+                        }
+                    },
+                    trailing: {
+                        CircleIconButton(
+                            systemName: "xmark",
+                            size: 11,
+                            help: "Скрыть окно",
+                            action: onClose
+                        )
                     }
-                }) {
-                    CircleIconButton(
-                        systemName: "xmark",
-                        size: 11,
-                        help: "Скрыть окно",
-                        action: onClose
-                    )
-                }
+                )
 
                 if showHelp {
                     HelpView(expandedID: $expandedHelpID)

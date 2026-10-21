@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RadioMac — интернет-радио в меню-баре macOS</title>
+  <meta name="description" content="RadioMac — нативный плеер интернет-радио для меню-бара macOS. 47 станций, метаданные трека, обложки, эквалайзер и Now Playing. Без иконки в Dock.">
+  <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0d0d0e" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icon.png">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="canonical" href="https://fso13.github.io/RadioApple/">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://fso13.github.io/RadioApple/">
+  <meta property="og:title" content="RadioMac — интернет-радио в меню-баре">
+  <meta property="og:description" content="Нативный плеер интернет-радио для macOS: 47 станций, метаданные, эквалайзер, Now Playing. Скачать DMG.">
+  <meta property="og:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main">Перейти к содержимому</a>
+
+  <header class="header">
+    <div class="header__inner">
+      <a class="brand" href="#top" aria-label="RadioMac — на главную">RadioMac<sup>®</sup></a>
+      <nav class="nav" aria-label="Основная навигация">
+        <a href="#features">Возможности</a>
+        <a href="#screens">Скриншоты</a>
+        <a href="#shortcuts">Клавиши</a>
+        <a href="#install">Установка</a>
+        <a class="nav__gh" href="https://github.com/fso13/RadioApple" data-repo-link>GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero__copy">
+        <p class="eyebrow">macOS · меню-бар</p>
+        <h1 id="hero-title">Радио, которое живёт в&nbsp;меню-баре.</h1>
+        <p class="lede">47 станций, живые метаданные, эквалайзер и Now Playing в Control Center. Без иконки в Dock и без лишнего шума.</p>
+        <div class="hero__actions">
+          <a class="btn btn--primary" data-download href="https://github.com/fso13/RadioApple/releases/latest">
+            Скачать <span data-version>последнюю версию</span>
+          </a>
+          <a class="btn btn--ghost" data-releases-link href="https://github.com/fso13/RadioApple/releases">Все релизы</a>
+        </div>
+        <ul class="meta">
+          <li>macOS 14+</li>
+          <li>Universal · Apple Silicon и Intel</li>
+          <li><span data-size>≈ 3 МБ</span></li>
+        </ul>
+        <p class="hero__date" data-release-date></p>
+        <p class="hero__note">Сборка для macOS 14 и новее. Исходный код и все релизы — на GitHub.</p>
+      </div>
+      <figure class="hero__art">
+        <img src="assets/screenshots/main-light.jpg" width="1560" height="1320" fetchpriority="high"
+             alt="Окно RadioMac: слева крупная навигация по жанрам и обложка, справа таблица станций, внизу транспорт">
+        <figcaption>Светлая тема · воспроизведение</figcaption>
+      </figure>
+    </section>
+
+    <section class="section" id="features" aria-labelledby="features-title">
+      <div class="section__head">
+        <p class="eyebrow">Возможности</p>
+        <h2 id="features-title">Всё для ежедневного радио</h2>
+      </div>
+      <div class="grid grid--features">
+        <article class="feature">
+          <p class="feature__index">01</p>
+          <h3>Навигация по жанрам</h3>
+          <p>Крупный список жанров и избранного вместо мелких чипов. Активный жанр отмечается эквалайзер-индикатором — как в референсе.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">02</p>
+          <h3>Таблица станций</h3>
+          <p>Номер, название, подпись, жанр, избранное и меню действий. Поиск по всем полям, счётчик станций и сортировка по каталогу.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">03</p>
+          <h3>Живые метаданные</h3>
+          <p>ICY-теги, Icecast, SomaFM и Radio Paradise. Обложка подтягивается из iTunes, а трек уходит в Control Center.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">04</p>
+          <h3>Транспорт и громкость</h3>
+          <p>Пауза, стоп, предыдущая и следующая станция, громкость и LIVE. Если ничего не выбрано, Play включает первую станцию.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">05</p>
+          <h3>Эквалайзер</h3>
+          <p>10 полос, пресеты и своя кривая. Настройка применяется ко всем станциям и сохраняется между запусками.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">06</p>
+          <h3>Темы и приватность</h3>
+          <p>Светлая, тёмная или системная тема. Приложение работает в песочнице, не собирает телеметрию и не требует аккаунта.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="screens" aria-labelledby="screens-title">
+      <div class="section__head">
+        <p class="eyebrow">Скриншоты</p>
+        <h2 id="screens-title">Светлая и тёмная</h2>
+      </div>
+      <div class="grid grid--shots">
+        <figure class="shot">
+          <img src="assets/screenshots/main-dark.jpg" width="1560" height="1320" loading="lazy"
+               alt="Главное окно RadioMac в тёмной теме с таблицей станций">
+          <figcaption>Тёмная тема — инверсия той же системы</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/settings.jpg" width="1560" height="1320" loading="lazy"
+               alt="Настройки RadioMac: оформление, поведение, звук, библиотека">
+          <figcaption>Настройки</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/equalizer.jpg" width="1120" height="1200" loading="lazy"
+               alt="Эквалайзер RadioMac: десять вертикальных полос и пресеты">
+          <figcaption>Эквалайзер</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/station-editor.jpg" width="1040" height="1240" loading="lazy"
+               alt="Форма добавления станции: название, ссылка на поток, жанр, комментарий, логотип">
+          <figcaption>Своя станция</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section" id="shortcuts" aria-labelledby="shortcuts-title">
+      <div class="section__head">
+        <p class="eyebrow">Клавиатура</p>
+        <h2 id="shortcuts-title">Горячие клавиши</h2>
+      </div>
+      <table class="keys">
+        <caption class="visually-hidden">Клавиатурные сокращения RadioMac</caption>
+        <thead>
+          <tr><th scope="col">Клавиши</th><th scope="col">Действие</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><kbd>Esc</kbd></th><td>убрать фокус из поиска, иначе скрыть окно</td></tr>
+          <tr><th scope="row"><kbd>Space</kbd></th><td>пауза / продолжить</td></tr>
+          <tr><th scope="row"><kbd>↑</kbd> <kbd>↓</kbd></th><td>двигать выделение</td></tr>
+          <tr><th scope="row"><kbd>Return</kbd></th><td>играть выделенную станцию</td></tr>
+          <tr><th scope="row"><kbd>1</kbd>…<kbd>9</kbd></th><td>сразу включить станцию из списка</td></tr>
+          <tr><th scope="row"><kbd>⌘F</kbd></th><td>фокус в поиск</td></tr>
+          <tr><th scope="row"><kbd>⌘N</kbd></th><td>новая станция</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section" id="install" aria-labelledby="install-title">
+      <div class="section__head">
+        <p class="eyebrow">Установка</p>
+        <h2 id="install-title">Три шага</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Скачайте образ</h3>
+          <p><a data-download href="https://github.com/fso13/RadioApple/releases/latest">RadioMac <span data-version-plain>1.0.0</span>.dmg</a> — универсальная сборка для Apple Silicon и Intel.</p>
+        </li>
+        <li>
+          <h3>Перетащите в «Программы»</h3>
+          <p>Откройте DMG и перетащите RadioMac в папку Applications. Или установите через <a data-download-pkg href="https://github.com/fso13/RadioApple/releases/latest">PKG</a>.</p>
+        </li>
+        <li>
+          <h3>Запустите</h3>
+          <p>Иконка появится в меню-баре, окно откроется по клику. Приложение не показывается в Dock и продолжает играть после закрытия окна.</p>
+        </li>
+      </ol>
+      <p class="note">
+        Требуется macOS 14 или новее. Если Gatekeeper блокирует сборку без нотарификации, выполните
+        <code>xattr -dr com.apple.quarantine /Applications/RadioMac.app</code>.
+        Проверить файлы можно по <a data-checksums href="https://github.com/fso13/RadioApple/releases/latest">контрольным суммам</a>,
+        состав сборки — по <a data-sbom href="https://github.com/fso13/RadioApple/releases/latest">SBOM</a>.
+      </p>
+      <figure class="installer">
+        <img src="assets/screenshots/installer-window.png" width="1280" height="800" loading="lazy"
+             alt="Окно установки: иконка RadioMac слева, папка Applications справа, стрелка между ними">
+        <figcaption>Окно установки с перетаскиванием</figcaption>
+      </figure>
+    </section>
+
+    <section class="section" id="security" aria-labelledby="security-title">
+      <div class="section__head">
+        <p class="eyebrow">Безопасность</p>
+        <h2 id="security-title">Проверяем каждую сборку</h2>
+      </div>
+      <div class="security">
+        <p>Приложение работает локально, в песочнице macOS, без аккаунтов и телеметрии. Сеть используется только для потоков станций, метаданных и логотипов.</p>
+        <ul class="checks">
+          <li>CodeQL для Swift и SwiftLint в CI</li>
+          <li>OSV-Scanner и Dependency Review</li>
+          <li>SBOM приложения и скан Grype</li>
+          <li>Dependabot для actions и Python-инструментов</li>
+          <li>SHA-256 вендорных аудиобиблиотек</li>
+          <li>Подпись Developer ID и нотарификация — когда настроены секреты</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__inner">
+      <p class="footer__brand">RadioMac<sup>®</sup> <span class="footer__year">© <span data-year>2026</span></span></p>
+      <nav class="footer__links" aria-label="Ссылки">
+        <a href="https://github.com/fso13/RadioApple" data-repo-link>GitHub</a>
+        <a href="https://github.com/fso13/RadioApple/releases" data-releases-link>Релизы</a>
+        <a href="https://github.com/fso13/RadioApple/blob/main/CHANGELOG.md">Changelog</a>
+        <a href="https://github.com/fso13/RadioApple/security">Безопасность</a>
+      </nav>
+      <p class="footer__credit">
+        Дизайн вдохновлён
+        <a href="https://dribbble.com/shots/19641552-Office-Radio-app">Office Radio app</a>
+        (Marko Kolić / PROTOTYP). Реализация, графика и иконки — собственные.
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

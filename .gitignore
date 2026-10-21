@@ -53,3 +53,9 @@ DerivedData/
 xcuserdata/
 *.xcuserstate
 *.xcworkspace/xcuserdata/
+
+# CI artefacts
+_site/
+release-notes.md
+sbom.spdx.json
+grype.sarif

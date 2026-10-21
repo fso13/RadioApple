@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://fso13.github.io/RadioApple/sitemap.xml

@@ -1,0 +1,65 @@
+name: Static analysis
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  swiftlint:
+    name: SwiftLint
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Lint Swift
+        run: |
+          if ! command -v swiftlint >/dev/null 2>&1; then
+            brew install swiftlint
+          fi
+          swiftlint version
+          # Warnings are annotations; only error-severity rules fail the job.
+          swiftlint lint --no-cache --reporter github-actions-logging
+
+  workflows:
+    name: Workflows & scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: actionlint
+        uses: raven-actions/actionlint@v2
+
+      - name: ShellCheck
+        run: shellcheck scripts/*.sh "Install RadioMac.command"
+
+  project:
+    name: Xcode project sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Regenerate and compare
+        run: |
+          python3 scripts/generate_xcodeproj.py
+          git diff --exit-code -- RadioMac.xcodeproj
+
+  site:
+    name: Static site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate site
+        run: python3 scripts/check_site.py
+
+      - name: Check JavaScript
+        run: node --check site/app.js

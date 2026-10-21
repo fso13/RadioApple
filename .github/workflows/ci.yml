@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build & test
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Verify vendored binaries
+        run: scripts/verify_third_party.sh
+
+      - name: Build (Debug)
+        run: |
+          xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \
+            -configuration Debug -derivedDataPath .build/DerivedData \
+            build
+
+      - name: Test
+        run: |
+          xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
+            -configuration Debug -derivedDataPath .build/DerivedData \
+            -destination 'platform=macOS' \
+            -resultBundlePath .build/TestResults.xcresult
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: .build/TestResults.xcresult
+          retention-days: 7
+          if-no-files-found: ignore

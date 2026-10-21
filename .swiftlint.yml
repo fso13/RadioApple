@@ -1,0 +1,59 @@
+# SwiftLint configuration for RadioMac.
+# Warnings are reported in CI; only SwiftLint "error" rules fail the build.
+included:
+  - RadioMac
+  - RadioMacTests
+
+excluded:
+  - .build
+  - build
+  - dist
+  - ThirdParty
+  - site
+
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 700
+  error: 1200
+
+type_body_length:
+  warning: 500
+  error: 900
+
+function_body_length:
+  warning: 120
+  error: 200
+
+cyclomatic_complexity:
+  warning: 20
+  error: 35
+
+identifier_name:
+  min_length: 1
+  max_length: 60
+
+# `try!` is used only for constant regular expressions; keep it visible as a warning.
+force_try: warning
+force_cast: warning
+
+disabled_rules:
+  - trailing_comma
+  - todo
+  - nesting
+  - non_optional_string_data_conversion
+
+opt_in_rules:
+  - empty_count
+  - explicit_init
+  - first_where
+  - last_where
+  - modifier_order
+  - redundant_nil_coalescing
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+  - yoda_condition
