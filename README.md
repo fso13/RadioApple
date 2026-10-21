@@ -56,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (34 XCTest-кейсов, host-приложение):
+Тесты (34 unit + 2 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -119,6 +119,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   обновлений из приложения; ключ подписи хранится в GitHub Secrets.
 - **Мини-плеер**: левый клик по иконке в меню-баре открывает поповер с обложкой,
   названием, play/pause, громкостью и быстрым выбором станции — без основного окна.
+- **UI-тесты**: XCUITest главного сценария и настроек; светлые/тёмные снапшоты
+  прикладываются к результату теста и проверяются на различие.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -255,7 +257,8 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                34 логических теста (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
+RadioMacTests/                34 логических теста
+RadioMacUITests/              2 XCUITest: сценарий и свет/тьма (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
@@ -305,7 +308,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 34 теста, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 34 unit + 2 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |

@@ -11,6 +11,7 @@ RadioMac/                 исходники приложения
   Window/                 статус-итем, панель, клавиатура, роутинг, debug-харнесс
   Resources/              Info.plist, entitlements, ассеты
 RadioMacTests/            34 логических теста
+RadioMacUITests/          2 XCUITest
 site/                     статический сайт для GitHub Pages
 wiki/                     исходники этой вики
 scripts/                  сборка, установка, генерация проекта, проверки
