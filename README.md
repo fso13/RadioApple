@@ -26,6 +26,10 @@
 | --- | --- | --- |
 | ![Настройки](site/assets/screenshots/settings.jpg) | ![Эквалайзер](site/assets/screenshots/equalizer.jpg) | ![Редактор станции](site/assets/screenshots/station-editor.jpg) |
 
+| Radio Browser | Импорт и экспорт | Мини-плеер |
+| --- | --- | --- |
+| ![Radio Browser](site/assets/screenshots/radio-browser.jpg) | ![Импорт и экспорт](site/assets/screenshots/transfer.jpg) | ![Мини-плеер](site/assets/screenshots/mini-player.jpg) |
+
 ## Flutter-версия
 
 Flutter-приложение больше не лежит в `main`: оно сохранено в ветке

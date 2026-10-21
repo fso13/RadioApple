@@ -35,7 +35,8 @@ APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
 
 Файлы: `01-main.png`, `02-settings.png`, `03-equalizer.png`, `04-editor.png`,
 `05-favorites.png`, `06-dark.png`, `07-reshown.png`, `08-playing.png`,
-`09-settings-dark.png`. Харнесс сам переключает темы, открывает листы и запускает
+`09-settings-dark.png`, `10-radio-browser.png`, `11-transfer.png`,
+`12-mini-player.png`. Харнесс сам переключает темы, открывает листы и запускает
 станцию, затем завершает приложение.
 
 `-playtest <файл>` запускает три потока (MP3, AAC, MP3) и записывает результат

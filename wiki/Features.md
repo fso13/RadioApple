@@ -52,6 +52,8 @@ Developer team не требуются. Виджет обновляется че
 и сервер. Значения обновляются кнопкой «Обновить», а «Скопировать диагностику»
 кладёт станцию, URL, состояние, параметры потока, EQ и ошибку в буфер обмена.
 
+![Мини-плеер](https://raw.githubusercontent.com/fso13/RadioApple/main/site/assets/screenshots/mini-player.jpg)
+
 ## Мини-плеер в меню-баре
 
 Левый клик по иконке открывает поповер: обложка, станция и трек, play/pause,
@@ -73,11 +75,15 @@ Sparkle 2 проверяет appcast из latest release (`appcast.xml`) и пр
 ограничивается безопасным диапазоном, а автозапуск срабатывает при старте RadioMac,
 если не включено восстановление последней станции.
 
+![Импорт и экспорт](https://raw.githubusercontent.com/fso13/RadioApple/main/site/assets/screenshots/transfer.jpg)
+
 ## Импорт и экспорт
 
 Меню **Импорт/экспорт** и drag-and-drop понимают JSON, M3U и OPML. Режим
 «Добавить» пропускает дубликаты, «Заменить» заменяет пользовательские станции,
 сохраняя избранное по URL и не трогая встроенный каталог.
+
+![Radio Browser](https://raw.githubusercontent.com/fso13/RadioApple/main/site/assets/screenshots/radio-browser.jpg)
 
 ## Radio Browser
 

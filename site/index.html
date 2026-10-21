@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>RadioMac — интернет-радио в меню-баре macOS</title>
-  <meta name="description" content="RadioMac — нативный плеер интернет-радио для меню-бара macOS. 47 станций, метаданные трека, обложки, эквалайзер и Now Playing. Без иконки в Dock.">
+  <meta name="description" content="RadioMac — нативный плеер интернет-радио для меню-бара macOS. 47 станций и Radio Browser, метаданные, эквалайзер, мини-плеер, виджет, Shortcuts и Control Center. Без иконки в Dock.">
   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d0d0e" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="assets/favicon.png" type="image/png">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fso13.github.io/RadioApple/">
   <meta property="og:title" content="RadioMac — интернет-радио в меню-баре">
-  <meta property="og:description" content="Нативный плеер интернет-радио для macOS: 47 станций, метаданные, эквалайзер, Now Playing. Скачать DMG.">
+  <meta property="og:description" content="Нативный плеер интернет-радио для macOS: 47 станций и Radio Browser, метаданные, эквалайзер, мини-плеер и виджет. Скачать DMG.">
   <meta property="og:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
@@ -31,6 +31,7 @@
         <a href="#features">Возможности</a>
         <a href="#screens">Скриншоты</a>
         <a href="#shortcuts">Клавиши</a>
+        <a href="#automation">Автоматизация</a>
         <a href="#install">Установка</a>
         <a class="nav__gh" href="https://github.com/fso13/RadioApple" data-repo-link>GitHub <span aria-hidden="true">↗</span></a>
       </nav>
@@ -42,7 +43,7 @@
       <div class="hero__copy">
         <p class="eyebrow">macOS · меню-бар</p>
         <h1 id="hero-title">Радио, которое живёт в&nbsp;меню-баре.</h1>
-        <p class="lede">47 станций, живые метаданные, эквалайзер и Now Playing в Control Center. Без иконки в Dock и без лишнего шума.</p>
+        <p class="lede">47 станций и Radio Browser, живые метаданные, эквалайзер, мини-плеер, виджет и Control Center. Без иконки в Dock и без лишнего шума.</p>
         <div class="hero__actions">
           <a class="btn btn--primary" data-download href="https://github.com/fso13/RadioApple/releases/latest">
             Скачать <span data-version>последнюю версию</span>
@@ -60,7 +61,7 @@
       <figure class="hero__art">
         <img src="assets/screenshots/main-light.jpg" width="1560" height="1320" fetchpriority="high"
              alt="Окно RadioMac: слева крупная навигация по жанрам и обложка, справа таблица станций, внизу транспорт">
-        <figcaption>Светлая тема · воспроизведение</figcaption>
+        <figcaption>Светлая тема · библиотека и транспорт</figcaption>
       </figure>
     </section>
 
@@ -72,33 +73,48 @@
       <div class="grid grid--features">
         <article class="feature">
           <p class="feature__index">01</p>
-          <h3>Навигация по жанрам</h3>
-          <p>Крупный список жанров и избранного вместо мелких чипов. Активный жанр отмечается эквалайзер-индикатором — как в референсе.</p>
+          <h3>Навигация и библиотека</h3>
+          <p>Крупные жанры, «Избранное» и группы в левой колонке. Порядок станций меняется перетаскиванием, состояние сохраняется между запусками.</p>
         </article>
         <article class="feature">
           <p class="feature__index">02</p>
-          <h3>Таблица станций</h3>
-          <p>Номер, название, подпись, жанр, избранное и меню действий. Поиск по всем полям, счётчик станций и сортировка по каталогу.</p>
+          <h3>Radio Browser</h3>
+          <p>Поиск тысяч станций по названию, жанру и стране, превью прямо в каталоге и добавление без дублей по URL или <code>stationuuid</code>.</p>
         </article>
         <article class="feature">
           <p class="feature__index">03</p>
           <h3>Живые метаданные</h3>
-          <p>ICY-теги, Icecast, SomaFM и Radio Paradise. Обложка подтягивается из iTunes, а трек уходит в Control Center.</p>
+          <p>HLS timed metadata, ICY, Icecast, SomaFM и Radio Paradise. Обложка подтягивается из iTunes, а трек уходит в системный Now Playing.</p>
         </article>
         <article class="feature">
           <p class="feature__index">04</p>
-          <h3>Транспорт и громкость</h3>
-          <p>Пауза, стоп, предыдущая и следующая станция, громкость и LIVE. Если ничего не выбрано, Play включает первую станцию.</p>
+          <h3>Мини-плеер в меню-баре</h3>
+          <p>Левый клик по иконке открывает поповер с обложкой, треком, play/pause, громкостью и быстрым выбором станции — без основного окна.</p>
         </article>
         <article class="feature">
           <p class="feature__index">05</p>
           <h3>Эквалайзер</h3>
-          <p>10 полос, пресеты и своя кривая. Настройка применяется ко всем станциям и сохраняется между запусками.</p>
+          <p>10 полос, пресеты и своя кривая. Нативный Biquad DSP в audio tap AVPlayer работает для HLS, AAC и MP3, не перезапуская поток.</p>
         </article>
         <article class="feature">
           <p class="feature__index">06</p>
-          <h3>Темы и приватность</h3>
-          <p>Светлая, тёмная или системная тема. Приложение работает в песочнице, не собирает телеметрию и не требует аккаунта.</p>
+          <h3>Импорт и экспорт</h3>
+          <p>JSON, M3U и OPML, drag-and-drop, режимы «Добавить» и «Заменить». Избранное сохраняется, встроенный каталог не затирается.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">07</p>
+          <h3>Виджет и Control Center</h3>
+          <p>Виджет macOS 14+ с текущей станцией и play/pause. На macOS 26+ — элемент Control Center. Общее состояние хранится локально без App Group.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">08</p>
+          <h3>Автоматизация</h3>
+          <p>«Играть станцию», «Пауза» и «Открыть RadioMac» в Shortcuts; URL <code>radiomac://play/&lt;id&gt;</code>, <code>radiomac://pause</code>, <code>radiomac://toggle</code>.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">09</p>
+          <h3>Обновления, темы и приватность</h3>
+          <p>Sparkle 2 с EdDSA-подписанным appcast. Светлая, тёмная или системная тема. Песочница, без аккаунтов и телеметрии.</p>
         </article>
       </div>
     </section>
@@ -111,12 +127,17 @@
       <div class="grid grid--shots">
         <figure class="shot">
           <img src="assets/screenshots/main-dark.jpg" width="1560" height="1320" loading="lazy"
-               alt="Главное окно RadioMac в тёмной теме с таблицей станций">
-          <figcaption>Тёмная тема — инверсия той же системы</figcaption>
+               alt="Главное окно RadioMac в тёмной теме: жанры, станции, импорт и Radio Browser">
+          <figcaption>Тёмная тема — та же система в инверсии</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/main-playing.jpg" width="1560" height="1320" loading="lazy"
+               alt="Главное окно RadioMac во время эфира: станция, транспорт и LIVE">
+          <figcaption>Эфир и транспорт</figcaption>
         </figure>
         <figure class="shot">
           <img src="assets/screenshots/settings.jpg" width="1560" height="1320" loading="lazy"
-               alt="Настройки RadioMac: оформление, поведение, звук, библиотека">
+               alt="Настройки RadioMac: оформление, поведение, будильник, звук, обновления и поток">
           <figcaption>Настройки</figcaption>
         </figure>
         <figure class="shot">
@@ -125,9 +146,24 @@
           <figcaption>Эквалайзер</figcaption>
         </figure>
         <figure class="shot">
-          <img src="assets/screenshots/station-editor.jpg" width="1040" height="1240" loading="lazy"
-               alt="Форма добавления станции: название, ссылка на поток, жанр, комментарий, логотип">
-          <figcaption>Своя станция</figcaption>
+          <img src="assets/screenshots/station-editor.jpg" width="1080" height="1440" loading="lazy"
+               alt="Редактор станции: ссылка, жанр, группа, логотип, смещение громкости, EQ-пресет и автозапуск">
+          <figcaption>Станция и её настройки</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/radio-browser.jpg" width="1520" height="1220" loading="lazy"
+               alt="Окно Radio Browser: поиск по названию, жанру и стране">
+          <figcaption>Radio Browser</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/transfer.jpg" width="1320" height="940" loading="lazy"
+               alt="Импорт и экспорт станций: JSON, M3U, OPML, добавить или заменить">
+          <figcaption>Импорт и экспорт</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/screenshots/mini-player.jpg" width="640" height="860" loading="lazy"
+               alt="Мини-плеер в меню-баре: обложка, станция, play/pause, громкость и быстрый выбор">
+          <figcaption>Мини-плеер в меню-баре</figcaption>
         </figure>
       </div>
     </section>
@@ -154,6 +190,30 @@
       </table>
     </section>
 
+    <section class="section" id="automation" aria-labelledby="automation-title">
+      <div class="section__head">
+        <p class="eyebrow">Автоматизация</p>
+        <h2 id="automation-title">Радио по команде</h2>
+      </div>
+      <div class="grid grid--features">
+        <article class="feature">
+          <p class="feature__index">Shortcuts</p>
+          <h3>Играть станцию</h3>
+          <p>Команда выбирает станцию из библиотеки и запускает эфир; отдельные команды — «Пауза» и «Открыть RadioMac».</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">URL</p>
+          <h3>Ссылки radiomac://</h3>
+          <p><code>radiomac://play/&lt;id&gt;</code> включает станцию, <code>radiomac://pause</code> ставит паузу, <code>radiomac://toggle</code> переключает play/pause.</p>
+        </article>
+        <article class="feature">
+          <p class="feature__index">Sparkle</p>
+          <h3>Обновления без DMG</h3>
+          <p>Appcast в latest release подписан Ed25519. «Настройки → Обновления» и меню-бар проверяют и устанавливают новую версию.</p>
+        </article>
+      </div>
+    </section>
+
     <section class="section" id="install" aria-labelledby="install-title">
       <div class="section__head">
         <p class="eyebrow">Установка</p>
@@ -170,7 +230,7 @@
         </li>
         <li>
           <h3>Запустите</h3>
-          <p>Иконка появится в меню-баре, окно откроется по клику. Приложение не показывается в Dock и продолжает играть после закрытия окна.</p>
+          <p>Иконка появится в меню-баре, окно откроется по клику. Приложение не показывается в Dock, продолжает играть после закрытия окна и обновляется через Sparkle.</p>
         </li>
       </ol>
       <p class="note">
@@ -202,7 +262,8 @@
           <li>OSV-Scanner и Dependency Review</li>
           <li>SBOM приложения и скан Grype</li>
           <li>Dependabot для actions и Python-инструментов</li>
-          <li>SHA-256 вендорных аудиобиблиотек</li>
+          <li>Sparkle 2 appcast с EdDSA-подписью</li>
+          <li>Виджет без App Group: общий файл только со станцией и статусом</li>
           <li>Подпись Developer ID и нотарификация — когда настроены секреты</li>
         </ul>
       </div>

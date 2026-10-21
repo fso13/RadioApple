@@ -26,9 +26,13 @@
 
 ## Что умеет
 
-- **47 станций** в каталоге, свои станции, избранное и поиск.
-- **Метаданные трека**: ICY, Icecast, SomaFM, Radio Paradise; обложки из iTunes;
-  Now Playing в Control Center.
+- **47 станций** в каталоге + **Radio Browser** с поиском по названию, жанру и стране,
+  свои станции, избранное и превью.
+- **Импорт/экспорт** JSON, M3U и OPML с drag-and-drop и сохранением избранного.
+- **Метаданные трека**: HLS timed metadata, ICY, Icecast, SomaFM, Radio Paradise;
+  обложки из iTunes; Now Playing в Control Center.
+- **Мини-плеер** в меню-баре, **виджет** macOS 14+ и Control Center macOS 26+.
+- **Shortcuts/App Intents** и URL `radiomac://`; Sparkle 2 с EdDSA-обновлениями.
 - **10-полосный эквалайзер** с пресетами и своей кривой.
 - **Группы станций** и собственный порядок перетаскиванием.
 - **Будильник-радио** с расписанием по дням недели и плавным нарастанием.
@@ -63,7 +67,8 @@
 ## Для разработчиков
 
 - Исходники: [github.com/fso13/RadioApple](https://github.com/fso13/RadioApple).
-- Flutter-версия сохранена в `lib/` и `macos/` для сравнения; актуальная — нативная.
+- Flutter-версия сохранена в ветке `flutter-legacy` и теге `flutter-legacy-1.0`;
+  в `main` только нативная версия.
 - Язык Swift 6 (strict concurrency), цель macOS 14, универсальная сборка (arm64 + x86_64).
 
 ---

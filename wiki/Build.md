@@ -107,13 +107,12 @@ xcrun stapler staple dist/RadioMac-1.0.0.dmg
 
 После stapling пересчитайте `SHA256SUMS.txt`: файл изменился.
 
-### App Groups
+### Виджет и App Groups
 
-Виджет (RM-19) и iCloud (RM-18) используют `com.apple.security.application-groups`.
-Это entitlement требует provisioning profile с App Groups: ad-hoc подпись падает с
-`"RadioMac" requires a provisioning profile`. Для локальной проверки нужен Apple
-Development team, для релиза — Developer ID с профилем, где зарегистрирован
-`group.com.fso13.radioMac`.
+Виджет RM-19 не использует App Group: app и extension читают
+`/Users/Shared/RadioMac/nowplaying.json` через sandbox temporary-exception, поэтому
+ad-hoc сборка работает без Developer team. iCloud (RM-18) по-прежнему требует
+`com.apple.security.application-groups` и provisioning profile.
 
 ## Локальный лаунчер
 
