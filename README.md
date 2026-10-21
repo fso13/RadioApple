@@ -42,7 +42,7 @@ Flutter-версия оставлена как есть. Нативное при
 ## Требования
 
 - macOS 14 (Sonoma) или новее
-- Xcode 16+ (проверено на Xcode 27 / Swift 6.4, язык Swift 5)
+- Xcode 16.4+ (Swift 6 language mode; проверено на Xcode 27 / Swift 6.4)
 - Apple Silicon или Intel: `libbass.dylib` и `libbass_fx.dylib` универсальные,
   `libbass_aac.dylib` — только x86_64 (см. «Ограничения»)
 
@@ -101,6 +101,7 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   и локальное уведомление.
 - **Диагностика**: opt-in локальный журнал, обнаружение аварийных завершений,
   просмотр, копирование и очистка; без отправки данных.
+- **Swift 6**: язык проекта, strict concurrency complete и warnings as errors.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
   выборке, громкость, эквалайзер, LIVE. Если ничего не выбрано, Play включает первую станцию.
 - **Метаданные трека**: ICY-теги, Icecast `status-json.xsl`, API SomaFM и Radio Paradise,

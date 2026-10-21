@@ -59,7 +59,7 @@
 
 - Исходники: [github.com/fso13/RadioApple](https://github.com/fso13/RadioApple).
 - Flutter-версия сохранена в `lib/` и `macos/` для сравнения; актуальная — нативная.
-- Язык Swift 5, цель macOS 14, универсальная сборка (arm64 + x86_64).
+- Язык Swift 6 (strict concurrency), цель macOS 14, универсальная сборка (arm64 + x86_64).
 - Лицензия BASS и аддонов — в `ThirdParty/BASS/bass.txt`.
 
 ---

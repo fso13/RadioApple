@@ -3,7 +3,7 @@
 ## Требования
 
 - macOS 14+.
-- Xcode 16 или новее (проверено на Xcode 27 / Swift 6.4, язык Swift 5).
+- Xcode 16.4 или новее (Swift 6 language mode; проверено на Xcode 27 / Swift 6.4).
 - Apple Silicon или Intel.
 - Для установщиков: Python 3 и сеть (dmgbuild ставится автоматически).
 

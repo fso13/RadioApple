@@ -1,6 +1,6 @@
 # Архитектура
 
-RadioMac — нативное приложение на **Swift 5** (SwiftUI + AppKit), без внешних
+RadioMac — нативное приложение на **Swift 6** (SwiftUI + AppKit, strict concurrency), без внешних
 пакетных зависимостей. Аудио — BASS 2.4, вендорные библиотеки лежат в `ThirdParty/BASS`.
 
 ## Слои
@@ -22,7 +22,7 @@ RadioMac — нативное приложение на **Swift 5** (SwiftUI + A
 
 ## Запуск и окно
 
-- `RadioMacApp` — `@main`, `NSApplicationDelegateAdaptor`, accessory-режим.
+- `RadioMacApp` — `@main`, ручной запуск `NSApplication` с `AppDelegate`, accessory-режим.
 - `AppDelegate` создаёт `AppEnvironment`, `StatusItemController` и `MainWindowController`.
 - `Info.plist` содержит `LSUIElement = true`: приложение не показывается в Dock и Cmd+Tab.
 - `MainWindowController` держит безрамочный `NSPanel` (780×660) с `NSHostingView`.
@@ -55,8 +55,16 @@ RadioMac — нативное приложение на **Swift 5** (SwiftUI + A
 
 ## Потоки
 
+- Проект собирается в **Swift 6** с `SWIFT_STRICT_CONCURRENCY = complete` и
+  `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`.
+- UI, модели состояния и сервисы изолированы `@MainActor`. `RadioEngine` —
+  единственный nonisolated остров: он владеет последовательной `workQueue` и
+  помечен `@unchecked Sendable`; BASS-колбэки возвращаются в UI через
+  `Task { @MainActor in ... }`.
+- `NowPlayingLookup` и `LogoResolver` помечены `@unchecked Sendable`: их кэши
+  используются только из асинхронных задач плеера/библиотеки.
 - BASS вызывается только на последовательной `workQueue` — никаких гонок за хэндлы.
-- Результаты и ICY-метаданные приходят в UI на main-очереди.
+- Результаты и ICY-метаданные приходят в UI на main-акторе.
 - Метаданные и обложки загружаются асинхронно (`URLSession`, `async/await`),
   с проверкой поколения, чтобы ответ старой станции не перетёр новый трек.
 - Опрос метаданных — таймер раз в 20 секунд; отменяется при остановке.
@@ -72,6 +80,8 @@ RadioMac — нативное приложение на **Swift 5** (SwiftUI + A
 | `resume_last_station`, `auto_start` | поведение |
 | `theme_preference` | тема |
 | `eq_enabled`, `eq_preset`, `eq_gains`, `eq_custom_gains` | эквалайзер |
+| `alarm_settings` | расписание будильника |
+| `diagnostics_enabled` | согласие на локальный журнал |
 | `native_migration_v1` | флаг миграции из Flutter |
 
 Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
