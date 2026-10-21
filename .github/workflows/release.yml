@@ -223,6 +223,34 @@ jobs:
               ${NOTES[@]+"${NOTES[@]}"}
           fi
 
+      - name: Update Homebrew tap
+        if: success()
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          if [[ "$PRERELEASE" == "true" ]]; then
+            echo "Prerelease $VERSION: the Homebrew cask is updated only for stable releases."
+            exit 0
+          fi
+          if [[ -z "${TAP_TOKEN:-}" ]]; then
+            echo "::warning::HOMEBREW_TAP_TOKEN is not configured; skipping Homebrew tap update."
+            exit 0
+          fi
+          CHECKSUMS="dist/SHA256SUMS.txt"
+          if [[ ! -f "$CHECKSUMS" ]]; then
+            curl -fsSL "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/SHA256SUMS.txt" -o "$CHECKSUMS"
+          fi
+          SHA256="$(awk -v asset="RadioMac-${VERSION}.dmg" '$2 == asset { print $1 }' "$CHECKSUMS")"
+          if [[ ! "$SHA256" =~ ^[0-9a-fA-F]{64}$ ]]; then
+            echo "::error::Cannot resolve SHA-256 for RadioMac-${VERSION}.dmg"
+            exit 1
+          fi
+          scripts/update_homebrew_cask.sh "$VERSION" "$SHA256" "$TAP_TOKEN"
+
       - name: Summary
         if: success()
         env:
@@ -235,6 +263,7 @@ jobs:
             echo "- [Релиз](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/tag/${TAG})"
             echo "- [DMG](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${TAG}/RadioMac-${VERSION}.dmg)"
             echo "- [PKG](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/releases/download/${TAG}/RadioMac-${VERSION}.pkg)"
+            echo "- [Homebrew](https://github.com/fso13/homebrew-tap): \`brew install --cask fso13/tap/radiomac\`"
             echo
             echo "\`\`\`"
             cat dist/SHA256SUMS.txt
