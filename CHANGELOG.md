@@ -25,8 +25,12 @@
   для MP3/AAC и ICY.
 - Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке как fallback вместо
   BASS_FX (ошибка 41 на macOS 27 / Apple Silicon).
-- AVPlayer: автоматический AAC, ICY-метаданные через side-channel; HLS/AAC играют
-  без libbass_aac.
+- AVPlayer: автоматический AAC, HLS timed metadata и ICY side-channel; HLS/AAC
+  играют без libbass_aac.
+- Автопереподключение: статус «Переподключение…», backoff 1/2/5/10 с, лимит попыток
+  и ручной retry.
+- Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`
+  и теге `flutter-legacy-1.0`. CodeQL переведён на autobuild.
 
 ### Безопасность
 

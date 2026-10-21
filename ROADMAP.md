@@ -7,11 +7,11 @@
 - **P1** — ежедневный сценарий: заметно улучшает повседневное использование.
 - **P2** — расширение и технический долг: полезно, но не блокирует релиз.
 
-✅ — реализовано, тесты 23/23.
+✅ — реализовано, тесты 24/24.
 
 > ✅ RM-25: код и тесты готовы; OAuth/scrobble нужно проверить с ключами Last.fm.
 >
-> 🚧 RM-27, этап 3: AVPlayer для HLS/AAC, автоматический AAC, ICY side-channel и нативный Biquad EQ для BASS; EQ для AVPlayer, HLS-метаданные и удаление BASS — следующие этапы.
+> 🚧 RM-27, этап 3: AVPlayer для HLS/AAC, автоматический AAC, HLS timed metadata, ICY side-channel и нативный Biquad EQ для BASS; EQ для AVPlayer и удаление BASS — следующие этапы.
 >
 > ⚠️ RM-18 и RM-19 требуют Apple Developer team и provisioning profile:
 > без него `com.apple.security.application-groups` (App Groups) и iCloud не работают.
@@ -26,11 +26,11 @@
 | ID | Задача | Результат |
 | --- | --- | --- |
 | RM-01 ✅ | **Рабочий эквалайзер на Apple Silicon** | 10 полос и пресеты работают на macOS 27/arm64 без ошибки BASS_FX 41; настройки сохраняются. Замена BASS_FX на `AVAudioUnitEQ` или совместимую сборку. |
-| RM-02 | **Поддержка HLS** | Потоки `.m3u8` (например, SOUNDPARK DEEP) играют через AVPlayer/AVAudioEngine; метаданные и Now Playing работают. |
+| RM-02 ✅ | **Поддержка HLS** | Потоки `.m3u8` (например, SOUNDPARK DEEP) играют через AVPlayer/AVAudioEngine; метаданные и Now Playing работают. |
 | RM-03 ✅ | **AAC без x86_64** | AAC-потоки (Radio Maximum) играют на Apple Silicon без Rosetta: universal `libbass_aac` или CoreAudio-путь. |
-| RM-04 | **Автопереподключение потока** | При обрыве — статус «Переподключение…», backoff 1/2/5/10 с, ограничение попыток и ручной retry. Поток восстанавливается без перезапуска станции. |
+| RM-04 ✅ | **Автопереподключение потока** | При обрыве — статус «Переподключение…», backoff 1/2/5/10 с, ограничение попыток и ручной retry. Поток восстанавливается без перезапуска станции. |
 | RM-05 | **Подпись Developer ID и нотарификация** | Релизные DMG/PKG подписаны, нотарифицированы и stapled; `spctl --assess` проходит на чистом Mac; в заметках релиза нет `xattr`-инструкции. |
-| RM-06 | **Убрать Flutter-наследие из main** | Flutter-версия перенесена в ветку/тег `flutter-legacy`; в `main` нет `macos/Podfile` и `Runner.xcodeproj`; CI/CodeQL больше не спотыкаются о старый проект. |
+| RM-06 ✅ | **Убрать Flutter-наследие из main** | Flutter-версия перенесена в ветку/тег `flutter-legacy`; в `main` нет `macos/Podfile` и `Runner.xcodeproj`; CI/CodeQL больше не спотыкаются о старый проект. |
 
 ## P1 — ежедневный сценарий
 

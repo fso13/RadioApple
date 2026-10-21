@@ -41,6 +41,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `NativeEqualizer` | 10-полосный Biquad DSP в BASS-колбэке, fallback без BASS_FX |
 | `NativeAudioEngine` | AVPlayer для HLS/AAC: play/pause/stop, громкость, KVO-состояния |
 | `ICYMetadataReader` | side-channel ICY `StreamTitle` для прогрессивных AVPlayer-потоков |
+| `HLSMetadataDelegate` | HLS timed metadata через `AVPlayerItemMetadataOutput` |
+| `ReconnectPolicy` | backoff 1/2/5/10 с и лимит попыток |
 | `RadioPlayerService` | состояние плеера, громкость, опрос метаданных, Now Playing |
 | `StationLibrary` | каталог, избранное, добавление/удаление, логотипы, персистентность |
 | `EqualizerService` | полосы, пресеты, дебаунс записи |
@@ -72,6 +74,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 - AVPlayer живёт на главном акторе; его KVO-состояния приходят через `Task { @MainActor in }`.
 - `RadioPlayerService` выбирает движок по настройке `audio_engine` и URL:
   `.m3u8`/AAC → AVPlayer, MP3 → BASS.
+- При ошибке или неожиданном `idle` включается `ReconnectPolicy`; после 10 секунд
+  стабильного эфира счётчик попыток сбрасывается.
 - AVPlayer не отдаёт ICY: для `.aac`/`.mp3` открывается второй запрос с
   `Icy-MetaData: 1`, аудио отбрасывается, `StreamTitle` уходит в Now Playing.
 - Результаты и ICY-метаданные приходят в UI на main-акторе.

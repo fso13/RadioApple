@@ -56,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (23 XCTest-кейсов, host-приложение):
+Тесты (24 XCTest-кейсов, host-приложение):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -102,8 +102,11 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут; ключи в Keychain,
   отключение одной кнопкой.
 - **Audio engine**: «Авто» играет HLS и AAC через AVPlayer, MP3 — через BASS;
-  можно принудительно выбрать BASS или AVPlayer. Для прогрессивных AVPlayer-потоков
-  ICY-метаданные читаются отдельным side-channel; EQ пока доступен в BASS.
+  можно принудительно выбрать BASS или AVPlayer. HLS-метаданные приходят через
+  `AVPlayerItemMetadataOutput`, для прогрессивных AVPlayer-потоков ICY читается
+  отдельным side-channel; EQ пока доступен в BASS.
+- **Автопереподключение**: при обрыве статус «Переподключение…», backoff 1/2/5/10 с,
+  4 попытки, кнопка «Повторить» и восстановление без выбора станции заново.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в BASS-потоке; заменяет BASS_FX
   на macOS 27 / Apple Silicon, где плагин не загружается. В AVPlayer EQ пока нет.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -233,7 +236,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                23 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
+RadioMacTests/                24 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
@@ -286,7 +289,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 23 теста, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 24 теста, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -366,8 +369,8 @@ wiki-репозиторий только после первой страниц�
 - **Эквалайзер.** Если BASS_FX недоступен (`error 41`), работает нативный 10-полосный
   Biquad DSP. В режиме AVPlayer эквалайзер пока недоступен.
 - **AAC.** «Авто» отправляет AAC на AVPlayer; `libbass_aac` для этого пути не нужен.
-- **HLS.** Потоки `.m3u8` играют через AVPlayer; ICY к HLS неприменим, трек-метаданные
-  HLS ещё в работе (RM-02).
+- **HLS.** Потоки `.m3u8` играют через AVPlayer; трек-метаданные приходят через
+  `AVPlayerItemMetadataOutput`, когда станция их отдаёт.
 - Песочница включена: приложение пишет только в свой контейнер
   `~/Library/Containers/com.fso13.radioMac/`.
 

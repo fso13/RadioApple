@@ -65,6 +65,12 @@
   скопировать, очистить или показать в Finder.
 - Файл: `~/Library/Containers/com.fso13.radioMac/Data/Library/Application Support/RadioMac/diagnostics.log`.
 
+## Переподключение
+
+При сетевом обрыве плеер показывает «Переподключение…» и повторяет попытки с
+задержками 1, 2, 5 и 10 секунд. После четырёх неудач появляется ошибка и кнопка
+«Повторить» в транспортной панели. Успешное воспроизведение сбрасывает счётчик.
+
 ## Last.fm
 
 - Создайте API-ключи на [last.fm/api/account/create](https://www.last.fm/api/account/create)
