@@ -98,7 +98,7 @@ struct LastFmSetupView: View {
                 }
             }
         } else {
-            Text("Ключи сохранены. Осталось авторизовать аккаунт Last.fm.")
+            Text("Ключи приложения готовы. Осталось авторизовать аккаунт Last.fm.")
                 .font(Typeface.body)
                 .foregroundStyle(palette.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)

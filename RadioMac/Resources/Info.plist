@@ -39,6 +39,10 @@
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
+	<key>LastFmAPIKey</key>
+	<string>$(LASTFM_API_KEY)</string>
+	<key>LastFmAPISecret</key>
+	<string>$(LASTFM_API_SECRET)</string>
 	<key>NSSupportsSuddenTermination</key>
 	<false/>
 </dict>

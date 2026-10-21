@@ -12,9 +12,7 @@ struct EqualizerView: View {
             HStack(alignment: .top) {
                 PageHeading(
                     title: "Эквалайзер",
-                    subtitle: equalizer.isSupported
-                        ? "10 полос · пресеты и своя кривая"
-                        : "Плагин BASS_FX не загрузился"
+                    subtitle: "10 полос · пресеты и своя кривая"
                 )
                 Spacer()
                 CircleIconButton(systemName: "xmark", size: 11, help: "Закрыть", action: onClose)
@@ -31,7 +29,7 @@ struct EqualizerView: View {
             Hairline()
 
             if !equalizer.isSupported {
-                Text("Аудиоплагин не загрузился — коррекция недоступна. Настройки сохранятся.")
+                Text("Эквалайзер недоступен для текущего аудиодвижка. Настройки сохранятся.")
                     .font(Typeface.caption)
                     .foregroundStyle(palette.red)
                     .fixedSize(horizontal: false, vertical: true)

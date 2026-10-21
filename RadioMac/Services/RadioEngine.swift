@@ -68,8 +68,8 @@ final class RadioEngine: @unchecked Sendable {
     var onICYURL: ((String) -> Void)?
     var onPlaybackError: ((String) -> Void)?
 
-    /// BASS_FX is used when available; otherwise a native biquad DSP handles
-    /// the equalizer, so the UI stays functional on macOS 27 / Apple Silicon.
+    /// The equalizer is implemented by a native biquad DSP inside BASS; no
+    /// BASS_FX plugin is required.
     var isEqualizerAvailable: Bool { true }
 
     fileprivate let queue = DispatchQueue(label: "radio_mac.bass")
@@ -82,9 +82,6 @@ final class RadioEngine: @unchecked Sendable {
     private var paused = false
     private var volume: Float = 0.8
     private var bassReady = false
-    private var pluginsLoaded = false
-    private var fxAvailable = false
-    private var eqHandle: HFX = 0
     private var dspHandle: HDSP = 0
     private let nativeEQ = NativeEqualizer()
 
@@ -223,59 +220,8 @@ final class RadioEngine: @unchecked Sendable {
         }
         BASS_SetConfig(DWORD(BASS_CONFIG_NET_PLAYLIST), 1)
         BASS_SetConfig(DWORD(BASS_CONFIG_NET_TIMEOUT), 15_000)
-        loadPlugins()
         bassReady = true
         applyVolume()
-    }
-
-    private func pluginPath(_ name: String) -> String? {
-        var candidates: [URL] = []
-        if let frameworks = Bundle.main.privateFrameworksURL {
-            candidates.append(frameworks.appendingPathComponent(name))
-        }
-        candidates.append(
-            Bundle.main.bundleURL
-                .appendingPathComponent("Contents/Frameworks")
-                .appendingPathComponent(name)
-        )
-        for url in candidates where FileManager.default.fileExists(atPath: url.path) {
-            return url.path
-        }
-        return nil
-    }
-
-    private func loadPlugins() {
-        guard !pluginsLoaded else { return }
-#if DEBUG
-        for name in ["libbass_aac.dylib", "libbass_fx.dylib"] {
-            guard let path = pluginPath(name) else {
-                DebugLog.write("plugin missing: \(name)")
-                continue
-            }
-            if let handle = dlopen(path, RTLD_NOW) {
-                DebugLog.write("plugin dlopen ok: \(path)")
-                dlclose(handle)
-            } else if let error = dlerror() {
-                DebugLog.write("plugin dlopen failed: \(path) -> \(String(cString: error))")
-            }
-        }
-#endif
-        if let path = pluginPath("libbass_aac.dylib") {
-            if BASS_PluginLoad(path, 0) != 0 {
-                NSLog("RadioMac: BASS_AAC loaded")
-            } else {
-                NSLog("RadioMac: BASS_AAC unavailable (%d)", BASS_ErrorGetCode())
-            }
-        }
-        if let path = pluginPath("libbass_fx.dylib") {
-            if BASS_PluginLoad(path, 0) != 0 {
-                fxAvailable = true
-                NSLog("RadioMac: BASS_FX loaded")
-            } else {
-                NSLog("RadioMac: BASS_FX unavailable (%d)", BASS_ErrorGetCode())
-            }
-        }
-        pluginsLoaded = true
     }
 
     // MARK: - Equalizer
@@ -293,22 +239,6 @@ final class RadioEngine: @unchecked Sendable {
             return
         }
 
-        if fxAvailable {
-            removeNativeDSP()
-            if eqHandle == 0 {
-                eqHandle = BASS_ChannelSetFX(stream, DWORD(BASS_FX_BFX_PEAKEQ), 0)
-            }
-            guard eqHandle != 0 else {
-                NSLog("RadioMac: EQ FX failed (%d)", BASS_ErrorGetCode())
-                return
-            }
-            for index in 0..<min(currentGains.count, Self.frequencies.count) {
-                applyEQBand(index: index, gain: currentGains[index])
-            }
-            return
-        }
-
-        removeFXFromStream()
         ensureNativeDSP()
         guard dspHandle != 0 else { return }
 
@@ -339,31 +269,7 @@ final class RadioEngine: @unchecked Sendable {
         nativeEQ.process(buffer: buffer, length: length)
     }
 
-    private func applyEQBand(index: Int, gain: Float) {
-        guard eqHandle != 0 else { return }
-        var params = BASS_BFX_PEAKEQ()
-        params.lBand = Int32(index)
-        params.fBandwidth = 1.0
-        params.fQ = 0.707
-        params.fCenter = Self.frequencies[index]
-        params.fGain = gain
-        params.lChannel = BASS_BFX_CHANALL
-        BASS_FXSetParameters(eqHandle, &params)
-    }
-
     private func removeEQFromStream() {
-        removeFXFromStream()
-        removeNativeDSP()
-    }
-
-    private func removeFXFromStream() {
-        if stream != 0, eqHandle != 0 {
-            BASS_ChannelRemoveFX(stream, eqHandle)
-        }
-        eqHandle = 0
-    }
-
-    private func removeNativeDSP() {
         if stream != 0, dspHandle != 0 {
             BASS_ChannelRemoveDSP(stream, dspHandle)
         }
@@ -455,7 +361,6 @@ final class RadioEngine: @unchecked Sendable {
 
     private func freeStream() {
         guard stream != 0 else { return }
-        eqHandle = 0
         dspHandle = 0
         nativeEQ.setEnabled(false)
         BASS_StreamFree(stream)
@@ -526,7 +431,6 @@ final class RadioEngine: @unchecked Sendable {
         streamLock.unlock()
         wantsPlayback = false
         paused = false
-        eqHandle = 0
         emitState(.idle)
     }
 

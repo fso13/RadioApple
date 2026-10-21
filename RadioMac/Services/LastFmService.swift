@@ -38,11 +38,12 @@ final class LastFmService: ObservableObject {
         self.player = player
 
         let stored = LastFmCredentialStore.load()
-        credentials = stored
-        isConnected = stored?.sessionKey != nil
-        username = stored?.username
+        let initial = stored ?? LastFmConfig.credentials
+        credentials = initial
+        isConnected = initial?.sessionKey != nil
+        username = initial?.username
         isEnabled = defaults.boolLike(DefaultsKey.lastFmEnabled) ?? false
-        client = stored.map { LastFmClient(apiKey: $0.apiKey, apiSecret: $0.apiSecret) }
+        client = initial.map { LastFmClient(apiKey: $0.apiKey, apiSecret: $0.apiSecret) }
         observePlayer()
     }
 

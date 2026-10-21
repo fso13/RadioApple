@@ -31,6 +31,8 @@ jobs:
       APPLE_ID: ${{ secrets.APPLE_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+      LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+      LASTFM_API_SECRET: ${{ secrets.LASTFM_API_SECRET }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -76,6 +78,8 @@ jobs:
             ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
             MARKETING_VERSION="$VERSION" \
             CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" \
+            LASTFM_API_KEY="$LASTFM_API_KEY" \
+            LASTFM_API_SECRET="$LASTFM_API_SECRET" \
             build
 
       - name: Import signing certificate

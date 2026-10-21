@@ -20,7 +20,7 @@ final class EqualizerService: ObservableObject {
     }
 
     var preset: EqualizerPreset { EqualizerCatalog.byID(presetID) }
-    /// `false` when the bundled BASS_FX plugin could not be loaded.
+    /// The native DSP equalizer is always available for BASS streams.
     var isSupported: Bool { engine.isEqualizerAvailable }
     var isCustom: Bool { presetID == EqualizerCatalog.customID }
 

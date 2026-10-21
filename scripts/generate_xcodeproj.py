@@ -21,8 +21,8 @@ ASSETS = SOURCES_DIR / "Resources" / "Assets.xcassets"
 INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
 ENTITLEMENTS = SOURCES_DIR / "Resources" / "RadioMac.entitlements"
 BRIDGING = SOURCES_DIR / "Bridging" / "Bridging-Header.h"
-DYLIBS = [BASS_DIR / "libbass.dylib", BASS_DIR / "libbass_aac.dylib", BASS_DIR / "libbass_fx.dylib"]
-HEADERS = [BASS_DIR / "bass.h", BASS_DIR / "bass_fx_shim.h"]
+DYLIBS = [BASS_DIR / "libbass.dylib"]
+HEADERS = [BASS_DIR / "bass.h"]
 TESTS_DIR = ROOT / "RadioMacTests"
 
 FILE_IDS: dict[str, str] = {}
