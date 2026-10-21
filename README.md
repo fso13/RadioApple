@@ -40,8 +40,8 @@ Flutter-приложение больше не лежит в `main`: оно со
 
 - macOS 14 (Sonoma) или новее
 - Xcode 16.4+ (Swift 6 language mode; проверено на Xcode 27 / Swift 6.4)
-- Apple Silicon или Intel: `libbass.dylib` и `libbass_fx.dylib` универсальные,
-  `libbass_aac.dylib` — только x86_64 (см. «Ограничения»)
+- Apple Silicon или Intel: универсальный `libbass.dylib`; EQ — нативный DSP,
+  AAC/HLS — AVPlayer. Отдельные BASS_FX/BASS_AAC плагины больше не нужны.
 
 ## Сборка и запуск
 
@@ -99,7 +99,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Диагностика**: opt-in локальный журнал, обнаружение аварийных завершений,
   просмотр, копирование и очистка; без отправки данных.
 - **Swift 6**: язык проекта, strict concurrency complete и warnings as errors.
-- **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут; ключи в Keychain,
+- **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут. API-ключи
+  встраиваются при сборке из GitHub Secrets, сессия хранится в Keychain;
   отключение одной кнопкой.
 - **Audio engine**: «Авто» играет HLS и AAC через AVPlayer, MP3 — через BASS;
   можно принудительно выбрать BASS или AVPlayer. HLS-метаданные приходят через
@@ -237,7 +238,7 @@ RadioMac/
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
 RadioMacTests/                24 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
-ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
+ThirdParty/BASS/              bass.h, libbass.dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
@@ -366,9 +367,9 @@ wiki-репозиторий только после первой страниц�
 
 ## Ограничения
 
-- **Эквалайзер.** Если BASS_FX недоступен (`error 41`), работает нативный 10-полосный
-  Biquad DSP. В режиме AVPlayer эквалайзер пока недоступен.
-- **AAC.** «Авто» отправляет AAC на AVPlayer; `libbass_aac` для этого пути не нужен.
+- **Эквалайзер.** Работает нативный 10-полосный Biquad DSP в BASS; BASS_FX удалён.
+  В режиме AVPlayer эквалайзер пока недоступен.
+- **AAC.** «Авто» отправляет AAC на AVPlayer; `libbass_aac` удалён.
 - **HLS.** Потоки `.m3u8` играют через AVPlayer; трек-метаданные приходят через
   `AVPlayerItemMetadataOutput`, когда станция их отдаёт.
 - Песочница включена: приложение пишет только в свой контейнер

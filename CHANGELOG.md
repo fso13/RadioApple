@@ -19,12 +19,12 @@
   аудит `@MainActor`/`Sendable`; предупреждения компилятора считаются ошибками.
 - Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`;
   Release workflow обновляет cask вместе с релизом.
-- Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи и сессия
-  в Keychain, отключение одной кнопкой.
+- Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи приложения
+  из build settings/GitHub Secrets, сессия в Keychain, отключение одной кнопкой.
 - Audio engine: AVPlayer для HLS и выбор «Авто / BASS / AVPlayer»; BASS остаётся
   для MP3/AAC и ICY.
-- Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке как fallback вместо
-  BASS_FX (ошибка 41 на macOS 27 / Apple Silicon).
+- Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке; BASS_FX удалён.
+- Удалены BASS_FX и BASS_AAC плагины; AAC/HLS идут через AVPlayer, EQ — нативный DSP.
 - AVPlayer: автоматический AAC, HLS timed metadata и ICY side-channel; HLS/AAC
   играют без libbass_aac.
 - Автопереподключение: статус «Переподключение…», backoff 1/2/5/10 с, лимит попыток

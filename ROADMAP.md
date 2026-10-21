@@ -11,7 +11,7 @@
 
 > ✅ RM-25: код и тесты готовы; OAuth/scrobble нужно проверить с ключами Last.fm.
 >
-> 🚧 RM-27, этап 3: AVPlayer для HLS/AAC, автоматический AAC, HLS timed metadata, ICY side-channel и нативный Biquad EQ для BASS; EQ для AVPlayer и удаление BASS — следующие этапы.
+> 🚧 RM-27, этап 4: AVPlayer для HLS/AAC, HLS timed metadata, ICY side-channel, нативный Biquad EQ и удаление BASS_FX/BASS_AAC; EQ для AVPlayer и удаление BASS — следующие этапы.
 >
 > ⚠️ RM-18 и RM-19 требуют Apple Developer team и provisioning profile:
 > без него `com.apple.security.application-groups` (App Groups) и iCloud не работают.
