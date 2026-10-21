@@ -340,7 +340,13 @@ enum DebugHarness {
             } else {
                 try? await Task.sleep(nanoseconds: 10_000_000_000)
             }
-            lines.append("[10.0s] final state=\(player.status.rawValue) engine=\(player.activeEngineName) info=\(player.streamInfo?.codec ?? "-")")
+            let info = player.streamInfo
+            lines.append(
+                "[10.0s] final state=\(player.status.rawValue) engine=\(player.activeEngineName) "
+                    + "codec=\(info?.codec ?? "-") rate=\(info?.sampleRateText ?? "-") "
+                    + "channels=\(info?.channelsText ?? "-") bitrate=\(info?.bitrateText ?? "-") "
+                    + "buffer=\(info?.bufferText ?? "-") server=\(info?.serverText ?? "-")"
+            )
             player.stop()
             try? lines.joined(separator: "\n").appending("\n").write(
                 to: output,

@@ -1,3 +1,4 @@
+import AudioToolbox
 import Foundation
 
 /// Audio properties of the current stream, as reported by the engine.
@@ -9,6 +10,7 @@ struct StreamInfo: Equatable, Sendable {
     let channels: Int
     let bitrateKbps: Int?
     let bufferMilliseconds: Int
+    let server: String?
 
     var sampleRateText: String {
         frequency > 0 ? "\(frequency) Гц" : "—"
@@ -30,6 +32,55 @@ struct StreamInfo: Equatable, Sendable {
 
     var bufferText: String {
         bufferMilliseconds > 0 ? "\(bufferMilliseconds) мс" : "—"
+    }
+
+    var serverText: String {
+        guard let server, !server.isEmpty else { return "—" }
+        return server
+    }
+
+    init(
+        codec: String,
+        frequency: Int,
+        channels: Int,
+        bitrateKbps: Int?,
+        bufferMilliseconds: Int,
+        server: String? = nil
+    ) {
+        self.codec = codec
+        self.frequency = frequency
+        self.channels = channels
+        self.bitrateKbps = bitrateKbps
+        self.bufferMilliseconds = bufferMilliseconds
+        self.server = server
+    }
+
+    /// Codec names for CoreMedia/AudioToolbox FourCC values.
+    static func codecName(forSubType subType: FourCharCode) -> String {
+        switch subType {
+        case kAudioFormatMPEG4AAC, kAudioFormatMPEG4AAC_HE, kAudioFormatMPEG4AAC_HE_V2:
+            return "AAC"
+        case kAudioFormatMPEGLayer3:
+            return "MP3"
+        case kAudioFormatAppleLossless:
+            return "ALAC"
+        case kAudioFormatOpus:
+            return "Opus"
+        case kAudioFormatFLAC:
+            return "FLAC"
+        case kAudioFormatMPEGLayer1:
+            return "MP1"
+        case kAudioFormatMPEGLayer2:
+            return "MP2"
+        default:
+            let bytes = [
+                UInt8((subType >> 24) & 0xff),
+                UInt8((subType >> 16) & 0xff),
+                UInt8((subType >> 8) & 0xff),
+                UInt8(subType & 0xff),
+            ]
+            return String(bytes: bytes, encoding: .ascii) ?? "Audio"
+        }
     }
 
     /// Human-readable codec name for a FourCC subtype.

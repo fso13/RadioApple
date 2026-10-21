@@ -190,7 +190,7 @@ struct SettingsView: View {
                     Hairline()
                     InfoRow(label: "Буфер", value: player.streamInfo?.bufferText ?? "—")
                     Hairline()
-                    InfoRow(label: "Сервер", value: streamServer)
+                    InfoRow(label: "Сервер", value: player.streamInfo?.serverText ?? streamServer)
                     HStack(spacing: Space.l) {
                         TextButton(title: "Обновить", systemImage: "arrow.clockwise") {
                             player.refreshStreamInfo()
@@ -576,7 +576,7 @@ struct SettingsView: View {
             "",
             "Станция: \(station?.name ?? "—")",
             "URL: \(station?.url ?? "—")",
-            "Сервер: \(streamServer)",
+            "Сервер: \(player.streamInfo?.serverText ?? streamServer)",
             "Статус: \(playerStatusText)",
             "Кодек: \(info?.codec ?? "—")",
             "Битрейт: \(info?.bitrateText ?? "—")",

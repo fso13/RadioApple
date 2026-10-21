@@ -152,7 +152,100 @@ final class NativeAudioEngine {
     /// The diagnostics panel shows «—» for native streams until the AVAsset
     /// inspection lands in the next stage.
     func fetchStreamInfo(completion: @escaping @MainActor (StreamInfo?) -> Void) {
-        completion(nil)
+        guard let item, let player else {
+            completion(nil)
+            return
+        }
+
+        Task { @MainActor in
+            var codec = Self.codecFallback(for: item.asset)
+            var frequency = 0
+            var channels = 0
+            var estimatedBitrate: Double = 0
+
+            if let track = item.tracks.first(where: { $0.assetTrack?.mediaType == .audio })?.assetTrack {
+                if let formats = try? await track.load(.formatDescriptions),
+                   let format = formats.first {
+                    codec = StreamInfo.codecName(forSubType: CMFormatDescriptionGetMediaSubType(format))
+                    if let description = CMAudioFormatDescriptionGetStreamBasicDescription(format)?.pointee {
+                        frequency = Int(description.mSampleRate)
+                        channels = Int(description.mChannelsPerFrame)
+                    }
+                }
+                if let rate = try? await track.load(.estimatedDataRate), rate > 0 {
+                    estimatedBitrate = Double(rate)
+                }
+            }
+
+            let event = item.accessLog()?.events.last
+            let observed = event?.observedBitrate ?? 0
+            let indicated = event?.indicatedBitrate ?? 0
+            let averageAudio = event?.averageAudioBitrate ?? 0
+            var transfer = 0.0
+            if let bytes = event?.numberOfBytesTransferred,
+               let duration = event?.transferDuration,
+               bytes > 0,
+               duration > 0 {
+                transfer = Double(bytes) * 8 / duration
+            }
+            let inferred = Self.inferredBitrate(
+                from: (item.asset as? AVURLAsset)?.url
+            )
+            let bitrate = [observed, indicated, averageAudio, transfer, estimatedBitrate, inferred]
+                .compactMap { $0 }
+                .first(where: { $0 > 0 }) ?? 0
+
+            let now = player.currentTime()
+            let buffered = item.loadedTimeRanges
+                .map { $0.timeRangeValue }
+                .filter { $0.isValid && !$0.isEmpty }
+                .map { CMTimeGetSeconds($0.end) - CMTimeGetSeconds(now) }
+                .filter { $0.isFinite && $0 > 0 }
+                .max() ?? 0
+
+            let server = event?.serverAddress
+                ?? URL(string: item.asset is AVURLAsset ? (item.asset as? AVURLAsset)?.url.absoluteString ?? "" : "")?.host
+
+            completion(
+                StreamInfo(
+                    codec: codec,
+                    frequency: frequency,
+                    channels: channels,
+                    bitrateKbps: bitrate > 0 ? Int((bitrate / 1_000).rounded()) : nil,
+                    bufferMilliseconds: Int(buffered * 1_000),
+                    server: server
+                )
+            )
+        }
+    }
+
+    /// Some progressive streams advertise the bitrate only in the filename
+    /// (for example `maximum96.aacp` or `nashe-128.mp3`).
+    private static func inferredBitrate(from url: URL?) -> Double? {
+        guard let url else { return nil }
+        let name = url.lastPathComponent.lowercased()
+        let pattern = #"([0-9]{2,3})(?:kbps|kbit)?\.(?:mp3|aac|aacp|m4a)$"#
+        guard let regex = try? NSRegularExpression(pattern: pattern),
+              let match = regex.firstMatch(
+                in: name,
+                range: NSRange(name.startIndex..., in: name)
+              ),
+              let range = Range(match.range(at: 1), in: name),
+              let value = Double(name[range]),
+              (32...512).contains(value)
+        else { return nil }
+        return value * 1_000
+    }
+
+    private static func codecFallback(for asset: AVAsset) -> String {
+        guard let url = (asset as? AVURLAsset)?.url.absoluteString.lowercased() else {
+            return "Audio"
+        }
+        if url.contains(".m3u8") { return "HLS/AAC" }
+        if url.contains(".aac") { return "AAC" }
+        if url.contains(".mp3") { return "MP3" }
+        if url.contains(".m4a") { return "AAC" }
+        return "Audio"
     }
 
     // MARK: - Observations
