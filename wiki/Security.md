@@ -86,6 +86,14 @@ xattr -dr com.apple.quarantine /Applications/RadioMac.app
 Secrets. Appcast и DMG подписываются в release workflow; приложение проверяет
 подпись перед установкой. Канал обновлений — latest release, без Pages.
 
+## Виджет
+
+Виджет и приложение используют `/Users/Shared/RadioMac/nowplaying.json` через
+sandbox temporary-exception. В файле только название станции/трека, id и флаг
+воспроизведения; он доступен локальным пользователям Mac. App Group не
+используется, поэтому подпись остаётся ad-hoc. Это осознанный обход требования
+provisioning profile для локальной сборки; для App Store нужен Developer team.
+
 ## Last.fm
 
 Скробблинг выключен по умолчанию. API-ключи приложения приходят из GitHub Secrets

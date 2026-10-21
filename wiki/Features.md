@@ -37,6 +37,15 @@ AVPlayer-потоки — через ICY side-channel. При обрыве вк�
 общий плеер. ICY-метаданные для прогрессивных потоков читаются отдельным side-channel;
 нативный эквалайзер работает через audio tap AVPlayer.
 
+## Виджет и Control Center
+
+Виджет macOS 14+ показывает текущую станцию/трек и кнопку play/pause; на macOS 26+
+доступен элемент Control Center «RadioMac» (play/pause). Виджет и приложение
+обмениваются состоянием через `/Users/Shared/RadioMac/nowplaying.json`; обоим
+таргетам выдан sandbox temporary-exception, поэтому App Group и платный
+Developer team не требуются. Виджет обновляется через `WidgetCenter` при смене
+станции/трека/статуса.
+
 ## Информация о потоке
 
 Настройки → Поток показывают кодек, битрейт, частоту, каналы, заполненный буфер

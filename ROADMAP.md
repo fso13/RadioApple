@@ -7,13 +7,13 @@
 - **P1** — ежедневный сценарий: заметно улучшает повседневное использование.
 - **P2** — расширение и технический долг: полезно, но не блокирует релиз.
 
-✅ — реализовано, 34 unit + 2 UI.
+✅ — реализовано, 35 unit + 2 UI.
 
 > ✅ RM-25: код и тесты готовы; OAuth/scrobble нужно проверить с ключами Last.fm.
 >
 > ✅ RM-27: AVPlayer для HLS/AAC/MP3, HLS timed metadata, ICY side-channel, нативный Biquad EQ через audio tap; BASS/BASS_FX/BASS_AAC удалены.
 >
-> ⚠️ RM-18 и RM-19 требуют Apple Developer team и provisioning profile:
+> ⚠️ RM-18 требует Apple Developer team и provisioning profile:
 > без него `com.apple.security.application-groups` (App Groups) и iCloud не работают.
 > Ad-hoc сборка падает с «requires a provisioning profile».
 
@@ -53,7 +53,7 @@
 | ID | Задача | Результат |
 | --- | --- | --- |
 | RM-18 | **iCloud-синхронизация** | Станции, избранное и настройки синхронизируются между Mac; разрешение конфликтов и opt-in. |
-| RM-19 ⚠️ | **Виджет и Control Center** | Виджет macOS 14+ с текущей станцией и play/pause; элемент управления в Control Center на поддерживаемых версиях. |
+| RM-19 ✅ | **Виджет и Control Center** | Виджет macOS 14+ с текущей станцией и play/pause; элемент управления в Control Center на поддерживаемых версиях. |
 | RM-20 ✅ | **Будильник-радио** | Расписание по дням недели, выбор станции, плавное нарастание громкости, уведомление. |
 | RM-21 ✅ | **Homebrew Cask** | `brew install --cask radiomac`; формула/тап обновляется вместе с релизом. |
 | RM-22 ✅ | **Swift 6 strict concurrency** | Языковой режим Swift 6, аудит `@MainActor`, отсутствие предупреждений конкурентности; warnings as errors в CI. |

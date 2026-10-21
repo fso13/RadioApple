@@ -21,6 +21,8 @@
 - Мини-плеер в меню-баре: обложка, трек, play/pause, громкость и быстрый выбор станции.
 - XCUITest главного сценария/настроек и светлые/тёмные снапшоты в CI.
 - Панель потока: кодек, битрейт, частота, каналы, буфер, сервер и копирование диагностики.
+- Виджет macOS 14+ и элемент Control Center macOS 26+ с текущей станцией и play/pause;
+  общее состояние через sandbox temporary-exception без App Group.
 - Группы станций, будильник-радио, локальная диагностика и Last.fm
   (now-playing/scrobble с ключами из GitHub Secrets).
 - Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`.

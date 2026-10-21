@@ -56,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (34 unit + 2 UI XCTest-кейса):
+Тесты (35 unit + 2 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -123,6 +123,9 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   прикладываются к результату теста и проверяются на различие.
 - **Информация о потоке**: кодек, битрейт, частота, каналы, буфер и сервер;
   копирование диагностики одной кнопкой.
+- **Виджет и Control Center**: виджет macOS 14+ с текущей станцией и play/pause;
+  элемент Control Center на macOS 26+. Состояние передаётся через общий файл
+  `/Users/Shared/RadioMac` с sandbox temporary-exception (без App Group).
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -218,6 +221,7 @@ xcrun stapler staple dist/RadioMac-1.0.0.dmg
 
 ```
 RadioMac.xcodeproj            проект Xcode (приложение + тесты)
+RadioMacWidget/              WidgetKit ext: виджет и Control Center
 RadioMac/
   RadioMacApp.swift           @main, запуск NSApplication как accessory-агента
   AppDelegate.swift           статус-итем, окно, меню правки для ⌘C/⌘V
@@ -259,7 +263,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                34 логических теста
+RadioMacTests/                35 логических тестов
 RadioMacUITests/              2 XCUITest: сценарий и свет/тьма (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
@@ -310,7 +314,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 34 unit + 2 UI, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 35 unit + 2 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
