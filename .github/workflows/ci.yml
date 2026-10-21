@@ -31,6 +31,9 @@ jobs:
           xcodebuild -version
           swift --version
 
+      - name: Check Sparkle feed
+        run: python3 scripts/check_appcast.py
+
       - name: Build (Debug)
         run: |
           xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \

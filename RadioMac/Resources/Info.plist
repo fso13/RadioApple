@@ -50,6 +50,16 @@
 	<string>NSApplication</string>
 	<key>NSSupportsAutomaticTermination</key>
 	<false/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/fso13/RadioApple/releases/latest/download/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>yhyEvIJygwWHLdBvbgnPhzYNyp7FJoppn1Z2r8LAcyE=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
 	<key>LastFmAPIKey</key>
 	<string>$(LASTFM_API_KEY)</string>
 	<key>LastFmAPISecret</key>

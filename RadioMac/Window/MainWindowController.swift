@@ -13,6 +13,7 @@ final class AppEnvironment {
     let alarm: AlarmService
     let lastFm: LastFmService
     let diagnostics: DiagnosticsService
+    let updates = UpdateService.shared
     let toasts = ToastCenter()
     let router = WindowRouter()
     let mainModel: MainViewModel
@@ -107,6 +108,7 @@ final class MainWindowController: NSWindowController {
             alarm: environment.alarm,
             lastFm: environment.lastFm,
             diagnostics: environment.diagnostics,
+            updates: environment.updates,
             toasts: environment.toasts,
             onClose: { [weak self] in self?.hide() },
             onQuit: { NSApp.terminate(nil) }

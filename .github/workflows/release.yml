@@ -33,6 +33,7 @@ jobs:
       APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
       LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
       LASTFM_API_SECRET: ${{ secrets.LASTFM_API_SECRET }}
+      SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -148,6 +149,22 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
+      - name: Generate Sparkle appcast
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 -m venv .build/appcast-venv
+          .build/appcast-venv/bin/pip install --quiet -r scripts/requirements-appcast.txt
+          .build/appcast-venv/bin/python scripts/make_appcast.py \
+            --version "$VERSION" \
+            --build "$GITHUB_RUN_NUMBER" \
+            --dmg "dist/RadioMac-${VERSION}.dmg" \
+            --url "https://github.com/${GITHUB_REPOSITORY}/releases/download/v${VERSION}/RadioMac-${VERSION}.dmg" \
+            --private-key "$SPARKLE_PRIVATE_KEY" \
+            --output dist/appcast.xml
+          python3 scripts/check_appcast.py
+
       - name: Prepare release notes
         env:
           VERSION: ${{ steps.version.outputs.version }}
@@ -188,6 +205,7 @@ jobs:
             "dist/RadioMac-${VERSION}.pkg"
             "dist/SHA256SUMS.txt"
             "dist/RadioMac-${VERSION}.spdx.json"
+            "dist/appcast.xml"
           )
           FLAGS=()
           if [[ "$PRERELEASE" == "true" ]]; then

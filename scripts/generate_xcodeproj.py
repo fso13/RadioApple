@@ -80,6 +80,9 @@ def build() -> tuple[str, str]:
 
     target_id = new_id("A7")
     project_id = new_id("B8")
+    sparkle_package = new_id("A1")
+    sparkle_product = new_id("F1")
+    sparkle_build = new_id("B2")
     main_group = new_id("A3")
     source_group = new_id("A3")
     products_group = new_id("A3")
@@ -129,6 +132,10 @@ def build() -> tuple[str, str]:
             f"\t\t{identifier} /* {path.name} in Build */ = {{isa = PBXBuildFile; "
             f"fileRef = {ref(path)};{suffix} }};"
         )
+    build_section.append(
+        f"\t\t{sparkle_build} /* Sparkle in Frameworks */ = {{isa = PBXBuildFile; "
+        f"productRef = {sparkle_product} /* Sparkle */; }};"
+    )
     build_section.append("/* End PBXBuildFile section */")
 
     file_section = ["/* Begin PBXFileReference section */"]
@@ -217,7 +224,7 @@ def build() -> tuple[str, str]:
 
     sections = "\n".join([
         "/* Begin PBXFrameworksBuildPhase section */",
-        phase(frameworks_phase, "PBXFrameworksBuildPhase", []),
+        phase(frameworks_phase, "PBXFrameworksBuildPhase", [f"{sparkle_build} /* Sparkle in Frameworks */"]),
         "/* End PBXFrameworksBuildPhase section */",
         "/* Begin PBXResourcesBuildPhase section */",
         phase(resources_phase, "PBXResourcesBuildPhase", [asset_build_file]),
@@ -264,7 +271,7 @@ def build() -> tuple[str, str]:
         'CODE_SIGN_IDENTITY = "-";',
         "CODE_SIGN_STYLE = Manual;",
         "COMBINE_HIDPI_IMAGES = YES;",
-        "CURRENT_PROJECT_VERSION = 1;",
+        "CURRENT_PROJECT_VERSION = 2;",
         "ENABLE_HARDENED_RUNTIME = NO;",
         "ENABLE_PREVIEWS = YES;",
         "INFOPLIST_FILE = RadioMac/Resources/Info.plist;",
@@ -277,7 +284,7 @@ def build() -> tuple[str, str]:
         '\t"-framework",',
         '\tAppIntents,',
         ");",
-        "MARKETING_VERSION = 1.0.0;",
+        "MARKETING_VERSION = 1.0.2;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",
         'PRODUCT_NAME = "$(TARGET_NAME)";',
         "SWIFT_STRICT_CONCURRENCY = complete;",
@@ -384,6 +391,9 @@ def build() -> tuple[str, str]:
         f"\t\t\tname = {PROJECT_NAME};",
         f"\t\t\tproductName = {PROJECT_NAME};",
         f"\t\t\tproductReference = {product_ref} /* {PROJECT_NAME}.app */;",
+        "\t\t\tpackageProductDependencies = (",
+        f"\t\t\t\t{sparkle_product} /* Sparkle */,",
+        "\t\t\t);",
         '\t\t\tproductType = "com.apple.product-type.application";',
         "\t\t};",
         f"\t\t{tests_target} /* {PROJECT_NAME}Tests */ = {{",
@@ -425,6 +435,9 @@ def build() -> tuple[str, str]:
         "\t\t\tknownRegions = (ru, en, Base);",
         f"\t\t\tmainGroup = {main_group};",
         f"\t\t\tproductRefGroup = {products_group};",
+        "\t\t\tpackageReferences = (",
+        f"\t\t\t\t{sparkle_package} /* Sparkle */,",
+        "\t\t\t);",
         '\t\t\tprojectDirPath = "";',
         '\t\t\tprojectRoot = "";',
         f"\t\t\ttargets = ({target_id} /* {PROJECT_NAME} */, {tests_target} /* {PROJECT_NAME}Tests */);",
@@ -451,6 +464,25 @@ def build() -> tuple[str, str]:
         project_section,
         "",
         sections,
+        "",
+        "/* Begin XCRemoteSwiftPackageReference section */",
+        f"\t\t{sparkle_package} /* Sparkle */ = {{",
+        "\t\t\tisa = XCRemoteSwiftPackageReference;",
+        '\t\t\trepositoryURL = "https://github.com/sparkle-project/Sparkle";',
+        "\t\t\trequirement = {",
+        "\t\t\t\tkind = upToNextMajorVersion;",
+        "\t\t\t\tminimumVersion = 2.9.0;",
+        "\t\t\t};",
+        "\t\t};",
+        "/* End XCRemoteSwiftPackageReference section */",
+        "",
+        "/* Begin XCSwiftPackageProductDependency section */",
+        f"\t\t{sparkle_product} /* Sparkle */ = {{",
+        "\t\t\tisa = XCSwiftPackageProductDependency;",
+        f"\t\t\tpackage = {sparkle_package} /* Sparkle */;",
+        "\t\t\tproductName = Sparkle;",
+        "\t\t};",
+        "/* End XCSwiftPackageProductDependency section */",
         "",
         config_section,
         "",

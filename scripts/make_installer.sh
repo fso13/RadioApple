@@ -139,6 +139,19 @@ if [[ -n "$IDENTITY" ]]; then
     while IFS= read -r -d '' dylib; do
         /usr/bin/codesign --force --options runtime --timestamp --sign "$IDENTITY" "$dylib"
     done < <(find "$APP/Contents/Frameworks" -name '*.dylib' -print0 2>/dev/null)
+    # Sparkle ships nested XPC services, Autoupdate and the framework itself.
+    # Sign from the inside out before signing the app container.
+    if [[ -d "$APP/Contents/Frameworks/Sparkle.framework" ]]; then
+        while IFS= read -r -d '' item; do
+            /usr/bin/codesign --force --options runtime --timestamp \
+                --preserve-metadata=entitlements,identifier,flags \
+                --sign "$IDENTITY" "$item"
+        done < <(find "$APP/Contents/Frameworks/Sparkle.framework" -depth \
+            \( -name '*.xpc' -o -name '*.app' -o -name 'Autoupdate' -o -name 'Sparkle' \) \
+            -print0)
+        /usr/bin/codesign --force --options runtime --timestamp \
+            --sign "$IDENTITY" "$APP/Contents/Frameworks/Sparkle.framework"
+    fi
     /usr/bin/codesign --force --options runtime --timestamp \
         --entitlements "$ENTITLEMENTS" --sign "$IDENTITY" "$APP"
     /usr/bin/codesign --verify --deep --strict "$APP"

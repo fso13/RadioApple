@@ -13,6 +13,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onOpenSettings: (() -> Void)?
     var onPlayPause: (() -> Void)?
     var onStop: (() -> Void)?
+    var onCheckForUpdates: (() -> Void)?
     var onQuit: (() -> Void)?
 
     init(environment: AppEnvironment) {
@@ -106,6 +107,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         show.target = self
         menu.addItem(show)
 
+        let updates = NSMenuItem(title: "Проверить обновления…", action: #selector(checkForUpdates), keyEquivalent: "")
+        updates.target = self
+        menu.addItem(updates)
+
         let settings = NSMenuItem(title: "Настройки", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
         menu.addItem(settings)
@@ -150,5 +155,6 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     @objc private func stopPlayback() { onStop?() }
     @objc private func showWindow() { onShowWindow?() }
     @objc private func openSettings() { onOpenSettings?() }
+    @objc private func checkForUpdates() { onCheckForUpdates?() }
     @objc private func quitApp() { onQuit?() }
 }

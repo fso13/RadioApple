@@ -32,6 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             environment.player.togglePlayPause()
         }
         statusItem.onStop = { [weak environment] in environment?.player.stop() }
+        statusItem.onCheckForUpdates = { UpdateService.shared.checkForUpdates() }
         statusItem.onQuit = { NSApp.terminate(nil) }
         statusItemController = statusItem
 
@@ -79,6 +80,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         true
     }
 
+    @objc private func checkForUpdates() {
+        UpdateService.shared.checkForUpdates()
+    }
+
     /// LSUIElement apps have no visible menu bar, but a main menu is still needed
     /// for the standard editing key equivalents (⌘C / ⌘V / ⌘A in text fields).
     private func configureMainMenu() {
@@ -87,6 +92,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         mainMenu.addItem(appItem)
         let appMenu = NSMenu()
+        let updates = NSMenuItem(
+            title: "Проверить обновления…",
+            action: #selector(checkForUpdates),
+            keyEquivalent: ""
+        )
+        updates.target = self
+        appMenu.addItem(updates)
+        appMenu.addItem(.separator())
         appMenu.addItem(
             withTitle: "Завершить RadioMac",
             action: #selector(NSApplication.terminate(_:)),

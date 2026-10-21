@@ -29,6 +29,7 @@ struct RootView: View {
     @ObservedObject var alarm: AlarmService
     @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
+    let updates: UpdateService
     @ObservedObject var toasts: ToastCenter
 
     let onClose: () -> Void
@@ -58,6 +59,7 @@ struct RootView: View {
                         alarm: alarm,
                         lastFm: lastFm,
                         diagnostics: diagnostics,
+                        updates: updates,
                         library: library,
                         toasts: toasts,
                         onBack: { router.route = .main },

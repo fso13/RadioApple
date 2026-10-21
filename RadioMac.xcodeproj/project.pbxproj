@@ -6,71 +6,73 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B20000000000000000000101 /* AppDelegate.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* AppDelegate.swift */; };
-		B20000000000000000000102 /* DefaultStations.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* DefaultStations.swift */; };
-		B20000000000000000000103 /* HelpGuide.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000003 /* HelpGuide.swift */; };
-		B20000000000000000000104 /* AppRuntime.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* AppRuntime.swift */; };
-		B20000000000000000000105 /* RadioIntents.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000005 /* RadioIntents.swift */; };
-		B20000000000000000000106 /* RadioURLCommand.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* RadioURLCommand.swift */; };
-		B20000000000000000000107 /* AlarmSettings.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000007 /* AlarmSettings.swift */; };
-		B20000000000000000000108 /* EqualizerPreset.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000008 /* EqualizerPreset.swift */; };
-		B20000000000000000000109 /* NowPlaying.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000009 /* NowPlaying.swift */; };
-		B20000000000000000000110 /* RadioStation.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000010 /* RadioStation.swift */; };
-		B20000000000000000000111 /* StreamInfo.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000011 /* StreamInfo.swift */; };
-		B20000000000000000000112 /* RadioMacApp.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000012 /* RadioMacApp.swift */; };
-		B20000000000000000000113 /* AVAudioMixTap.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000013 /* AVAudioMixTap.swift */; };
-		B20000000000000000000114 /* AlarmService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000014 /* AlarmService.swift */; };
-		B20000000000000000000115 /* AppSettings.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000015 /* AppSettings.swift */; };
-		B20000000000000000000116 /* DiagnosticsService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000016 /* DiagnosticsService.swift */; };
-		B20000000000000000000117 /* DiagnosticsStore.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000017 /* DiagnosticsStore.swift */; };
-		B20000000000000000000118 /* EqualizerService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000018 /* EqualizerService.swift */; };
-		B20000000000000000000119 /* HLSMetadataDelegate.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000019 /* HLSMetadataDelegate.swift */; };
-		B20000000000000000000120 /* ICYMetadataReader.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000020 /* ICYMetadataReader.swift */; };
-		B20000000000000000000121 /* LastFmClient.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000021 /* LastFmClient.swift */; };
-		B20000000000000000000122 /* LastFmConfig.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000022 /* LastFmConfig.swift */; };
-		B20000000000000000000123 /* LastFmCredentialStore.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000023 /* LastFmCredentialStore.swift */; };
-		B20000000000000000000124 /* LastFmService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000024 /* LastFmService.swift */; };
-		B20000000000000000000125 /* LaunchAtLogin.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000025 /* LaunchAtLogin.swift */; };
-		B20000000000000000000126 /* LogoResolver.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000026 /* LogoResolver.swift */; };
-		B20000000000000000000127 /* NativeAudioEngine.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000027 /* NativeAudioEngine.swift */; };
-		B20000000000000000000128 /* NativeEqualizer.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000028 /* NativeEqualizer.swift */; };
-		B20000000000000000000129 /* NowPlayingCenter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000029 /* NowPlayingCenter.swift */; };
-		B20000000000000000000130 /* NowPlayingLookup.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000030 /* NowPlayingLookup.swift */; };
-		B20000000000000000000131 /* PlaybackState.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000031 /* PlaybackState.swift */; };
-		B20000000000000000000132 /* Preferences.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000032 /* Preferences.swift */; };
-		B20000000000000000000133 /* RadioBrowserService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000033 /* RadioBrowserService.swift */; };
-		B20000000000000000000134 /* RadioPlayerService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000034 /* RadioPlayerService.swift */; };
-		B20000000000000000000135 /* ReconnectPolicy.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000035 /* ReconnectPolicy.swift */; };
-		B20000000000000000000136 /* StationLibrary.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000036 /* StationLibrary.swift */; };
-		B20000000000000000000137 /* StationTransfer.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000037 /* StationTransfer.swift */; };
-		B20000000000000000000138 /* ThemeService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000038 /* ThemeService.swift */; };
-		B20000000000000000000139 /* BrandMark.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000039 /* BrandMark.swift */; };
-		B20000000000000000000140 /* Components.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000040 /* Components.swift */; };
-		B20000000000000000000141 /* DesignSystem.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000041 /* DesignSystem.swift */; };
-		B20000000000000000000142 /* DiagnosticsView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000042 /* DiagnosticsView.swift */; };
-		B20000000000000000000143 /* EqualizerView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000043 /* EqualizerView.swift */; };
-		B20000000000000000000144 /* HelpView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000044 /* HelpView.swift */; };
-		B20000000000000000000145 /* ImageCache.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000045 /* ImageCache.swift */; };
-		B20000000000000000000146 /* LastFmSetupView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000046 /* LastFmSetupView.swift */; };
-		B20000000000000000000147 /* MainView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000047 /* MainView.swift */; };
-		B20000000000000000000148 /* Palette.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000048 /* Palette.swift */; };
-		B20000000000000000000149 /* PlayerBar.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000049 /* PlayerBar.swift */; };
-		B20000000000000000000150 /* RadioBrowserView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000050 /* RadioBrowserView.swift */; };
-		B20000000000000000000151 /* SettingsView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000051 /* SettingsView.swift */; };
-		B20000000000000000000152 /* Sidebar.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000052 /* Sidebar.swift */; };
-		B20000000000000000000153 /* StationEditorView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000053 /* StationEditorView.swift */; };
-		B20000000000000000000154 /* StationLogo.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000054 /* StationLogo.swift */; };
-		B20000000000000000000155 /* StationRow.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000055 /* StationRow.swift */; };
-		B20000000000000000000156 /* StationTransferView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000056 /* StationTransferView.swift */; };
-		B20000000000000000000157 /* DebugHarness.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000057 /* DebugHarness.swift */; };
-		B20000000000000000000158 /* DebugLog.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000058 /* DebugLog.swift */; };
-		B20000000000000000000159 /* KeyboardRouter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000059 /* KeyboardRouter.swift */; };
-		B20000000000000000000160 /* MainViewModel.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000060 /* MainViewModel.swift */; };
-		B20000000000000000000161 /* MainWindowController.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000061 /* MainWindowController.swift */; };
-		B20000000000000000000162 /* StatusItemController.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000062 /* StatusItemController.swift */; };
-		B20000000000000000000163 /* WindowRouter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000063 /* WindowRouter.swift */; };
-		B20000000000000000000164 /* RadioMacLogicTests.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000064 /* RadioMacLogicTests.swift */; };
-		B20000000000000000000165 /* Assets.xcassets in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000065 /* Assets.xcassets */; };
+		B20000000000000000000105 /* AppDelegate.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000001 /* AppDelegate.swift */; };
+		B20000000000000000000106 /* DefaultStations.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000002 /* DefaultStations.swift */; };
+		B20000000000000000000107 /* HelpGuide.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000003 /* HelpGuide.swift */; };
+		B20000000000000000000108 /* AppRuntime.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000004 /* AppRuntime.swift */; };
+		B20000000000000000000109 /* RadioIntents.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000005 /* RadioIntents.swift */; };
+		B20000000000000000000110 /* RadioURLCommand.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000006 /* RadioURLCommand.swift */; };
+		B20000000000000000000111 /* AlarmSettings.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000007 /* AlarmSettings.swift */; };
+		B20000000000000000000112 /* EqualizerPreset.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000008 /* EqualizerPreset.swift */; };
+		B20000000000000000000113 /* NowPlaying.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000009 /* NowPlaying.swift */; };
+		B20000000000000000000114 /* RadioStation.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000010 /* RadioStation.swift */; };
+		B20000000000000000000115 /* StreamInfo.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000011 /* StreamInfo.swift */; };
+		B20000000000000000000116 /* RadioMacApp.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000012 /* RadioMacApp.swift */; };
+		B20000000000000000000117 /* AVAudioMixTap.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000013 /* AVAudioMixTap.swift */; };
+		B20000000000000000000118 /* AlarmService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000014 /* AlarmService.swift */; };
+		B20000000000000000000119 /* AppSettings.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000015 /* AppSettings.swift */; };
+		B20000000000000000000120 /* DiagnosticsService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000016 /* DiagnosticsService.swift */; };
+		B20000000000000000000121 /* DiagnosticsStore.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000017 /* DiagnosticsStore.swift */; };
+		B20000000000000000000122 /* EqualizerService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000018 /* EqualizerService.swift */; };
+		B20000000000000000000123 /* HLSMetadataDelegate.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000019 /* HLSMetadataDelegate.swift */; };
+		B20000000000000000000124 /* ICYMetadataReader.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000020 /* ICYMetadataReader.swift */; };
+		B20000000000000000000125 /* LastFmClient.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000021 /* LastFmClient.swift */; };
+		B20000000000000000000126 /* LastFmConfig.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000022 /* LastFmConfig.swift */; };
+		B20000000000000000000127 /* LastFmCredentialStore.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000023 /* LastFmCredentialStore.swift */; };
+		B20000000000000000000128 /* LastFmService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000024 /* LastFmService.swift */; };
+		B20000000000000000000129 /* LaunchAtLogin.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000025 /* LaunchAtLogin.swift */; };
+		B20000000000000000000130 /* LogoResolver.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000026 /* LogoResolver.swift */; };
+		B20000000000000000000131 /* NativeAudioEngine.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000027 /* NativeAudioEngine.swift */; };
+		B20000000000000000000132 /* NativeEqualizer.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000028 /* NativeEqualizer.swift */; };
+		B20000000000000000000133 /* NowPlayingCenter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000029 /* NowPlayingCenter.swift */; };
+		B20000000000000000000134 /* NowPlayingLookup.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000030 /* NowPlayingLookup.swift */; };
+		B20000000000000000000135 /* PlaybackState.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000031 /* PlaybackState.swift */; };
+		B20000000000000000000136 /* Preferences.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000032 /* Preferences.swift */; };
+		B20000000000000000000137 /* RadioBrowserService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000033 /* RadioBrowserService.swift */; };
+		B20000000000000000000138 /* RadioPlayerService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000034 /* RadioPlayerService.swift */; };
+		B20000000000000000000139 /* ReconnectPolicy.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000035 /* ReconnectPolicy.swift */; };
+		B20000000000000000000140 /* StationLibrary.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000036 /* StationLibrary.swift */; };
+		B20000000000000000000141 /* StationTransfer.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000037 /* StationTransfer.swift */; };
+		B20000000000000000000142 /* ThemeService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000038 /* ThemeService.swift */; };
+		B20000000000000000000143 /* UpdateService.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000039 /* UpdateService.swift */; };
+		B20000000000000000000144 /* BrandMark.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000040 /* BrandMark.swift */; };
+		B20000000000000000000145 /* Components.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000041 /* Components.swift */; };
+		B20000000000000000000146 /* DesignSystem.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000042 /* DesignSystem.swift */; };
+		B20000000000000000000147 /* DiagnosticsView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000043 /* DiagnosticsView.swift */; };
+		B20000000000000000000148 /* EqualizerView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000044 /* EqualizerView.swift */; };
+		B20000000000000000000149 /* HelpView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000045 /* HelpView.swift */; };
+		B20000000000000000000150 /* ImageCache.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000046 /* ImageCache.swift */; };
+		B20000000000000000000151 /* LastFmSetupView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000047 /* LastFmSetupView.swift */; };
+		B20000000000000000000152 /* MainView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000048 /* MainView.swift */; };
+		B20000000000000000000153 /* Palette.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000049 /* Palette.swift */; };
+		B20000000000000000000154 /* PlayerBar.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000050 /* PlayerBar.swift */; };
+		B20000000000000000000155 /* RadioBrowserView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000051 /* RadioBrowserView.swift */; };
+		B20000000000000000000156 /* SettingsView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000052 /* SettingsView.swift */; };
+		B20000000000000000000157 /* Sidebar.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000053 /* Sidebar.swift */; };
+		B20000000000000000000158 /* StationEditorView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000054 /* StationEditorView.swift */; };
+		B20000000000000000000159 /* StationLogo.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000055 /* StationLogo.swift */; };
+		B20000000000000000000160 /* StationRow.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000056 /* StationRow.swift */; };
+		B20000000000000000000161 /* StationTransferView.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000057 /* StationTransferView.swift */; };
+		B20000000000000000000162 /* DebugHarness.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000058 /* DebugHarness.swift */; };
+		B20000000000000000000163 /* DebugLog.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000059 /* DebugLog.swift */; };
+		B20000000000000000000164 /* KeyboardRouter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000060 /* KeyboardRouter.swift */; };
+		B20000000000000000000165 /* MainViewModel.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000061 /* MainViewModel.swift */; };
+		B20000000000000000000166 /* MainWindowController.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000062 /* MainWindowController.swift */; };
+		B20000000000000000000167 /* StatusItemController.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000063 /* StatusItemController.swift */; };
+		B20000000000000000000168 /* WindowRouter.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000064 /* WindowRouter.swift */; };
+		B20000000000000000000169 /* RadioMacLogicTests.swift in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000065 /* RadioMacLogicTests.swift */; };
+		B20000000000000000000170 /* Assets.xcassets in Build */ = {isa = PBXBuildFile; fileRef = F10000000000000000000066 /* Assets.xcassets */; };
+		B20000000000000000000073 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = F10000000000000000000072 /* Sparkle */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -112,66 +114,67 @@
 		F10000000000000000000036 /* StationLibrary.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationLibrary.swift; sourceTree = "<group>"; };
 		F10000000000000000000037 /* StationTransfer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationTransfer.swift; sourceTree = "<group>"; };
 		F10000000000000000000038 /* ThemeService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThemeService.swift; sourceTree = "<group>"; };
-		F10000000000000000000039 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
-		F10000000000000000000040 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
-		F10000000000000000000041 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
-		F10000000000000000000042 /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
-		F10000000000000000000043 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
-		F10000000000000000000044 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
-		F10000000000000000000045 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
-		F10000000000000000000046 /* LastFmSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastFmSetupView.swift; sourceTree = "<group>"; };
-		F10000000000000000000047 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
-		F10000000000000000000048 /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
-		F10000000000000000000049 /* PlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBar.swift; sourceTree = "<group>"; };
-		F10000000000000000000050 /* RadioBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioBrowserView.swift; sourceTree = "<group>"; };
-		F10000000000000000000051 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		F10000000000000000000052 /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
-		F10000000000000000000053 /* StationEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationEditorView.swift; sourceTree = "<group>"; };
-		F10000000000000000000054 /* StationLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationLogo.swift; sourceTree = "<group>"; };
-		F10000000000000000000055 /* StationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationRow.swift; sourceTree = "<group>"; };
-		F10000000000000000000056 /* StationTransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationTransferView.swift; sourceTree = "<group>"; };
-		F10000000000000000000057 /* DebugHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHarness.swift; sourceTree = "<group>"; };
-		F10000000000000000000058 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
-		F10000000000000000000059 /* KeyboardRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardRouter.swift; sourceTree = "<group>"; };
-		F10000000000000000000060 /* MainViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewModel.swift; sourceTree = "<group>"; };
-		F10000000000000000000061 /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
-		F10000000000000000000062 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
-		F10000000000000000000063 /* WindowRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRouter.swift; sourceTree = "<group>"; };
-		F10000000000000000000064 /* RadioMacLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioMacLogicTests.swift; sourceTree = "<group>"; };
-		F10000000000000000000065 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		F10000000000000000000066 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		F10000000000000000000067 /* RadioMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RadioMac.entitlements; sourceTree = "<group>"; };
-		F10000000000000000000073 /* RadioMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RadioMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		F10000000000000000000075 /* RadioMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RadioMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F10000000000000000000039 /* UpdateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateService.swift; sourceTree = "<group>"; };
+		F10000000000000000000040 /* BrandMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrandMark.swift; sourceTree = "<group>"; };
+		F10000000000000000000041 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
+		F10000000000000000000042 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		F10000000000000000000043 /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
+		F10000000000000000000044 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
+		F10000000000000000000045 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
+		F10000000000000000000046 /* ImageCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCache.swift; sourceTree = "<group>"; };
+		F10000000000000000000047 /* LastFmSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LastFmSetupView.swift; sourceTree = "<group>"; };
+		F10000000000000000000048 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
+		F10000000000000000000049 /* Palette.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Palette.swift; sourceTree = "<group>"; };
+		F10000000000000000000050 /* PlayerBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerBar.swift; sourceTree = "<group>"; };
+		F10000000000000000000051 /* RadioBrowserView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioBrowserView.swift; sourceTree = "<group>"; };
+		F10000000000000000000052 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		F10000000000000000000053 /* Sidebar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sidebar.swift; sourceTree = "<group>"; };
+		F10000000000000000000054 /* StationEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationEditorView.swift; sourceTree = "<group>"; };
+		F10000000000000000000055 /* StationLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationLogo.swift; sourceTree = "<group>"; };
+		F10000000000000000000056 /* StationRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationRow.swift; sourceTree = "<group>"; };
+		F10000000000000000000057 /* StationTransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StationTransferView.swift; sourceTree = "<group>"; };
+		F10000000000000000000058 /* DebugHarness.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugHarness.swift; sourceTree = "<group>"; };
+		F10000000000000000000059 /* DebugLog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLog.swift; sourceTree = "<group>"; };
+		F10000000000000000000060 /* KeyboardRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeyboardRouter.swift; sourceTree = "<group>"; };
+		F10000000000000000000061 /* MainViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewModel.swift; sourceTree = "<group>"; };
+		F10000000000000000000062 /* MainWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainWindowController.swift; sourceTree = "<group>"; };
+		F10000000000000000000063 /* StatusItemController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusItemController.swift; sourceTree = "<group>"; };
+		F10000000000000000000064 /* WindowRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowRouter.swift; sourceTree = "<group>"; };
+		F10000000000000000000065 /* RadioMacLogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RadioMacLogicTests.swift; sourceTree = "<group>"; };
+		F10000000000000000000066 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		F10000000000000000000067 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		F10000000000000000000068 /* RadioMac.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = RadioMac.entitlements; sourceTree = "<group>"; };
+		F10000000000000000000077 /* RadioMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RadioMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F10000000000000000000079 /* RadioMacTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RadioMacTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		A30000000000000000000070 = {
+		A30000000000000000000074 = {
 			isa = PBXGroup;
 			children = (
-				A30000000000000000000071 /* RadioMac */,
-				A30000000000000000000076 /* RadioMacTests */,
-				A30000000000000000000072 /* Products */,
+				A30000000000000000000075 /* RadioMac */,
+				A30000000000000000000080 /* RadioMacTests */,
+				A30000000000000000000076 /* Products */,
 			);
 			sourceTree = "<group>";
 		};
-		A30000000000000000000071 = {
+		A30000000000000000000075 = {
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000001 /* AppDelegate.swift */,
 				F10000000000000000000012 /* RadioMacApp.swift */,
-				A30000000000000000000085 /* Models */,
-				A30000000000000000000086 /* Data */,
-				A30000000000000000000087 /* Services */,
-				A30000000000000000000088 /* Intents */,
-				A30000000000000000000089 /* UI */,
-				A30000000000000000000090 /* Window */,
-				A30000000000000000000091 /* Resources */,
+				A30000000000000000000089 /* Models */,
+				A30000000000000000000090 /* Data */,
+				A30000000000000000000091 /* Services */,
+				A30000000000000000000092 /* Intents */,
+				A30000000000000000000093 /* UI */,
+				A30000000000000000000094 /* Window */,
+				A30000000000000000000095 /* Resources */,
 			);
 			path = RadioMac;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000085 = {
+		A30000000000000000000089 = {
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000007 /* AlarmSettings.swift */,
@@ -183,7 +186,7 @@
 			path = Models;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000086 = {
+		A30000000000000000000090 = {
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000002 /* DefaultStations.swift */,
@@ -192,7 +195,7 @@
 			path = Data;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000087 = {
+		A30000000000000000000091 = {
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000013 /* AVAudioMixTap.swift */,
@@ -221,11 +224,12 @@
 				F10000000000000000000036 /* StationLibrary.swift */,
 				F10000000000000000000037 /* StationTransfer.swift */,
 				F10000000000000000000038 /* ThemeService.swift */,
+				F10000000000000000000039 /* UpdateService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000088 = {
+		A30000000000000000000092 = {
 			isa = PBXGroup;
 			children = (
 				F10000000000000000000004 /* AppRuntime.swift */,
@@ -235,68 +239,68 @@
 			path = Intents;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000089 = {
+		A30000000000000000000093 = {
 			isa = PBXGroup;
 			children = (
-				F10000000000000000000039 /* BrandMark.swift */,
-				F10000000000000000000040 /* Components.swift */,
-				F10000000000000000000041 /* DesignSystem.swift */,
-				F10000000000000000000042 /* DiagnosticsView.swift */,
-				F10000000000000000000043 /* EqualizerView.swift */,
-				F10000000000000000000044 /* HelpView.swift */,
-				F10000000000000000000045 /* ImageCache.swift */,
-				F10000000000000000000046 /* LastFmSetupView.swift */,
-				F10000000000000000000047 /* MainView.swift */,
-				F10000000000000000000048 /* Palette.swift */,
-				F10000000000000000000049 /* PlayerBar.swift */,
-				F10000000000000000000050 /* RadioBrowserView.swift */,
-				F10000000000000000000051 /* SettingsView.swift */,
-				F10000000000000000000052 /* Sidebar.swift */,
-				F10000000000000000000053 /* StationEditorView.swift */,
-				F10000000000000000000054 /* StationLogo.swift */,
-				F10000000000000000000055 /* StationRow.swift */,
-				F10000000000000000000056 /* StationTransferView.swift */,
+				F10000000000000000000040 /* BrandMark.swift */,
+				F10000000000000000000041 /* Components.swift */,
+				F10000000000000000000042 /* DesignSystem.swift */,
+				F10000000000000000000043 /* DiagnosticsView.swift */,
+				F10000000000000000000044 /* EqualizerView.swift */,
+				F10000000000000000000045 /* HelpView.swift */,
+				F10000000000000000000046 /* ImageCache.swift */,
+				F10000000000000000000047 /* LastFmSetupView.swift */,
+				F10000000000000000000048 /* MainView.swift */,
+				F10000000000000000000049 /* Palette.swift */,
+				F10000000000000000000050 /* PlayerBar.swift */,
+				F10000000000000000000051 /* RadioBrowserView.swift */,
+				F10000000000000000000052 /* SettingsView.swift */,
+				F10000000000000000000053 /* Sidebar.swift */,
+				F10000000000000000000054 /* StationEditorView.swift */,
+				F10000000000000000000055 /* StationLogo.swift */,
+				F10000000000000000000056 /* StationRow.swift */,
+				F10000000000000000000057 /* StationTransferView.swift */,
 			);
 			path = UI;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000090 = {
+		A30000000000000000000094 = {
 			isa = PBXGroup;
 			children = (
-				F10000000000000000000057 /* DebugHarness.swift */,
-				F10000000000000000000058 /* DebugLog.swift */,
-				F10000000000000000000059 /* KeyboardRouter.swift */,
-				F10000000000000000000060 /* MainViewModel.swift */,
-				F10000000000000000000061 /* MainWindowController.swift */,
-				F10000000000000000000062 /* StatusItemController.swift */,
-				F10000000000000000000063 /* WindowRouter.swift */,
+				F10000000000000000000058 /* DebugHarness.swift */,
+				F10000000000000000000059 /* DebugLog.swift */,
+				F10000000000000000000060 /* KeyboardRouter.swift */,
+				F10000000000000000000061 /* MainViewModel.swift */,
+				F10000000000000000000062 /* MainWindowController.swift */,
+				F10000000000000000000063 /* StatusItemController.swift */,
+				F10000000000000000000064 /* WindowRouter.swift */,
 			);
 			path = Window;
 			sourceTree = "<group>";
 		};
-		A30000000000000000000091 = {
+		A30000000000000000000095 = {
 			isa = PBXGroup;
 			children = (
-				F10000000000000000000065 /* Assets.xcassets */,
-				F10000000000000000000066 /* Info.plist */,
-				F10000000000000000000067 /* RadioMac.entitlements */,
+				F10000000000000000000066 /* Assets.xcassets */,
+				F10000000000000000000067 /* Info.plist */,
+				F10000000000000000000068 /* RadioMac.entitlements */,
 			);
 			path = Resources;
-			sourceTree = "<group>";
-		};
-		A30000000000000000000072 = {
-			isa = PBXGroup;
-			children = (
-				F10000000000000000000073 /* RadioMac.app */,
-				F10000000000000000000075 /* RadioMacTests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		A30000000000000000000076 = {
 			isa = PBXGroup;
 			children = (
-				F10000000000000000000064 /* RadioMacLogicTests.swift */,
+				F10000000000000000000077 /* RadioMac.app */,
+				F10000000000000000000079 /* RadioMacTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A30000000000000000000080 = {
+			isa = PBXGroup;
+			children = (
+				F10000000000000000000065 /* RadioMacLogicTests.swift */,
 			);
 			path = RadioMacTests;
 			sourceTree = "<group>";
@@ -304,92 +308,95 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A70000000000000000000068 /* RadioMac */ = {
+		A70000000000000000000069 /* RadioMac */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E60000000000000000000096;
+			buildConfigurationList = E60000000000000000000100;
 			buildPhases = (
-				C40000000000000000000092 /* Sources */,
-				C40000000000000000000093 /* Frameworks */,
-				C40000000000000000000094 /* Resources */,
+				C40000000000000000000096 /* Sources */,
+				C40000000000000000000097 /* Frameworks */,
+				C40000000000000000000098 /* Resources */,
 			);
 			buildRules = ();
 			dependencies = ();
 			name = RadioMac;
 			productName = RadioMac;
-			productReference = F10000000000000000000073 /* RadioMac.app */;
+			productReference = F10000000000000000000077 /* RadioMac.app */;
+			packageProductDependencies = (
+				F10000000000000000000072 /* Sparkle */,
+			);
 			productType = "com.apple.product-type.application";
 		};
-		A70000000000000000000074 /* RadioMacTests */ = {
+		A70000000000000000000078 /* RadioMacTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = E60000000000000000000080;
+			buildConfigurationList = E60000000000000000000084;
 			buildPhases = (
-				C40000000000000000000077 /* Sources */,
-				C40000000000000000000078 /* Frameworks */,
-				C40000000000000000000079 /* Resources */,
+				C40000000000000000000081 /* Sources */,
+				C40000000000000000000082 /* Frameworks */,
+				C40000000000000000000083 /* Resources */,
 			);
 			buildRules = ();
-			dependencies = (A90000000000000000000083 /* PBXTargetDependency */,);
+			dependencies = (A90000000000000000000087 /* PBXTargetDependency */,);
 			name = RadioMacTests;
 			productName = RadioMacTests;
-			productReference = F10000000000000000000075 /* RadioMacTests.xctest */;
+			productReference = F10000000000000000000079 /* RadioMacTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
-		B80000000000000000000069 /* Project object */ = {
+		B80000000000000000000070 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1600;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
-					A70000000000000000000068 = {
+					A70000000000000000000069 = {
 						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
-			buildConfigurationList = E60000000000000000000095;
+			buildConfigurationList = E60000000000000000000099;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = ru;
 			hasScannedForEncodings = 0;
 			knownRegions = (ru, en, Base);
-			mainGroup = A30000000000000000000070;
-			productRefGroup = A30000000000000000000072;
+			mainGroup = A30000000000000000000074;
+			productRefGroup = A30000000000000000000076;
+			packageReferences = (
+				A10000000000000000000071 /* Sparkle */,
+			);
 			projectDirPath = "";
 			projectRoot = "";
-			targets = (A70000000000000000000068 /* RadioMac */, A70000000000000000000074 /* RadioMacTests */);
+			targets = (A70000000000000000000069 /* RadioMac */, A70000000000000000000078 /* RadioMacTests */);
 		};
 /* End PBXProject section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		C40000000000000000000093 = {
+		C40000000000000000000097 = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B20000000000000000000073 /* Sparkle in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 /* Begin PBXResourcesBuildPhase section */
-		C40000000000000000000094 = {
+		C40000000000000000000098 = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B20000000000000000000165,
+				B20000000000000000000170,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 /* Begin PBXSourcesBuildPhase section */
-		C40000000000000000000092 = {
+		C40000000000000000000096 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B20000000000000000000101,
-				B20000000000000000000102,
-				B20000000000000000000103,
-				B20000000000000000000104,
 				B20000000000000000000105,
 				B20000000000000000000106,
 				B20000000000000000000107,
@@ -449,26 +456,31 @@
 				B20000000000000000000161,
 				B20000000000000000000162,
 				B20000000000000000000163,
+				B20000000000000000000164,
+				B20000000000000000000165,
+				B20000000000000000000166,
+				B20000000000000000000167,
+				B20000000000000000000168,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		C40000000000000000000077 = {
+		C40000000000000000000081 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B20000000000000000000164,
+				B20000000000000000000169,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 /* Begin PBXContainerItemProxy section */
-		B90000000000000000000084 = {isa = PBXContainerItemProxy; containerPortal = B80000000000000000000069; proxyType = 1; remoteGlobalIDString = A70000000000000000000068; remoteInfo = RadioMac; };
+		B90000000000000000000088 = {isa = PBXContainerItemProxy; containerPortal = B80000000000000000000070; proxyType = 1; remoteGlobalIDString = A70000000000000000000069; remoteInfo = RadioMac; };
 /* End PBXContainerItemProxy section */
 /* Begin PBXTargetDependency section */
-		A90000000000000000000083 = {isa = PBXTargetDependency; target = A70000000000000000000068; targetProxy = B90000000000000000000084; };
+		A90000000000000000000087 = {isa = PBXTargetDependency; target = A70000000000000000000069; targetProxy = B90000000000000000000088; };
 /* End PBXTargetDependency section */
 /* Begin PBXResourcesBuildPhase section (tests) */
-		C40000000000000000000079 = {
+		C40000000000000000000083 = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -477,7 +489,7 @@
 		};
 /* End PBXResourcesBuildPhase section (tests) */
 /* Begin PBXFrameworksBuildPhase section (tests) */
-		C40000000000000000000078 = {
+		C40000000000000000000082 = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -486,8 +498,27 @@
 		};
 /* End PBXFrameworksBuildPhase section (tests) */
 
+/* Begin XCRemoteSwiftPackageReference section */
+		A10000000000000000000071 /* Sparkle */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.9.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F10000000000000000000072 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000000000000000000071 /* Sparkle */;
+			productName = Sparkle;
+		};
+/* End XCSwiftPackageProductDependency section */
+
 /* Begin XCBuildConfiguration section */
-		D50000000000000000000097 /* Debug */ = {
+		D50000000000000000000101 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -517,7 +548,7 @@
 			};
 			name = Debug;
 		};
-		D50000000000000000000098 /* Release */ = {
+		D50000000000000000000102 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
@@ -541,7 +572,7 @@
 			};
 			name = Release;
 		};
-		D50000000000000000000099 /* Debug */ = {
+		D50000000000000000000103 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -549,7 +580,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = RadioMac/Resources/Info.plist;
@@ -562,7 +593,7 @@
 					"-framework",
 					AppIntents,
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -570,7 +601,7 @@
 			};
 			name = Debug;
 		};
-		D50000000000000000000100 /* Release */ = {
+		D50000000000000000000104 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
@@ -578,7 +609,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = RadioMac/Resources/Info.plist;
@@ -591,7 +622,7 @@
 					"-framework",
 					AppIntents,
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_STRICT_CONCURRENCY = complete;
@@ -599,7 +630,7 @@
 			};
 			name = Release;
 		};
-		D50000000000000000000081 /* Debug */ = {
+		D50000000000000000000085 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -620,7 +651,7 @@
 			};
 			name = Debug;
 		};
-		D50000000000000000000082 /* Release */ = {
+		D50000000000000000000086 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
@@ -644,26 +675,26 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		E60000000000000000000095 /* Build configuration list for PBXProject "RadioMac" */ = {
+		E60000000000000000000099 /* Build configuration list for PBXProject "RadioMac" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (D50000000000000000000097 /* Debug */, D50000000000000000000098 /* Release */);
+			buildConfigurations = (D50000000000000000000101 /* Debug */, D50000000000000000000102 /* Release */);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E60000000000000000000096 /* Build configuration list for PBXNativeTarget "RadioMac" */ = {
+		E60000000000000000000100 /* Build configuration list for PBXNativeTarget "RadioMac" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (D50000000000000000000099 /* Debug */, D50000000000000000000100 /* Release */);
+			buildConfigurations = (D50000000000000000000103 /* Debug */, D50000000000000000000104 /* Release */);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		E60000000000000000000080 /* Build configuration list for PBXNativeTarget "RadioMacTests" */ = {
+		E60000000000000000000084 /* Build configuration list for PBXNativeTarget "RadioMacTests" */ = {
 			isa = XCConfigurationList;
-			buildConfigurations = (D50000000000000000000081 /* Debug */, D50000000000000000000082 /* Release */);
+			buildConfigurations = (D50000000000000000000085 /* Debug */, D50000000000000000000086 /* Release */);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 
 	};
-	rootObject = B80000000000000000000069;
+	rootObject = B80000000000000000000070;
 }

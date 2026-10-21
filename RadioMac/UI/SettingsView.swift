@@ -10,6 +10,7 @@ struct SettingsView: View {
     @ObservedObject var alarm: AlarmService
     @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
+    let updates: UpdateService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
 
@@ -237,6 +238,14 @@ struct SettingsView: View {
                         .foregroundStyle(palette.textTertiary)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.bottom, Space.m)
+                }
+
+                section("Обновления") {
+                    SettingsRow(title: "РадиоMac \(updates.version)", subtitle: "Проверить наличие новой версии") {
+                        TextButton(title: "Проверить", systemImage: "arrow.triangle.2.circlepath") {
+                            updates.checkForUpdates()
+                        }
+                    }
                 }
 
                 section("Диагностика") {
