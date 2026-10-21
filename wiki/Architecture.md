@@ -61,6 +61,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `RadioBrowserView` | превью и добавление найденных станций без дублей |
 | `StationTransfer` | JSON/M3U/OPML, импорт и экспорт |
 | `StationTransferView` | файлы, drag-and-drop и режим добавления/замены |
+| `UpdateService` | Sparkle 2, проверка appcast и установка обновлений |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.

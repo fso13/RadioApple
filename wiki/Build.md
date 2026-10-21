@@ -127,6 +127,7 @@ Development team, для релиза — Developer ID с профилем, гд
   в ограниченной среде; собирайте через Xcode или `xcodebuild`.
 - Внешние аудиобиблиотеки не нужны: используются системные AVFoundation,
   MediaToolbox и AudioToolbox.
+- Sparkle 2 подключается как Swift Package; Xcode разрешает пакет при сборке.
 - Если Xcode просит команду разработчика, проверьте **Settings → Accounts** и
   **Signing & Capabilities**. Для локальной сборки достаточно ad-hoc подписи.
 

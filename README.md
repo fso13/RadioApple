@@ -115,6 +115,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   с сохранением избранного.
 - **Настройки станции**: смещение громкости в dB, свой EQ-пресет и автозапуск
   при старте RadioMac; сохраняются в библиотеке.
+- **Автообновление**: Sparkle 2, appcast в latest release, EdDSA-подпись и проверка
+  обновлений из приложения; ключ подписи хранится в GitHub Secrets.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -147,8 +149,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
-| **Образ** | `dist/RadioMac-1.0.1.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.0.1.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Образ** | `dist/RadioMac-1.0.2.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-1.0.2.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -223,6 +225,7 @@ RadioMac/
     StationLibrary.swift      библиотека станций, избранное, логотипы, персистентность
     RadioBrowserService.swift поиск Radio Browser
     StationTransfer.swift     JSON/M3U/OPML импорт и экспорт
+    UpdateService.swift       Sparkle 2 updater
     EqualizerService.swift    полосы, пресеты, дебаунс записи
     NowPlayingLookup.swift    SomaFM / Radio Paradise / Icecast / ICY + обложки iTunes
     LogoResolver.swift        Radio Browser и favicon-фолбэки
@@ -312,12 +315,12 @@ CodeQL собирает нативный проект через autobuild: Flut
 
 ### Как выпустить релиз
 
-1. Добавьте в `CHANGELOG.md` секцию `## [1.0.1] — 2026-11-01`.
+1. Добавьте в `CHANGELOG.md` секцию `## [1.0.2] — 2026-10-21`.
 2. Поставьте тег и отправьте его:
 
    ```bash
-   git tag v1.0.1
-   git push origin v1.0.1
+   git tag v1.0.2
+   git push origin v1.0.2
    ```
 
 3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,

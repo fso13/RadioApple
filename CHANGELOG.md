@@ -43,6 +43,19 @@
   (в скане OSV — 18 записей с учётом повторов). Инструмент используется только
   для генерации иконок и фона установщика, в приложение не входит.
 
+## [1.0.2] — 2026-10-21
+
+### Добавлено
+- Sparkle 2: appcast, EdDSA-подпись, проверка обновлений в приложении и CI,
+  публикация appcast в latest release.
+- App Intents/Shortcuts и URL-схема `radiomac://`.
+- Radio Browser: поиск, превью, добавление без дублей.
+- Импорт/экспорт JSON, M3U и OPML с drag-and-drop.
+- Настройки на станцию: громкость, EQ-пресет, автозапуск.
+
+### Исправлено
+- HLS timed metadata, автопереподключение, нативный EQ AVPlayer, удаление BASS.
+
 ## [1.0.1] — 2026-10-21
 
 ### Добавлено
@@ -87,6 +100,7 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/fso13/RadioApple/releases/tag/v1.0.2
 [1.0.1]: https://github.com/fso13/RadioApple/releases/tag/v1.0.1
 [1.0.0]: https://github.com/fso13/RadioApple/releases/tag/v1.0.0

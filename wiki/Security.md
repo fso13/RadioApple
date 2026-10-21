@@ -80,6 +80,12 @@ xattr -dr com.apple.quarantine /Applications/RadioMac.app
 импортируется во временную keychain, файл `.p12` удаляется после импорта. Секреты
 не печатаются и не попадают в артефакты. Без секретов релиз собирается ad-hoc.
 
+## Автообновление
+
+Публичный Ed25519-ключ Sparkle лежит в Info.plist, приватный — только в GitHub
+Secrets. Appcast и DMG подписываются в release workflow; приложение проверяет
+подпись перед установкой. Канал обновлений — latest release, без Pages.
+
 ## Last.fm
 
 Скробблинг выключен по умолчанию. API-ключи приложения приходят из GitHub Secrets

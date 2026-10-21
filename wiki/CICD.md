@@ -13,6 +13,7 @@
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, сверка `.xcodeproj`, сайт и вики |
 | `codeql.yml` | push/PR, расписание | CodeQL для Swift |
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype |
+| Sparkle | релиз | appcast + EdDSA, `SPARKLE_PRIVATE_KEY` |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
 > **CodeQL и Flutter-папка.** В репозитории остаётся Flutter-версия с `macos/Podfile`.
