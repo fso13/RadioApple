@@ -55,6 +55,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.arguments.contains("-showWindow") {
             windowController.showMainWindow()
         }
+        if ProcessInfo.processInfo.arguments.contains("-showSettings") {
+            windowController.showSettings()
+        }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

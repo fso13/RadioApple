@@ -306,6 +306,7 @@ struct SearchLine: View {
                 .font(Typeface.callout)
                 .foregroundStyle(palette.textPrimary)
                 .focused($isFocused)
+                .accessibilityIdentifier("station-search")
 
                 if text.isEmpty {
                     Text("⌘F")
