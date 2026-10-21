@@ -22,7 +22,9 @@
 - Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи и сессия
   в Keychain, отключение одной кнопкой.
 - Audio engine: AVPlayer для HLS и выбор «Авто / BASS / AVPlayer»; BASS остаётся
-  для MP3/AAC, ICY и эквалайзера.
+  для MP3/AAC и ICY.
+- Эквалайзер: нативный 10-полосный Biquad DSP в BASS-потоке как fallback вместо
+  BASS_FX (ошибка 41 на macOS 27 / Apple Silicon).
 
 ### Безопасность
 

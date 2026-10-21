@@ -38,6 +38,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | Сервис | Ответственность |
 | --- | --- |
 | `RadioEngine` | единственный владелец BASS-хэндлов, потоки, ICY, стоп/пауза, EQ |
+| `NativeEqualizer` | 10-полосный Biquad DSP в BASS-колбэке, fallback без BASS_FX |
 | `NativeAudioEngine` | AVPlayer для HLS: play/pause/stop, громкость, KVO-состояния |
 | `RadioPlayerService` | состояние плеера, громкость, опрос метаданных, Now Playing |
 | `StationLibrary` | каталог, избранное, добавление/удаление, логотипы, персистентность |
