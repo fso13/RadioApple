@@ -31,6 +31,8 @@
   `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
 - Radio Browser: поиск по названию/жанру/стране, превью, добавление в библиотеку
   и защита от дублей по URL/external ID.
+- Импорт/экспорт JSON, M3U и OPML с drag-and-drop, режимами add/replace и
+  сохранением избранного.
 - Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`
   и теге `flutter-legacy-1.0`. CodeQL переведён на autobuild.
 

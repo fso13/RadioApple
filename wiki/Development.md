@@ -10,7 +10,7 @@ RadioMac/                 исходники приложения
   UI/                     SwiftUI-экраны и дизайн-система
   Window/                 статус-итем, панель, клавиатура, роутинг, debug-харнесс
   Resources/              Info.plist, entitlements, ассеты
-RadioMacTests/            29 логических тестов
+RadioMacTests/            33 логических теста
 site/                     статический сайт для GitHub Pages
 wiki/                     исходники этой вики
 scripts/                  сборка, установка, генерация проекта, проверки
