@@ -9,6 +9,7 @@ import Foundation
 @MainActor
 final class NativeAudioEngine {
     var onStateChange: (@MainActor (RadioPlaybackState) -> Void)?
+    var onMetadata: (@MainActor (String) -> Void)?
     var onPlaybackError: (@MainActor (String) -> Void)?
 
     private var player: AVPlayer?
@@ -20,6 +21,8 @@ final class NativeAudioEngine {
 
     private var wantsPlayback = false
     private var volume: Double = 0.8
+    private var currentURL: URL?
+    private let icyReader = ICYMetadataReader()
 
     func play(url: URL) {
         stopObservers()
@@ -33,7 +36,13 @@ final class NativeAudioEngine {
 
         self.item = item
         self.player = player
+        currentURL = url
         wantsPlayback = true
+
+        icyReader.onTitle = { [weak self] raw in
+            Task { @MainActor in self?.onMetadata?(raw) }
+        }
+        startICYIfNeeded()
 
         observe(item: item, player: player)
         onStateChange?(.loading)
@@ -42,6 +51,7 @@ final class NativeAudioEngine {
 
     func pause() {
         wantsPlayback = false
+        icyReader.stop()
         player?.pause()
         onStateChange?(.paused)
     }
@@ -49,12 +59,15 @@ final class NativeAudioEngine {
     func resume() {
         guard player != nil else { return }
         wantsPlayback = true
+        startICYIfNeeded()
         onStateChange?(.loading)
         player?.play()
     }
 
     func stop() {
         wantsPlayback = false
+        icyReader.stop()
+        currentURL = nil
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
@@ -66,6 +79,16 @@ final class NativeAudioEngine {
     func setVolume(_ value: Double) {
         volume = min(1, max(0, value))
         player?.volume = Float(volume)
+    }
+
+    private func startICYIfNeeded() {
+        guard let currentURL,
+              !currentURL.absoluteString.lowercased().contains(".m3u8")
+        else {
+            icyReader.stop()
+            return
+        }
+        icyReader.start(url: currentURL)
     }
 
     /// AVPlayer does not expose BASS-style stream properties synchronously.
@@ -146,6 +169,7 @@ final class NativeAudioEngine {
             }
         case .failed:
             wantsPlayback = false
+            icyReader.stop()
             onPlaybackError?(message ?? "Не удалось открыть поток.")
         case .unknown:
             break
@@ -169,11 +193,13 @@ final class NativeAudioEngine {
 
     private func handleFailure(_ message: String) {
         wantsPlayback = false
+        icyReader.stop()
         onPlaybackError?(message)
     }
 
     private func handleEnded() {
         wantsPlayback = false
+        icyReader.stop()
         onStateChange?(.idle)
     }
 }

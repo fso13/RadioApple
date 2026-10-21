@@ -232,6 +232,12 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testICYMetadataParsing() {
+        let bytes = Array("StreamTitle='Artist - Song';".utf8)
+        XCTAssertEqual(ICYMetadataReader.title(from: bytes), "Artist - Song")
+        XCTAssertNil(ICYMetadataReader.title(from: []))
+    }
+
     func testNativeEqualizerIdentityAndBoost() {
         let equalizer = NativeEqualizer()
         equalizer.configure(
@@ -270,7 +276,9 @@ final class RadioMacLogicTests: XCTestCase {
         let hls = URL(string: "https://example.com/live.m3u8")!
         let mp3 = URL(string: "https://example.com/live.mp3")!
 
+        let aac = URL(string: "https://example.com/live.aacp")!
         XCTAssertTrue(AudioEnginePreference.automatic.prefersNative(for: hls))
+        XCTAssertTrue(AudioEnginePreference.automatic.prefersNative(for: aac))
         XCTAssertFalse(AudioEnginePreference.automatic.prefersNative(for: mp3))
         XCTAssertTrue(AudioEnginePreference.native.prefersNative(for: mp3))
         XCTAssertFalse(AudioEnginePreference.bass.prefersNative(for: hls))

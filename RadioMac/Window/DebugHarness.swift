@@ -37,6 +37,15 @@ enum DebugHarness {
         if let name = value(after: "-nativetest", in: arguments) {
             runNativeTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name),
+                stationID: "rp-soundpark",
+                environment: environment
+            )
+            return true
+        }
+        if let name = value(after: "-nativeaac", in: arguments) {
+            runNativeTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                stationID: "rock-maximum",
                 environment: environment
             )
             return true
@@ -183,7 +192,7 @@ enum DebugHarness {
         }
     }
 
-    private static func runNativeTest(output: URL, environment: AppEnvironment) {
+    private static func runNativeTest(output: URL, stationID: String, environment: AppEnvironment) {
         let player = environment.player
         let previousEngine = environment.settings.audioEnginePreference
         environment.settings.setAudioEnginePreference(.native)
@@ -202,7 +211,14 @@ enum DebugHarness {
             }
             .store(in: &playtestCancellables)
 
-        guard let station = environment.library.byID("rp-soundpark")
+        player.$nowPlaying
+            .compactMap { $0 }
+            .sink { track in
+                lines.append("[\(stamp())] track=\(track.trayLine)")
+            }
+            .store(in: &playtestCancellables)
+
+        guard let station = environment.library.byID(stationID)
             ?? environment.library.stations.first(where: { $0.url.contains(".m3u8") })
         else {
             try? "no HLS station\n".write(to: output, atomically: true, encoding: .utf8)

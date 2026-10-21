@@ -19,7 +19,7 @@ enum AudioEnginePreference: String, CaseIterable, Identifiable, Hashable, Sendab
     var detail: String {
         switch self {
         case .automatic:
-            return "HLS — через AVPlayer, остальные потоки — через BASS."
+            return "HLS и AAC — через AVPlayer, MP3 — через BASS."
         case .bass:
             return "BASS для всех потоков; эквалайзер работает."
         case .native:
@@ -30,7 +30,11 @@ enum AudioEnginePreference: String, CaseIterable, Identifiable, Hashable, Sendab
     func prefersNative(for url: URL) -> Bool {
         switch self {
         case .automatic:
-            return url.absoluteString.lowercased().contains(".m3u8")
+            let value = url.absoluteString.lowercased()
+            return value.contains(".m3u8")
+                || value.contains(".aac")
+                || value.contains(".m4a")
+                || value.contains("/aac/")
         case .native:
             return true
         case .bass:

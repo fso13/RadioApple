@@ -100,6 +100,10 @@ final class RadioPlayerService: ObservableObject {
         nativeEngine.onStateChange = { [weak self] state in
             self?.handleEngineState(state, from: .native)
         }
+        nativeEngine.onMetadata = { [weak self] raw in
+            guard let self, self.activeEngine == .native else { return }
+            self.handleICYTitle(raw)
+        }
         nativeEngine.onPlaybackError = { [weak self] message in
             guard let self, self.activeEngine == .native else { return }
             self.errorMessage = message
