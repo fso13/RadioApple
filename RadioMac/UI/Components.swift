@@ -446,19 +446,41 @@ struct ToggleRow: View {
     var subtitle: String?
     let isOn: Bool
     var isEnabled: Bool = true
-    let onChange: @MainActor @Sendable (Bool) -> Void
+    let onChange: @MainActor (Bool) -> Void
 
     @Environment(\.palette) private var palette
+    @State private var value: Bool
+
+    init(
+        title: String,
+        subtitle: String? = nil,
+        isOn: Bool,
+        isEnabled: Bool = true,
+        onChange: @escaping @MainActor (Bool) -> Void
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.isOn = isOn
+        self.isEnabled = isEnabled
+        self.onChange = onChange
+        _value = State(initialValue: isOn)
+    }
 
     var body: some View {
         SettingsRow(title: title, subtitle: subtitle) {
-            Toggle("", isOn: Binding(get: { isOn }, set: onChange))
+            Toggle("", isOn: $value)
                 .labelsHidden()
                 .toggleStyle(.switch)
                 .tint(palette.accentFill)
                 .controlSize(.small)
                 .disabled(!isEnabled)
                 .accessibilityLabel(title)
+                .onChange(of: value) { _, newValue in
+                    onChange(newValue)
+                }
+                .onChange(of: isOn) { _, newValue in
+                    if value != newValue { value = newValue }
+                }
         }
         .opacity(isEnabled ? 1 : 0.45)
     }
