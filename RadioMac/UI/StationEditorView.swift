@@ -7,6 +7,9 @@ struct StationDraft {
     var comment: String
     var group: String
     var logoURL: String
+    var volumeOffsetDB: Double
+    var eqPresetID: String?
+    var autoplay: Bool
 }
 
 /// Add/edit station sheet in the same editorial language as the main page.
@@ -24,6 +27,9 @@ struct StationEditorView: View {
     @State private var comment: String
     @State private var group: String
     @State private var logoURL: String
+    @State private var volumeOffsetDB: Double
+    @State private var eqPresetID: String?
+    @State private var autoplay: Bool
 
     init(existing: RadioStation?, genres: [String], onSave: @escaping (StationDraft) -> Void) {
         self.existing = existing
@@ -35,6 +41,9 @@ struct StationEditorView: View {
         _comment = State(initialValue: existing?.comment ?? "")
         _group = State(initialValue: existing?.group ?? "")
         _logoURL = State(initialValue: existing?.logoURL ?? "")
+        _volumeOffsetDB = State(initialValue: existing?.volumeOffsetDB ?? 0)
+        _eqPresetID = State(initialValue: existing?.eqPresetID)
+        _autoplay = State(initialValue: existing?.autoplay ?? false)
     }
 
     private var isValid: Bool {
@@ -97,6 +106,8 @@ struct StationEditorView: View {
                         isMonospaced: true,
                         footnote: "Если пусто — логотип найдётся по ссылке потока."
                     )
+
+                    stationTuning
                 }
                 .padding(.vertical, Space.xs)
             }
@@ -116,7 +127,10 @@ struct StationEditorView: View {
                             genre: genre,
                             comment: comment,
                             group: group,
-                            logoURL: logoURL
+                            logoURL: logoURL,
+                            volumeOffsetDB: volumeOffsetDB,
+                            eqPresetID: eqPresetID,
+                            autoplay: autoplay
                         )
                     )
                     dismiss()
@@ -124,8 +138,49 @@ struct StationEditorView: View {
             }
         }
         .padding(Space.xxl + 2)
-        .frame(width: 520, height: 620)
+        .frame(width: 540, height: 720)
         .background(palette.surface)
+    }
+
+    private var stationTuning: some View {
+        VStack(alignment: .leading, spacing: Space.m) {
+            Text("НАСТРОЙКИ СТАНЦИИ")
+                .font(Typeface.overline)
+                .tracking(1.2)
+                .foregroundStyle(palette.textTertiary)
+
+            HStack(spacing: Space.m) {
+                Text("Смещение громкости")
+                    .font(Typeface.caption)
+                    .foregroundStyle(palette.textSecondary)
+                Slider(value: $volumeOffsetDB, in: -12...12, step: 1)
+                Text(String(format: "%+.0f dB", volumeOffsetDB))
+                    .font(Typeface.mono)
+                    .foregroundStyle(palette.textPrimary)
+                    .frame(width: 54, alignment: .trailing)
+            }
+
+            HStack(spacing: Space.m) {
+                Text("EQ-пресет")
+                    .font(Typeface.caption)
+                    .foregroundStyle(palette.textSecondary)
+                Picker("", selection: $eqPresetID) {
+                    Text("Как в приложении").tag(String?.none)
+                    ForEach(EqualizerCatalog.presets.filter { $0.id != EqualizerCatalog.customID }) { preset in
+                        Text(preset.label).tag(Optional(preset.id))
+                    }
+                }
+                .labelsHidden()
+                .frame(maxWidth: 220)
+                Spacer()
+            }
+
+            Toggle("Запускать при старте RadioMac", isOn: $autoplay)
+                .toggleStyle(.switch)
+                .font(Typeface.caption)
+                .foregroundStyle(palette.textSecondary)
+        }
+        .padding(.top, Space.xs)
     }
 
     private var genreChoices: some View {

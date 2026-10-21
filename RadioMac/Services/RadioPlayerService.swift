@@ -89,6 +89,8 @@ final class RadioPlayerService: ObservableObject {
            let id = settings.lastStationID,
            let station = library.byID(id) {
             play(station)
+        } else if let autoplay = library.stations.first(where: { $0.autoplay && $0.streamURL != nil }) {
+            play(autoplay)
         }
     }
 
@@ -136,6 +138,10 @@ final class RadioPlayerService: ObservableObject {
         if persist {
             settings.setLastStationID(station.id)
         }
+        if let presetID = station.eqPresetID,
+           EqualizerCatalog.presets.contains(where: { $0.id == presetID }) {
+            equalizer.applyPreset(presetID)
+        }
         beginPlayback(station)
     }
 
@@ -154,7 +160,7 @@ final class RadioPlayerService: ObservableObject {
 
         nativeEngine.stop(emitIdle: false)
         activeEngineName = "AVPlayer"
-        nativeEngine.setVolume(volume)
+        nativeEngine.setVolume(effectiveVolume(for: station))
         nativeEngine.play(url: url)
     }
 
@@ -224,8 +230,14 @@ final class RadioPlayerService: ObservableObject {
 
     func setVolume(_ value: Double) {
         volume = min(1, max(0, value))
-        nativeEngine.setVolume(volume)
+        nativeEngine.setVolume(effectiveVolume(for: station))
         settings.setVolume(volume)
+    }
+
+    private func effectiveVolume(for station: RadioStation?) -> Double {
+        let offset = station?.volumeOffsetDB ?? 0
+        let multiplier = pow(10, offset / 20)
+        return min(1, max(0, volume * multiplier))
     }
 
     func consumeError() -> String? {

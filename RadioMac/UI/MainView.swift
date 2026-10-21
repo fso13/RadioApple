@@ -371,6 +371,9 @@ struct MainView: View {
             station.comment = draft.comment.isEmpty ? nil : draft.comment
             station.group = draft.group.isEmpty ? nil : draft.group
             station.logoURL = draft.logoURL.isEmpty ? nil : draft.logoURL
+            station.volumeOffsetDB = draft.volumeOffsetDB
+            station.eqPresetID = draft.eqPresetID
+            station.autoplay = draft.autoplay
             library.update(station)
             toasts.show("Станция сохранена", kind: .success)
         } else {
@@ -380,7 +383,10 @@ struct MainView: View {
                 genre: draft.genre,
                 comment: draft.comment,
                 group: draft.group,
-                logoURL: draft.logoURL
+                logoURL: draft.logoURL,
+                volumeOffsetDB: draft.volumeOffsetDB,
+                eqPresetID: draft.eqPresetID,
+                autoplay: draft.autoplay
             )
             toasts.show("Станция добавлена", kind: .success)
         }

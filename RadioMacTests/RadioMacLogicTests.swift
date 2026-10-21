@@ -253,6 +253,34 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertTrue(library.isDuplicate(url: "https://example.com/live", externalID: "external-1"))
     }
 
+    func testStationSettingsPersistAndRoundTrip() throws {
+        let defaults = scratchDefaults()
+        let library = StationLibrary(defaults: defaults)
+        library.load()
+        let station = library.add(
+            name: "Tuned",
+            url: "https://example.com/tuned",
+            genre: "jazz",
+            volumeOffsetDB: 6,
+            eqPresetID: "jazz",
+            autoplay: true
+        )
+        XCTAssertEqual(station.volumeOffsetDB, 6)
+        XCTAssertEqual(station.eqPresetID, "jazz")
+        XCTAssertTrue(station.autoplay)
+
+        let data = try JSONEncoder().encode(station)
+        let restored = try JSONDecoder().decode(RadioStation.self, from: data)
+        XCTAssertEqual(restored.volumeOffsetDB, 6)
+        XCTAssertEqual(restored.eqPresetID, "jazz")
+        XCTAssertTrue(restored.autoplay)
+
+        var updated = restored
+        updated.volumeOffsetDB = 12.5
+        library.update(updated)
+        XCTAssertEqual(library.byID(restored.id)?.volumeOffsetDB, 12)
+    }
+
     func testStationTransferM3URoundTrip() throws {
         let source = RadioStation(
             id: "m3u-1",

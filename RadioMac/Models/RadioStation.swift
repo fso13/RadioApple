@@ -13,6 +13,12 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
     var builtIn: Bool
     /// Stable identifier from an external catalog such as Radio Browser.
     var externalID: String?
+    /// Per-station loudness correction in dB (-12…+12).
+    var volumeOffsetDB: Double
+    /// Optional equalizer preset applied when this station starts.
+    var eqPresetID: String?
+    /// Start this station automatically when the app launches.
+    var autoplay: Bool
 
     init(
         id: String,
@@ -24,7 +30,10 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         logoURL: String? = nil,
         isFavorite: Bool = false,
         builtIn: Bool = false,
-        externalID: String? = nil
+        externalID: String? = nil,
+        volumeOffsetDB: Double = 0,
+        eqPresetID: String? = nil,
+        autoplay: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -36,6 +45,9 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         self.isFavorite = isFavorite
         self.builtIn = builtIn
         self.externalID = externalID
+        self.volumeOffsetDB = volumeOffsetDB
+        self.eqPresetID = eqPresetID
+        self.autoplay = autoplay
     }
 
     var hasComment: Bool {
@@ -59,7 +71,7 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
     // MARK: - JSON
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, url, genre, comment, group, logoUrl, isFavorite, builtIn, externalId
+        case id, name, url, genre, comment, group, logoUrl, isFavorite, builtIn, externalId, volumeOffset, eqPreset, autoplay
     }
 
     init(from decoder: Decoder) throws {
@@ -78,6 +90,11 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         externalID = RadioStation.emptyToNil(
             try container.decodeIfPresent(String.self, forKey: .externalId)
         )
+        volumeOffsetDB = min(12, max(-12, try container.decodeIfPresent(Double.self, forKey: .volumeOffset) ?? 0))
+        eqPresetID = RadioStation.emptyToNil(
+            try container.decodeIfPresent(String.self, forKey: .eqPreset)
+        )
+        autoplay = try container.decodeIfPresent(Bool.self, forKey: .autoplay) ?? false
     }
 
     func encode(to encoder: Encoder) throws {
@@ -92,6 +109,9 @@ struct RadioStation: Identifiable, Hashable, Codable, Sendable {
         try container.encode(isFavorite, forKey: .isFavorite)
         try container.encode(builtIn, forKey: .builtIn)
         try container.encodeIfPresent(externalID, forKey: .externalId)
+        try container.encode(volumeOffsetDB, forKey: .volumeOffset)
+        try container.encodeIfPresent(eqPresetID, forKey: .eqPreset)
+        try container.encode(autoplay, forKey: .autoplay)
     }
 
     private static func emptyToNil(_ value: String?) -> String? {

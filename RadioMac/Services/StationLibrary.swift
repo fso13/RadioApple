@@ -95,7 +95,10 @@ final class StationLibrary: ObservableObject {
         comment: String? = nil,
         group: String? = nil,
         logoURL: String? = nil,
-        externalID: String? = nil
+        externalID: String? = nil,
+        volumeOffsetDB: Double = 0,
+        eqPresetID: String? = nil,
+        autoplay: Bool = false
     ) -> RadioStation {
         let trimmedURL = url.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedExternalID = Self.emptyToNil(externalID)
@@ -113,7 +116,10 @@ final class StationLibrary: ObservableObject {
             comment: Self.emptyToNil(comment),
             group: normalizeGroup(group),
             logoURL: Self.emptyToNil(logoURL),
-            externalID: trimmedExternalID
+            externalID: trimmedExternalID,
+            volumeOffsetDB: min(12, max(-12, volumeOffsetDB)),
+            eqPresetID: Self.emptyToNil(eqPresetID),
+            autoplay: autoplay
         )
         stations.append(station)
         persist()
@@ -199,7 +205,10 @@ final class StationLibrary: ObservableObject {
                 comment: source.comment,
                 group: source.group,
                 logoURL: source.logoURL,
-                externalID: source.externalID
+                externalID: source.externalID,
+                volumeOffsetDB: source.volumeOffsetDB,
+                eqPresetID: source.eqPresetID,
+                autoplay: source.autoplay
             )
             if source.isFavorite || favoriteURLs.contains(Self.normalizedURL(url)) {
                 if let index = stations.firstIndex(where: { $0.id == added.id }),
@@ -222,6 +231,8 @@ final class StationLibrary: ObservableObject {
         next.comment = Self.emptyToNil(updated.comment)
         next.group = normalizeGroup(updated.group)
         next.logoURL = Self.emptyToNil(updated.logoURL)
+        next.volumeOffsetDB = min(12, max(-12, updated.volumeOffsetDB))
+        next.eqPresetID = Self.emptyToNil(updated.eqPresetID)
         stations[index] = next
         persist()
         if !next.hasLogo {
