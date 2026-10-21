@@ -83,7 +83,7 @@ struct MiniPlayerView: View {
                 .fontWeight(.medium)
                 .foregroundStyle(palette.textPrimary)
                 .lineLimit(1)
-            Text(player.nowPlaying?.trayLine ?? "Выберите станцию")
+            Text(player.nowPlaying?.trayLine ?? (player.isPlaying ? "Играет" : "Выберите станцию"))
                 .font(Typeface.caption)
                 .foregroundStyle(palette.textSecondary)
                 .lineLimit(1)

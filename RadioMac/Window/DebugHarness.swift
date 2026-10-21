@@ -2,6 +2,7 @@
 import AppKit
 import Combine
 import Foundation
+import SwiftUI
 
 /// Developer utilities, compiled into Debug builds only.
 ///
@@ -142,6 +143,18 @@ enum DebugHarness {
         after { }
         after { }
         after { window.snapshotPanel(to: directory.appendingPathComponent("08-playing.png")) }
+        after {
+            snapshotHosting(
+                MiniPlayerView(
+                    player: environment.player,
+                    library: environment.library,
+                    theme: environment.theme,
+                    onOpenWindow: {}
+                ),
+                size: NSSize(width: 320, height: 430),
+                to: directory.appendingPathComponent("12-mini-player.png")
+            )
+        }
         after { environment.player.stop() }
         after { environment.theme.setPreference(.dark) }
         after { window.snapshotPanel(to: directory.appendingPathComponent("06-dark.png")) }
@@ -162,7 +175,62 @@ enum DebugHarness {
             DebugLog.write("hide/show race: visible=\(window.isVisible)")
             window.snapshotPanel(to: directory.appendingPathComponent("07-reshown.png"))
         }
+        after {
+            snapshotHosting(
+                ThemedRoot {
+                    RadioBrowserView(
+                        library: environment.library,
+                        player: environment.player,
+                        toasts: environment.toasts
+                    )
+                },
+                size: NSSize(width: 760, height: 610),
+                to: directory.appendingPathComponent("10-radio-browser.png")
+            )
+        }
+        after {
+            snapshotHosting(
+                ThemedRoot {
+                    StationTransferView(
+                        library: environment.library,
+                        toasts: environment.toasts
+                    )
+                },
+                size: NSSize(width: 660, height: 470),
+                to: directory.appendingPathComponent("11-transfer.png")
+            )
+        }
         after { NSApp.terminate(nil) }
+    }
+
+    private static func snapshotHosting<Content: View>(
+        _ content: Content,
+        size: NSSize,
+        to url: URL
+    ) {
+        let hosting = NSHostingView(
+            rootView: content.environment(\.colorScheme, .light)
+        )
+        hosting.appearance = NSAppearance(named: .aqua)
+        hosting.frame = NSRect(origin: .zero, size: size)
+        hosting.layoutSubtreeIfNeeded()
+        let scale: CGFloat = 2
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(size.width * scale),
+            pixelsHigh: Int(size.height * scale),
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ) else { return }
+        rep.size = size
+        hosting.cacheDisplay(in: hosting.bounds, to: rep)
+        guard let data = rep.representation(using: .png, properties: [:]) else { return }
+        try? data.write(to: url)
     }
 
     // MARK: - Playback smoke test
