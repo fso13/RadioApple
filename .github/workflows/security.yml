@@ -39,16 +39,6 @@ jobs:
         with:
           fail-on-severity: high
 
-  third-party:
-    name: Vendored binary integrity
-    runs-on: macos-15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Verify SHA-256
-        run: scripts/verify_third_party.sh
-
   app-sbom:
     name: SBOM & CVE scan
     runs-on: macos-15

@@ -1,3 +1,4 @@
+import AudioToolbox
 import XCTest
 
 @testable import RadioMac
@@ -283,16 +284,36 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertNotEqual(signal, before)
     }
 
-    func testAudioEnginePreferenceSelection() {
-        let hls = URL(string: "https://example.com/live.m3u8")!
-        let mp3 = URL(string: "https://example.com/live.mp3")!
+    func testNativeEqualizerPlanarBuffer() {
+        let equalizer = NativeEqualizer()
+        equalizer.configure(
+            enabled: true,
+            gains: [0, 0, 0, 0, 0, 8, 0, 0, 0, 0],
+            sampleRate: 44_100,
+            channels: 2,
+            nonInterleaved: true
+        )
 
-        let aac = URL(string: "https://example.com/live.aacp")!
-        XCTAssertTrue(AudioEnginePreference.automatic.prefersNative(for: hls))
-        XCTAssertTrue(AudioEnginePreference.automatic.prefersNative(for: aac))
-        XCTAssertFalse(AudioEnginePreference.automatic.prefersNative(for: mp3))
-        XCTAssertTrue(AudioEnginePreference.native.prefersNative(for: mp3))
-        XCTAssertFalse(AudioEnginePreference.bass.prefersNative(for: hls))
+        let frames = 128
+        let list = AudioBufferList.allocate(maximumBuffers: 2)
+        var pointers: [UnsafeMutablePointer<Float>] = []
+        for channel in 0..<2 {
+            let pointer = UnsafeMutablePointer<Float>.allocate(capacity: frames)
+            for index in 0..<frames {
+                pointer[index] = sinf(Float(index) * 0.1)
+            }
+            pointers.append(pointer)
+            list[channel] = AudioBuffer(
+                mNumberChannels: 1,
+                mDataByteSize: UInt32(frames * MemoryLayout<Float>.size),
+                mData: UnsafeMutableRawPointer(pointer)
+            )
+        }
+
+        let before = pointers[0][10]
+        equalizer.process(bufferList: list.unsafeMutablePointer, frames: frames)
+        XCTAssertNotEqual(pointers[0][10], before)
+        for pointer in pointers { pointer.deallocate() }
     }
 
     func testLastFmKeychainRoundtrip() {

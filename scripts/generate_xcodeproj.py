@@ -14,15 +14,11 @@ import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCES_DIR = ROOT / "RadioMac"
-BASS_DIR = ROOT / "ThirdParty" / "BASS"
 PROJECT_NAME = "RadioMac"
 
 ASSETS = SOURCES_DIR / "Resources" / "Assets.xcassets"
 INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
 ENTITLEMENTS = SOURCES_DIR / "Resources" / "RadioMac.entitlements"
-BRIDGING = SOURCES_DIR / "Bridging" / "Bridging-Header.h"
-DYLIBS = [BASS_DIR / "libbass.dylib"]
-HEADERS = [BASS_DIR / "bass.h"]
 TESTS_DIR = ROOT / "RadioMacTests"
 
 FILE_IDS: dict[str, str] = {}
@@ -77,7 +73,7 @@ def phase(identifier: str, isa: str, files: list[str], name: str | None = None) 
 def build() -> tuple[str, str]:
     sources = sorted(SOURCES_DIR.rglob("*.swift"))
     test_sources = sorted(TESTS_DIR.glob("*.swift")) if TESTS_DIR.exists() else []
-    all_files = [*sources, *test_sources, ASSETS, INFO_PLIST, ENTITLEMENTS, BRIDGING, *DYLIBS, *HEADERS]
+    all_files = [*sources, *test_sources, ASSETS, INFO_PLIST, ENTITLEMENTS]
     for path in all_files:
         assert path.exists(), f"missing file: {path}"
         FILE_IDS[str(path)] = new_id("F1")
@@ -86,8 +82,6 @@ def build() -> tuple[str, str]:
     project_id = new_id("B8")
     main_group = new_id("A3")
     source_group = new_id("A3")
-    thirdparty_group = new_id("A3")
-    bass_group = new_id("A3")
     products_group = new_id("A3")
     product_ref = new_id("F1")
     tests_target = new_id("A7")
@@ -103,13 +97,12 @@ def build() -> tuple[str, str]:
     tests_proxy = new_id("B9")
 
     folder_groups = {
-        name: new_id("A3") for name in ["Models", "Data", "Services", "UI", "Window", "Bridging", "Resources"]
+        name: new_id("A3") for name in ["Models", "Data", "Services", "UI", "Window", "Resources"]
     }
 
     sources_phase = new_id("C4")
     frameworks_phase = new_id("C4")
     resources_phase = new_id("C4")
-    embed_phase = new_id("C4")
     project_configs = new_id("E6")
     target_configs = new_id("E6")
     project_debug = new_id("D5")
@@ -127,10 +120,6 @@ def build() -> tuple[str, str]:
     source_build_files = [build_file(path) for path in sources]
     test_build_files = [build_file(path) for path in test_sources]
     asset_build_file = build_file(ASSETS)
-    bass_build_file = build_file(DYLIBS[0])
-    embed_build_files = [
-        build_file(path, "settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); };") for path in DYLIBS
-    ]
 
     # ------------------------------------------------------------------ sections
     build_section = ["/* Begin PBXBuildFile section */"]
@@ -182,7 +171,6 @@ def build() -> tuple[str, str]:
             [
                 f"{source_group} /* RadioMac */",
                 f"{tests_group} /* {PROJECT_NAME}Tests */",
-                f"{thirdparty_group} /* ThirdParty */",
                 f"{products_group} /* Products */",
             ],
         )
@@ -197,7 +185,6 @@ def build() -> tuple[str, str]:
                 f"{folder_groups['Services']} /* Services */",
                 f"{folder_groups['UI']} /* UI */",
                 f"{folder_groups['Window']} /* Window */",
-                f"{folder_groups['Bridging']} /* Bridging */",
                 f"{folder_groups['Resources']} /* Resources */",
             ],
             path="RadioMac",
@@ -205,7 +192,6 @@ def build() -> tuple[str, str]:
     )
     for name in ["Models", "Data", "Services", "UI", "Window"]:
         group_section.append(group(folder_groups[name], files_in(name), path=name))
-    group_section.append(group(folder_groups["Bridging"], [ref(BRIDGING)], path="Bridging"))
     group_section.append(
         group(
             folder_groups["Resources"],
@@ -213,8 +199,6 @@ def build() -> tuple[str, str]:
             path="Resources",
         )
     )
-    group_section.append(group(thirdparty_group, [f"{bass_group} /* BASS */"], path="ThirdParty"))
-    group_section.append(group(bass_group, [*[ref(p) for p in DYLIBS], *[ref(p) for p in HEADERS]], path="BASS"))
     group_section.append(
         group(
             products_group,
@@ -230,16 +214,9 @@ def build() -> tuple[str, str]:
     )
     group_section.append("/* End PBXGroup section */")
 
-    embed = phase(embed_phase, "PBXCopyFilesBuildPhase", embed_build_files, name="Embed Frameworks").replace(
-        "\t\t\trunOnlyForDeploymentPostprocessing = 0;",
-        '\t\t\tdstPath = "";\n\t\t\tdstSubfolderSpec = 10;\n\t\t\trunOnlyForDeploymentPostprocessing = 0;',
-    )
     sections = "\n".join([
-        "/* Begin PBXCopyFilesBuildPhase section */",
-        embed,
-        "/* End PBXCopyFilesBuildPhase section */",
         "/* Begin PBXFrameworksBuildPhase section */",
-        phase(frameworks_phase, "PBXFrameworksBuildPhase", [bass_build_file]),
+        phase(frameworks_phase, "PBXFrameworksBuildPhase", []),
         "/* End PBXFrameworksBuildPhase section */",
         "/* Begin PBXResourcesBuildPhase section */",
         phase(resources_phase, "PBXResourcesBuildPhase", [asset_build_file]),
@@ -290,10 +267,6 @@ def build() -> tuple[str, str]:
         "ENABLE_HARDENED_RUNTIME = NO;",
         "ENABLE_PREVIEWS = YES;",
         "INFOPLIST_FILE = RadioMac/Resources/Info.plist;",
-        "LIBRARY_SEARCH_PATHS = (",
-        '\t"$(inherited)",',
-        '\t"$(PROJECT_DIR)/ThirdParty/BASS",',
-        ");",
         "LD_RUNPATH_SEARCH_PATHS = (",
         '\t"$(inherited)",',
         '\t"@executable_path/../Frameworks",',
@@ -301,7 +274,6 @@ def build() -> tuple[str, str]:
         "MARKETING_VERSION = 1.0.0;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",
         'PRODUCT_NAME = "$(TARGET_NAME)";',
-        "SWIFT_OBJC_BRIDGING_HEADER = RadioMac/Bridging/Bridging-Header.h;",
         "SWIFT_STRICT_CONCURRENCY = complete;",
         "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
     ]
@@ -400,7 +372,6 @@ def build() -> tuple[str, str]:
         f"\t\t\t\t{sources_phase} /* Sources */,",
         f"\t\t\t\t{frameworks_phase} /* Frameworks */,",
         f"\t\t\t\t{resources_phase} /* Resources */,",
-        f"\t\t\t\t{embed_phase} /* Embed Frameworks */,",
         "\t\t\t);",
         "\t\t\tbuildRules = ();",
         "\t\t\tdependencies = ();",

@@ -4,7 +4,7 @@ import Foundation
 /// AVPlayer-based engine for HLS and progressive streams.
 ///
 /// This is the first stage of the native audio migration: playback, pause,
-/// resume, volume and HLS timed metadata. The BASS engine remains the default
+/// resume, volume and HLS timed metadata.
 /// for MP3/AAC because it also provides ICY metadata and the equalizer.
 @MainActor
 final class NativeAudioEngine {
@@ -26,6 +26,9 @@ final class NativeAudioEngine {
     private var metadataOutput: AVPlayerItemMetadataOutput?
     private var metadataDelegate: HLSMetadataDelegate?
     private var lastMetadata: String?
+    private let equalizer = NativeEqualizer()
+    private var audioMix: AVAudioMix?
+    private var audioTap: MTAudioProcessingTap?
 
     func play(url: URL) {
         stopObservers()
@@ -42,6 +45,8 @@ final class NativeAudioEngine {
         currentURL = url
         wantsPlayback = true
         lastMetadata = nil
+        audioMix = nil
+        audioTap = nil
 
         let output = AVPlayerItemMetadataOutput(identifiers: nil)
         let delegate = HLSMetadataDelegate()
@@ -60,7 +65,42 @@ final class NativeAudioEngine {
 
         observe(item: item, player: player)
         onStateChange?(.loading)
-        player.play()
+        attachAudioMix(item: item, player: player)
+    }
+
+    func setEQEnabled(_ enabled: Bool) {
+        equalizer.setEnabled(enabled)
+    }
+
+    func setEQGains(_ gains: [Double]) {
+        equalizer.setGains(gains)
+    }
+
+    private func attachAudioMix(item: AVPlayerItem, player: AVPlayer) {
+        Task { @MainActor [weak self] in
+            guard let self, self.item === item, self.player === player else { return }
+
+            if let track = try? await item.asset.loadTracks(withMediaType: .audio).first,
+               let result = AudioMixTapFactory.make(track: track, equalizer: self.equalizer) {
+                guard self.item === item else { return }
+                item.audioMix = result.mix
+                self.audioMix = result.mix
+                self.audioTap = result.tap
+            }
+
+            guard self.item === item, self.player === player else { return }
+            player.play()
+        }
+
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            guard let self,
+                  self.item === item,
+                  self.player === player,
+                  player.timeControlStatus == .paused
+            else { return }
+            player.play()
+        }
     }
 
     func pause() {
@@ -78,17 +118,19 @@ final class NativeAudioEngine {
         player?.play()
     }
 
-    func stop() {
+    func stop(emitIdle: Bool = true) {
         wantsPlayback = false
         icyReader.stop()
         currentURL = nil
         lastMetadata = nil
+        audioMix = nil
+        audioTap = nil
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
         player = nil
         item = nil
-        onStateChange?(.idle)
+        if emitIdle { onStateChange?(.idle) }
     }
 
     func setVolume(_ value: Double) {
@@ -106,7 +148,7 @@ final class NativeAudioEngine {
         icyReader.start(url: currentURL)
     }
 
-    /// AVPlayer does not expose BASS-style stream properties synchronously.
+    /// AVPlayer does not expose stream properties synchronously.
     /// The diagnostics panel shows «—» for native streams until the AVAsset
     /// inspection lands in the next stage.
     func fetchStreamInfo(completion: @escaping @MainActor (StreamInfo?) -> Void) {

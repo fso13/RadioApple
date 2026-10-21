@@ -16,7 +16,6 @@ enum DefaultsKey {
     static let alarmSettings = "alarm_settings"
     static let diagnosticsEnabled = "diagnostics_enabled"
     static let lastFmEnabled = "lastfm_enabled"
-    static let audioEngine = "audio_engine"
     static let migrationFlag = "native_migration_v1"
 
     /// `shared_preferences` on macOS stores every entry with this prefix.

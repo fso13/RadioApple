@@ -24,9 +24,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Verify vendored binaries
-        run: scripts/verify_third_party.sh
-
       - name: Build (Release, universal)
         run: |
           xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \

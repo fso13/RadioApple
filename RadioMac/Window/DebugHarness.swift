@@ -53,6 +53,34 @@ enum DebugHarness {
             runNativeTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name),
                 stationID: "rock-maximum",
+                applyEQ: false,
+                environment: environment
+            )
+            return true
+        }
+        if let name = value(after: "-nativeeq", in: arguments) {
+            runNativeTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                stationID: "rock-maximum",
+                applyEQ: true,
+                environment: environment
+            )
+            return true
+        }
+        if let name = value(after: "-nativeeqmp3", in: arguments) {
+            runNativeTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                stationID: "rock-nashe",
+                applyEQ: true,
+                environment: environment
+            )
+            return true
+        }
+        if let name = value(after: "-nativeeqhls", in: arguments) {
+            runNativeTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                stationID: "rp-soundpark",
+                applyEQ: true,
                 environment: environment
             )
             return true
@@ -137,8 +165,6 @@ enum DebugHarness {
 
     private static func runReconnectTest(output: URL, environment: AppEnvironment) {
         let player = environment.player
-        let previousEngine = environment.settings.audioEnginePreference
-        environment.settings.setAudioEnginePreference(.bass)
         player.stop()
         playtestCancellables.removeAll()
 
@@ -171,7 +197,6 @@ enum DebugHarness {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             lines.append("[25.0s] after manual retry state=\(player.status.rawValue) attempts=\(player.reconnectAttempts)")
             player.stop()
-            environment.settings.setAudioEnginePreference(previousEngine)
             try? lines.joined(separator: "\n").appending("\n").write(
                 to: output,
                 atomically: true,
@@ -184,12 +209,10 @@ enum DebugHarness {
     private static func runEqualizerTest(output: URL, environment: AppEnvironment) {
         let player = environment.player
         let equalizer = environment.equalizer
-        let previousEngine = environment.settings.audioEnginePreference
         let previousEnabled = equalizer.enabled
         let previousPreset = equalizer.presetID
         let previousGains = equalizer.gains
 
-        environment.settings.setAudioEnginePreference(.bass)
         player.stop()
         playtestCancellables.removeAll()
 
@@ -235,7 +258,6 @@ enum DebugHarness {
             } else {
                 equalizer.setEnabled(false)
             }
-            environment.settings.setAudioEnginePreference(previousEngine)
             try? lines.joined(separator: "\n").appending("\n").write(
                 to: output,
                 atomically: true,
@@ -245,10 +267,9 @@ enum DebugHarness {
         }
     }
 
-    private static func runNativeTest(output: URL, stationID: String, environment: AppEnvironment) {
+    private static func runNativeTest(output: URL, stationID: String, applyEQ: Bool = false, environment: AppEnvironment) {
         let player = environment.player
-        let previousEngine = environment.settings.audioEnginePreference
-        environment.settings.setAudioEnginePreference(.native)
+        let equalizer = environment.equalizer
         player.stop()
         playtestCancellables.removeAll()
 
@@ -279,14 +300,21 @@ enum DebugHarness {
             return
         }
 
-        lines.append("== native \(station.name) <\(station.url)>")
+        lines.append("== native \(station.name) <\(station.url)> applyEQ=\(applyEQ)")
         player.play(station)
 
         Task { @MainActor in
-            try? await Task.sleep(nanoseconds: 15_000_000_000)
-            lines.append("[15.0s] final state=\(player.status.rawValue) engine=\(player.activeEngineName) info=\(player.streamInfo?.codec ?? "-")")
+            if applyEQ {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                equalizer.setEnabled(true)
+                equalizer.setBand(5, value: 8)
+                lines.append("[ 2.0s] native EQ enabled")
+                try? await Task.sleep(nanoseconds: 8_000_000_000)
+            } else {
+                try? await Task.sleep(nanoseconds: 10_000_000_000)
+            }
+            lines.append("[10.0s] final state=\(player.status.rawValue) engine=\(player.activeEngineName) info=\(player.streamInfo?.codec ?? "-")")
             player.stop()
-            environment.settings.setAudioEnginePreference(previousEngine)
             try? lines.joined(separator: "\n").appending("\n").write(
                 to: output,
                 atomically: true,

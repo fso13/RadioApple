@@ -9,7 +9,7 @@
 #   scripts/make_installer.sh [--version 1.2.3]
 #                             [--identity "Developer ID Application: Name (TEAM)"]
 #                             [--installer-identity "Developer ID Installer: Name (TEAM)"]
-#                             [--skip-build] [--skip-verify]
+#                             [--skip-build]
 #
 # Without --identity the app keeps its ad-hoc signature, which is fine for local
 # use but will be blocked by Gatekeeper on other Macs (see README).
@@ -32,7 +32,6 @@ VERSION=""
 IDENTITY="${CODESIGN_IDENTITY:-}"
 INSTALLER_IDENTITY="${CODESIGN_INSTALLER_IDENTITY:-}"
 SKIP_BUILD=0
-SKIP_VERIFY=0
 VOLUME_NAME=""
 DMG_PATH=""
 PKG_PATH=""
@@ -49,7 +48,6 @@ while [[ $# -gt 0 ]]; do
         --identity) IDENTITY="${2:?missing value for --identity}"; shift 2 ;;
         --installer-identity) INSTALLER_IDENTITY="${2:?missing value}"; shift 2 ;;
         --skip-build) SKIP_BUILD=1; shift ;;
-        --skip-verify) SKIP_VERIFY=1; shift ;;
         -h|--help) usage; exit 0 ;;
         *) die "unknown argument: $1 (see --help)" ;;
     esac
@@ -58,11 +56,6 @@ done
 [[ "$(uname -s)" == "Darwin" ]] || die "macOS is required"
 command -v xcodebuild >/dev/null 2>&1 || die "xcodebuild not found — install Xcode"
 command -v pkgbuild >/dev/null 2>&1 || die "pkgbuild not found — install Xcode command line tools"
-
-if [[ $SKIP_VERIFY -eq 0 ]]; then
-    info "Verifying vendored BASS binaries"
-    "$ROOT/scripts/verify_third_party.sh" || die "third-party files failed verification"
-fi
 
 # Prefer the macOS 26+ image tool, fall back to hdiutil on older systems.
 DISKUTIL_IMAGE=0

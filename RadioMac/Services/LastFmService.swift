@@ -37,7 +37,10 @@ final class LastFmService: ObservableObject {
         self.defaults = defaults
         self.player = player
 
-        let stored = LastFmCredentialStore.load()
+        let skipKeychain = ProcessInfo.processInfo.arguments.contains(
+            "-skip-lastfm-keychain"
+        )
+        let stored = skipKeychain ? nil : LastFmCredentialStore.load()
         let initial = stored ?? LastFmConfig.credentials
         credentials = initial
         isConnected = initial?.sessionKey != nil

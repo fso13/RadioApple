@@ -1,8 +1,8 @@
 import Foundation
 
-/// Audio properties of the current stream, as reported by BASS.
+/// Audio properties of the current stream, as reported by the engine.
 ///
-/// Kept free of BASS imports so formatting and codec naming are unit-testable.
+/// Kept free of AVFoundation imports so formatting and codec naming are testable.
 struct StreamInfo: Equatable, Sendable {
     let codec: String
     let frequency: Int
@@ -32,7 +32,7 @@ struct StreamInfo: Equatable, Sendable {
         bufferMilliseconds > 0 ? "\(bufferMilliseconds) мс" : "—"
     }
 
-    /// Human-readable codec name for a `BASS_CHANNELINFO.ctype` value.
+    /// Human-readable codec name for a FourCC subtype.
     static func codecName(for ctype: UInt32) -> String {
         switch ctype {
         case 0x10003: return "MP1"

@@ -1,10 +1,10 @@
 import Foundation
 
-/// Ten-band equalizer state, pushed straight into BASS (no stream restart needed).
+/// Ten-band equalizer state. The player observes changes and applies them to
+/// the AVPlayer audio tap without restarting the stream.
 @MainActor
 final class EqualizerService: ObservableObject {
     private let defaults: UserDefaults
-    private let engine: RadioEngine
     private var persistWorkItem: DispatchWorkItem?
 
     @Published private(set) var enabled: Bool = false
@@ -13,15 +13,14 @@ final class EqualizerService: ObservableObject {
 
     private var customGains: [Double] = Array(repeating: 0, count: EqualizerCatalog.bandCount)
 
-    init(defaults: UserDefaults = .standard, engine: RadioEngine = .shared) {
+    init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        self.engine = engine
         load()
     }
 
     var preset: EqualizerPreset { EqualizerCatalog.byID(presetID) }
-    /// The native DSP equalizer is always available for BASS streams.
-    var isSupported: Bool { engine.isEqualizerAvailable }
+    /// The AVPlayer audio tap always provides a native DSP equalizer.
+    var isSupported: Bool { true }
     var isCustom: Bool { presetID == EqualizerCatalog.customID }
 
     // MARK: - Loading
@@ -40,8 +39,6 @@ final class EqualizerService: ObservableObject {
         if presetID != EqualizerCatalog.customID {
             gains = EqualizerCatalog.clampGains(preset.gains)
         }
-
-        pushToEngine()
     }
 
     // MARK: - Commands
@@ -49,7 +46,6 @@ final class EqualizerService: ObservableObject {
     func setEnabled(_ value: Bool) {
         guard value != enabled, isSupported else { return }
         enabled = value
-        engine.setEQEnabled(value)
         persistNow()
     }
 
@@ -60,7 +56,6 @@ final class EqualizerService: ObservableObject {
         } else {
             gains = EqualizerCatalog.clampGains(EqualizerCatalog.byID(id).gains)
         }
-        engine.setEQGains(gains)
         persistNow()
     }
 
@@ -69,7 +64,6 @@ final class EqualizerService: ObservableObject {
         gains[index] = min(EqualizerCatalog.maxGain, max(EqualizerCatalog.minGain, value))
         presetID = EqualizerCatalog.customID
         customGains = gains
-        engine.setEQGains(gains)
         schedulePersist()
     }
 
@@ -77,12 +71,7 @@ final class EqualizerService: ObservableObject {
         applyPreset(EqualizerCatalog.flatID)
     }
 
-    // MARK: - Engine / persistence
-
-    private func pushToEngine() {
-        engine.setEQEnabled(enabled)
-        engine.setEQGains(gains)
-    }
+    // MARK: - Persistence
 
     private func schedulePersist() {
         persistWorkItem?.cancel()

@@ -22,20 +22,13 @@ final class RadioPlayerService: ObservableObject {
     @Published private(set) var streamInfo: StreamInfo?
     @Published private(set) var errorMessage: String?
     @Published private(set) var volume: Double
-    @Published private(set) var activeEngineName = "BASS"
+    @Published private(set) var activeEngineName = "AVPlayer"
     @Published private(set) var reconnectAttempts = 0
-
-    private enum AudioEngineKind {
-        case bass
-        case native
-    }
 
     private let settings: AppSettings
     private let library: StationLibrary
     private let equalizer: EqualizerService
-    private let bassEngine: RadioEngine
     private let nativeEngine = NativeAudioEngine()
-    private var activeEngine: AudioEngineKind?
     private let lookup = NowPlayingLookup.shared
 
     private var pollTimer: Timer?
@@ -50,16 +43,31 @@ final class RadioPlayerService: ObservableObject {
     init(
         settings: AppSettings,
         library: StationLibrary,
-        equalizer: EqualizerService,
-        engine: RadioEngine = .shared
+        equalizer: EqualizerService
     ) {
         self.settings = settings
         self.library = library
         self.equalizer = equalizer
-        self.bassEngine = engine
         self.volume = settings.volume
         wireEngine()
         observeLibrary()
+
+        equalizer.$enabled
+            .receive(on: RunLoop.main)
+            .sink { [weak self] enabled in
+                self?.nativeEngine.setEQEnabled(enabled)
+            }
+            .store(in: &cancellables)
+
+        equalizer.$gains
+            .receive(on: RunLoop.main)
+            .sink { [weak self] gains in
+                self?.nativeEngine.setEQGains(gains)
+            }
+            .store(in: &cancellables)
+
+        nativeEngine.setEQEnabled(equalizer.enabled)
+        nativeEngine.setEQGains(equalizer.gains)
         NowPlayingCenter.shared.configure(
             onPlay: { [weak self] in self?.resumeOrPlay() },
             onPause: { [weak self] in self?.pause() },
@@ -76,7 +84,6 @@ final class RadioPlayerService: ObservableObject {
     // MARK: - Lifecycle
 
     func start() {
-        bassEngine.setVolume(volume)
         nativeEngine.setVolume(volume)
         if settings.resumeLastStation,
            let id = settings.lastStationID,
@@ -86,33 +93,15 @@ final class RadioPlayerService: ObservableObject {
     }
 
     private func wireEngine() {
-        bassEngine.onStateChange = { [weak self] state in
-            self?.handleEngineState(state, from: .bass)
-        }
-        bassEngine.onICYTitle = { [weak self] title in
-            guard let self, self.activeEngine == .bass else { return }
-            self.handleICYTitle(title)
-        }
-        bassEngine.onICYURL = { [weak self] url in
-            guard let self, self.activeEngine == .bass else { return }
-            self.handleICYURL(url)
-        }
-        bassEngine.onPlaybackError = { [weak self] message in
-            guard let self, self.activeEngine == .bass else { return }
-            self.errorMessage = message
-        }
-
         nativeEngine.onStateChange = { [weak self] state in
-            self?.handleEngineState(state, from: .native)
+            self?.handleEngineState(state)
         }
         nativeEngine.onMetadata = { [weak self] raw in
-            guard let self, self.activeEngine == .native else { return }
-            self.handleICYTitle(raw)
+            self?.handleICYTitle(raw)
         }
         nativeEngine.onPlaybackError = { [weak self] message in
-            guard let self, self.activeEngine == .native else { return }
-            self.errorMessage = message
-            self.handleEngineState(.error, from: .native)
+            self?.errorMessage = message
+            self?.handleEngineState(.error)
         }
     }
 
@@ -161,23 +150,10 @@ final class RadioPlayerService: ObservableObject {
             return
         }
 
-        let kind: AudioEngineKind = settings.audioEnginePreference.prefersNative(for: url)
-            ? .native
-            : .bass
-        activeEngine = nil
-        bassEngine.stop()
-        nativeEngine.stop()
-        activeEngine = kind
-        activeEngineName = kind == .native ? "AVPlayer" : "BASS"
-
-        switch kind {
-        case .bass:
-            bassEngine.setVolume(volume)
-            bassEngine.play(url: url)
-        case .native:
-            nativeEngine.setVolume(volume)
-            nativeEngine.play(url: url)
-        }
+        nativeEngine.stop(emitIdle: false)
+        activeEngineName = "AVPlayer"
+        nativeEngine.setVolume(volume)
+        nativeEngine.play(url: url)
     }
 
     /// Manual retry from the error state.
@@ -210,11 +186,7 @@ final class RadioPlayerService: ObservableObject {
         reconnectTask = nil
         stableTask?.cancel()
         stableTask = nil
-        switch activeEngine {
-        case .bass: bassEngine.pause()
-        case .native: nativeEngine.pause()
-        case nil: break
-        }
+        nativeEngine.pause()
     }
 
     func resumeOrPlay() {
@@ -227,12 +199,7 @@ final class RadioPlayerService: ObservableObject {
 
     private func resumeActive() {
         wantsPlayback = true
-        switch activeEngine {
-        case .bass: bassEngine.resume()
-        case .native: nativeEngine.resume()
-        case nil:
-            if let station { play(station) }
-        }
+        nativeEngine.resume()
     }
 
     func stop() {
@@ -244,8 +211,6 @@ final class RadioPlayerService: ObservableObject {
         stableTask = nil
         stopNowPlayingPoll()
         nowPlayingGeneration += 1
-        activeEngine = nil
-        bassEngine.stop()
         nativeEngine.stop()
         status = .idle
         nowPlaying = nil
@@ -257,7 +222,6 @@ final class RadioPlayerService: ObservableObject {
 
     func setVolume(_ value: Double) {
         volume = min(1, max(0, value))
-        bassEngine.setVolume(volume)
         nativeEngine.setVolume(volume)
         settings.setVolume(volume)
     }
@@ -274,12 +238,7 @@ final class RadioPlayerService: ObservableObject {
 
     // MARK: - Engine events
 
-    private func handleEngineState(
-        _ state: RadioPlaybackState,
-        from kind: AudioEngineKind
-    ) {
-        guard activeEngine == kind else { return }
-
+    private func handleEngineState(_ state: RadioPlaybackState) {
         if state == .error {
             if wantsPlayback, station != nil {
                 scheduleReconnect()
@@ -380,12 +339,7 @@ final class RadioPlayerService: ObservableObject {
             guard let self, self.station?.id == stationID else { return }
             self.streamInfo = info
         }
-        switch activeEngine {
-        case .native:
-            nativeEngine.fetchStreamInfo(completion: completion)
-        case .bass, nil:
-            bassEngine.fetchStreamInfo(completion: completion)
-        }
+        nativeEngine.fetchStreamInfo(completion: completion)
     }
 
     private func handleICYTitle(_ title: String) {

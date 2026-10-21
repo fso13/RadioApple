@@ -31,9 +31,6 @@ jobs:
           xcodebuild -version
           swift --version
 
-      - name: Verify vendored binaries
-        run: scripts/verify_third_party.sh
-
       - name: Build (Debug)
         run: |
           xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \
