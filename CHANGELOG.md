@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+## [1.2.0] — 2026-10-21
+
+### Добавлено
+
+- Виджет macOS 14+ с текущей станцией/треком и play/pause.
+- Элемент Control Center macOS 26+ «RadioMac» (play/pause).
+- Общее состояние виджета через `/Users/Shared/RadioMac/nowplaying.json`
+  и sandbox temporary-exception; App Group и Developer team не требуются.
+
 ## [1.1.0] — 2026-10-21
 
 ### Добавлено
@@ -98,7 +107,8 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/fso13/RadioApple/releases/tag/v1.2.0
 [1.1.0]: https://github.com/fso13/RadioApple/releases/tag/v1.1.0
 [1.0.1]: https://github.com/fso13/RadioApple/releases/tag/v1.0.1
 [1.0.0]: https://github.com/fso13/RadioApple/releases/tag/v1.0.0
