@@ -5,6 +5,7 @@ struct StationDraft {
     var url: String
     var genre: String
     var comment: String
+    var group: String
     var logoURL: String
 }
 
@@ -21,6 +22,7 @@ struct StationEditorView: View {
     @State private var url: String
     @State private var genre: String
     @State private var comment: String
+    @State private var group: String
     @State private var logoURL: String
 
     init(existing: RadioStation?, genres: [String], onSave: @escaping (StationDraft) -> Void) {
@@ -31,6 +33,7 @@ struct StationEditorView: View {
         _url = State(initialValue: existing?.url ?? "")
         _genre = State(initialValue: existing?.genre ?? GenreCatalog.other)
         _comment = State(initialValue: existing?.comment ?? "")
+        _group = State(initialValue: existing?.group ?? "")
         _logoURL = State(initialValue: existing?.logoURL ?? "")
     }
 
@@ -81,6 +84,13 @@ struct StationEditorView: View {
                     )
 
                     EditorialField(
+                        title: "Группа",
+                        text: $group,
+                        placeholder: "Например, Утро",
+                        footnote: "Необязательно. Группы появятся в навигации слева."
+                    )
+
+                    EditorialField(
                         title: "Логотип",
                         text: $logoURL,
                         placeholder: "URL картинки",
@@ -105,6 +115,7 @@ struct StationEditorView: View {
                             url: url.trimmingCharacters(in: .whitespacesAndNewlines),
                             genre: genre,
                             comment: comment,
+                            group: group,
                             logoURL: logoURL
                         )
                     )

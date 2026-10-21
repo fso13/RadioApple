@@ -50,6 +50,7 @@ struct RootView: View {
                         settings: settings,
                         theme: theme,
                         equalizer: equalizer,
+                        player: player,
                         library: library,
                         toasts: toasts,
                         onBack: { router.route = .main },

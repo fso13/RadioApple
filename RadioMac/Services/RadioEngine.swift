@@ -160,6 +160,38 @@ final class RadioEngine {
         }
     }
 
+    /// Reads the current stream's audio properties on the BASS queue.
+    func fetchStreamInfo(completion: @escaping (StreamInfo?) -> Void) {
+        queue.async { [weak self] in
+            guard let self, self.stream != 0 else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+
+            var info = BASS_CHANNELINFO()
+            guard BASS_ChannelGetInfo(self.stream, &info) != 0 else {
+                DispatchQueue.main.async { completion(nil) }
+                return
+            }
+
+            var bitrate: Float = 0
+            let hasBitrate = BASS_ChannelGetAttribute(
+                self.stream,
+                DWORD(BASS_ATTRIB_BITRATE),
+                &bitrate
+            ) != 0
+
+            let snapshot = StreamInfo(
+                codec: StreamInfo.codecName(for: info.ctype),
+                frequency: Int(info.freq),
+                channels: Int(info.chans),
+                bitrateKbps: hasBitrate && bitrate > 0 ? Int(bitrate.rounded()) : nil,
+                bufferMilliseconds: Int(BASS_GetConfig(DWORD(BASS_CONFIG_BUFFER)))
+            )
+            DispatchQueue.main.async { completion(snapshot) }
+        }
+    }
+
     // MARK: - Setup
 
     private func initializeBass() {

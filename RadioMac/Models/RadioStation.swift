@@ -7,6 +7,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
     var url: String
     var genre: String
     var comment: String?
+    var group: String?
     var logoURL: String?
     var isFavorite: Bool
     var builtIn: Bool
@@ -17,6 +18,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
         url: String,
         genre: String,
         comment: String? = nil,
+        group: String? = nil,
         logoURL: String? = nil,
         isFavorite: Bool = false,
         builtIn: Bool = false
@@ -26,6 +28,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
         self.url = url
         self.genre = genre
         self.comment = comment
+        self.group = group
         self.logoURL = logoURL
         self.isFavorite = isFavorite
         self.builtIn = builtIn
@@ -52,7 +55,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
     // MARK: - JSON
 
     private enum CodingKeys: String, CodingKey {
-        case id, name, url, genre, comment, logoUrl, isFavorite, builtIn
+        case id, name, url, genre, comment, group, logoUrl, isFavorite, builtIn
     }
 
     init(from decoder: Decoder) throws {
@@ -64,6 +67,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
             try container.decodeIfPresent(String.self, forKey: .genre) ?? GenreCatalog.other
         )
         comment = RadioStation.emptyToNil(try container.decodeIfPresent(String.self, forKey: .comment))
+        group = RadioStation.emptyToNil(try container.decodeIfPresent(String.self, forKey: .group))
         logoURL = RadioStation.emptyToNil(try container.decodeIfPresent(String.self, forKey: .logoUrl))
         isFavorite = try container.decodeIfPresent(Bool.self, forKey: .isFavorite) ?? false
         builtIn = try container.decodeIfPresent(Bool.self, forKey: .builtIn) ?? false
@@ -76,6 +80,7 @@ struct RadioStation: Identifiable, Hashable, Codable {
         try container.encode(url, forKey: .url)
         try container.encode(genre, forKey: .genre)
         try container.encodeIfPresent(comment, forKey: .comment)
+        try container.encodeIfPresent(group, forKey: .group)
         try container.encodeIfPresent(logoURL, forKey: .logoUrl)
         try container.encode(isFavorite, forKey: .isFavorite)
         try container.encode(builtIn, forKey: .builtIn)

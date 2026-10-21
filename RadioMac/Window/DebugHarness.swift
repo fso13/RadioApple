@@ -73,6 +73,11 @@ enum DebugHarness {
         after { }
         after { }
         after { window.snapshotPanel(to: directory.appendingPathComponent("08-playing.png")) }
+        after { environment.router.route = .settings }
+        after {
+            window.snapshotPanel(to: directory.appendingPathComponent("10-stream-info.png"))
+        }
+        after { environment.router.route = .main }
         after { environment.player.stop() }
         after { environment.theme.setPreference(.dark) }
         after { window.snapshotPanel(to: directory.appendingPathComponent("06-dark.png")) }
@@ -117,6 +122,16 @@ enum DebugHarness {
             .compactMap { $0 }
             .sink { track in
                 lines.append("[\(stamp())] track=\(track.trayLine) artwork=\(track.artworkURL ?? "-")")
+            }
+            .store(in: &playtestCancellables)
+
+        player.$streamInfo
+            .compactMap { $0 }
+            .sink { info in
+                lines.append(
+                    "[\(stamp())] stream codec=\(info.codec) bitrate=\(info.bitrateText) " +
+                        "freq=\(info.frequency) channels=\(info.channels) buffer=\(info.bufferMilliseconds)"
+                )
             }
             .store(in: &playtestCancellables)
 

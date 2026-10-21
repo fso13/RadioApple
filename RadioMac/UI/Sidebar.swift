@@ -6,16 +6,20 @@ struct GenreNav: View {
     @ObservedObject var library: StationLibrary
     @ObservedObject var player: RadioPlayerService
 
+    @Environment(\.palette) private var palette
+
     private enum ItemID: Hashable {
         case all
         case favorites
         case genre(String)
+        case group(String)
 
         init(_ filter: StationFilter) {
             switch filter {
             case .all: self = .all
             case .favorites: self = .favorites
             case .genre(let name): self = .genre(name)
+            case .group(let name): self = .group(name)
             }
         }
     }
@@ -41,6 +45,22 @@ struct GenreNav: View {
                         model.setFilter(.favorites)
                     }
                     .id(ItemID.favorites)
+
+                    if !library.groups.isEmpty {
+                        sectionLabel("Группы")
+                        ForEach(library.groups, id: \.self) { group in
+                            NavItem(
+                                label: group,
+                                isSelected: model.filter == .group(group),
+                                isPlaying: player.isPlaying
+                            ) {
+                                model.setFilter(.group(group))
+                            }
+                            .id(ItemID.group(group))
+                        }
+                    }
+
+                    sectionLabel("Жанры")
 
                     ForEach(library.genres, id: \.self) { genre in
                         NavItem(
@@ -73,6 +93,16 @@ struct GenreNav: View {
                 }
             }
         }
+    }
+
+    private func sectionLabel(_ title: String) -> some View {
+        Text(title.uppercased())
+            .font(Typeface.overline)
+            .tracking(1.1)
+            .foregroundStyle(palette.textTertiary)
+            .padding(.top, Space.m)
+            .padding(.bottom, Space.xxs)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 

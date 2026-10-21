@@ -18,6 +18,7 @@ final class RadioPlayerService: ObservableObject {
     @Published private(set) var station: RadioStation?
     @Published private(set) var status: Status = .idle
     @Published private(set) var nowPlaying: NowPlaying?
+    @Published private(set) var streamInfo: StreamInfo?
     @Published private(set) var errorMessage: String?
     @Published private(set) var volume: Double
 
@@ -98,6 +99,7 @@ final class RadioPlayerService: ObservableObject {
     func play(_ station: RadioStation) {
         self.station = station
         nowPlaying = nil
+        streamInfo = nil
         icyLive = false
         nowPlayingGeneration += 1
         errorMessage = nil
@@ -147,6 +149,7 @@ final class RadioPlayerService: ObservableObject {
         engine.stop()
         status = .idle
         nowPlaying = nil
+        streamInfo = nil
         icyLive = false
         errorMessage = nil
         syncSystemNowPlaying()
@@ -163,6 +166,11 @@ final class RadioPlayerService: ObservableObject {
         return errorMessage
     }
 
+    /// Re-reads the current stream properties (used by the diagnostics panel).
+    func refreshStreamInfo() {
+        refreshStreamInfoIfNeeded(force: true)
+    }
+
     // MARK: - Engine events
 
     private func handleEngineState(_ state: RadioPlaybackState) {
@@ -174,8 +182,30 @@ final class RadioPlayerService: ObservableObject {
         }
         guard next != status else { return }
         status = next
+        switch next {
+        case .playing:
+            refreshStreamInfoIfNeeded()
+        case .idle, .error:
+            streamInfo = nil
+        case .loading, .paused:
+            break
+        }
         if next == .error { stopNowPlayingPoll() }
         syncSystemNowPlaying()
+    }
+
+    private func refreshStreamInfoIfNeeded(force: Bool = false) {
+        guard let station else {
+            streamInfo = nil
+            return
+        }
+        guard force || streamInfo == nil else { return }
+
+        let stationID = station.id
+        engine.fetchStreamInfo { [weak self] info in
+            guard let self, self.station?.id == stationID else { return }
+            self.streamInfo = info
+        }
     }
 
     private func handleICYTitle(_ title: String) {

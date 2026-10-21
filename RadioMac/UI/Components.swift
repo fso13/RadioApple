@@ -479,6 +479,9 @@ struct InfoRow: View {
             Text(value)
                 .font(Typeface.mono)
                 .foregroundStyle(palette.textPrimary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .help(value)
         }
         .padding(.vertical, Space.m - 2)
     }

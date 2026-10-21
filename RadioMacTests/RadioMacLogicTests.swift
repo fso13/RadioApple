@@ -230,4 +230,100 @@ final class RadioMacLogicTests: XCTestCase {
         library.load()
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
+
+    func testStationGroupsPersistAndReorder() {
+        let defaults = scratchDefaults()
+        let library = StationLibrary(defaults: defaults)
+        library.load()
+
+        let morning = library.add(
+            name: "Morning Show",
+            url: "https://example.com/morning.mp3",
+            genre: GenreCatalog.jazz,
+            group: "alpha"
+        )
+        let evening = library.add(
+            name: "Evening Show",
+            url: "https://example.com/evening.mp3",
+            genre: GenreCatalog.jazz,
+            group: "beta"
+        )
+        let sameGroup = library.add(
+            name: "Another Morning",
+            url: "https://example.com/morning-2.mp3",
+            genre: GenreCatalog.jazz,
+            group: "ALPHA"
+        )
+
+        XCTAssertEqual(sameGroup.group, "alpha", "group casing should reuse the existing spelling")
+        XCTAssertEqual(library.groups, ["alpha", "beta"])
+
+        library.move(id: evening.id, before: morning.id)
+        let ids = library.stations.map(\.id)
+        XCTAssertLessThan(
+            ids.firstIndex(of: evening.id) ?? .max,
+            ids.firstIndex(of: morning.id) ?? .max
+        )
+
+        library.moveToEnd(id: evening.id)
+        XCTAssertEqual(library.stations.last?.id, evening.id)
+
+        let reloaded = StationLibrary(defaults: defaults)
+        reloaded.load()
+        XCTAssertEqual(reloaded.byID(morning.id)?.group, "alpha")
+        XCTAssertEqual(reloaded.stations.last?.id, evening.id)
+    }
+
+    func testGroupFilterAndReorderAvailability() {
+        let defaults = scratchDefaults()
+        let library = StationLibrary(defaults: defaults)
+        library.load()
+        let grouped = library.add(
+            name: "Grouped",
+            url: "https://example.com/grouped.mp3",
+            genre: GenreCatalog.jazz,
+            group: "Morning"
+        )
+
+        let model = MainViewModel(library: library)
+        model.setFilter(.group("Morning"))
+        XCTAssertEqual(model.visible.map(\.id), [grouped.id])
+        XCTAssertFalse(model.canReorder, "reordering is disabled while a filter is active")
+
+        model.setFilter(.all)
+        XCTAssertTrue(model.canReorder)
+        XCTAssertTrue(model.visible.contains { $0.id == grouped.id })
+    }
+
+    func testStreamInfoFormattingAndCodecs() {
+        let stereo = StreamInfo(
+            codec: "MP3",
+            frequency: 44_100,
+            channels: 2,
+            bitrateKbps: 128,
+            bufferMilliseconds: 500
+        )
+        XCTAssertEqual(stereo.sampleRateText, "44100 Гц")
+        XCTAssertEqual(stereo.channelsText, "стерео")
+        XCTAssertEqual(stereo.bitrateText, "128 кбит/с")
+        XCTAssertEqual(stereo.bufferText, "500 мс")
+
+        let unknown = StreamInfo(
+            codec: "AAC",
+            frequency: 0,
+            channels: 1,
+            bitrateKbps: nil,
+            bufferMilliseconds: 0
+        )
+        XCTAssertEqual(unknown.sampleRateText, "—")
+        XCTAssertEqual(unknown.channelsText, "моно")
+        XCTAssertEqual(unknown.bitrateText, "—")
+        XCTAssertEqual(unknown.bufferText, "—")
+
+        XCTAssertEqual(StreamInfo.codecName(for: 0x10005), "MP3")
+        XCTAssertEqual(StreamInfo.codecName(for: 0x10002), "OGG/Vorbis")
+        XCTAssertEqual(StreamInfo.codecName(for: 0x1000b), "AAC")
+        XCTAssertEqual(StreamInfo.codecName(for: 0x1000a), "Поток")
+        XCTAssertEqual(StreamInfo.codecName(for: 0x99999), "Неизвестно")
+    }
 }

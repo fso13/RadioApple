@@ -118,6 +118,7 @@ struct StationRow: View {
     private var accessibilityLabel: String {
         var parts = [station.name, station.genre]
         if let comment = station.comment, station.hasComment { parts.append(comment) }
+        if let group = station.group, !group.isEmpty { parts.append("группа \(group)") }
         if station.isFavorite { parts.append("в избранном") }
         if isCurrent { parts.append(isPlaying ? "играет" : "выбрана") }
         return parts.joined(separator: ", ")

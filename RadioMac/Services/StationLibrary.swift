@@ -16,6 +16,12 @@ final class StationLibrary: ObservableObject {
 
     var favorites: [RadioStation] { stations.filter(\.isFavorite) }
 
+    /// User-defined groups, alphabetically. Stations without a group are not listed.
+    var groups: [String] {
+        let names = Set(stations.compactMap(\.group))
+        return names.sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
+    }
+
     /// Genres in catalog order first, then custom genres alphabetically.
     var genres: [String] {
         var names = Set<String>()
@@ -86,6 +92,7 @@ final class StationLibrary: ObservableObject {
         url: String,
         genre: String,
         comment: String? = nil,
+        group: String? = nil,
         logoURL: String? = nil
     ) -> RadioStation {
         let station = RadioStation(
@@ -94,6 +101,7 @@ final class StationLibrary: ObservableObject {
             url: url.trimmingCharacters(in: .whitespacesAndNewlines),
             genre: GenreCatalog.normalize(genre),
             comment: Self.emptyToNil(comment),
+            group: normalizeGroup(group),
             logoURL: Self.emptyToNil(logoURL)
         )
         stations.append(station)
@@ -109,6 +117,7 @@ final class StationLibrary: ObservableObject {
         var next = updated
         next.genre = GenreCatalog.normalize(updated.genre)
         next.comment = Self.emptyToNil(updated.comment)
+        next.group = normalizeGroup(updated.group)
         next.logoURL = Self.emptyToNil(updated.logoURL)
         stations[index] = next
         persist()
@@ -119,6 +128,40 @@ final class StationLibrary: ObservableObject {
 
     func remove(id: String) {
         stations.removeAll { $0.id == id }
+        persist()
+    }
+
+    /// Moves a station before another one, preserving the library order.
+    /// Trims a group and reuses the existing spelling when only the case differs.
+    private func normalizeGroup(_ value: String?) -> String? {
+        guard let trimmed = Self.emptyToNil(value) else { return nil }
+        if let existing = stations.compactMap(\.group).first(where: {
+            $0.localizedCaseInsensitiveCompare(trimmed) == .orderedSame
+        }) {
+            return existing
+        }
+        return trimmed
+    }
+
+    func move(id: String, before targetID: String) {
+        guard id != targetID,
+              let from = stations.firstIndex(where: { $0.id == id }),
+              let target = stations.firstIndex(where: { $0.id == targetID })
+        else { return }
+
+        let station = stations.remove(at: from)
+        let insertion = from < target ? target - 1 : target
+        stations.insert(station, at: insertion)
+        persist()
+    }
+
+    /// Moves a station to the end of the library.
+    func moveToEnd(id: String) {
+        guard let from = stations.firstIndex(where: { $0.id == id }),
+              from != stations.count - 1
+        else { return }
+        let station = stations.remove(at: from)
+        stations.append(station)
         persist()
     }
 

@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 /// Settings page: appearance, behaviour, sound, library, help and about.
@@ -5,6 +6,7 @@ struct SettingsView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var theme: ThemeService
     @ObservedObject var equalizer: EqualizerService
+    @ObservedObject var player: RadioPlayerService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
 
@@ -121,6 +123,40 @@ struct SettingsView: View {
                     }
                 }
 
+                section("Поток") {
+                    InfoRow(
+                        label: "Станция",
+                        value: player.station?.name ?? "Нет активного потока"
+                    )
+                    Hairline()
+                    InfoRow(label: "Статус", value: playerStatusText)
+                    Hairline()
+                    InfoRow(label: "Кодек", value: player.streamInfo?.codec ?? "—")
+                    Hairline()
+                    InfoRow(label: "Битрейт", value: player.streamInfo?.bitrateText ?? "—")
+                    Hairline()
+                    InfoRow(label: "Частота", value: player.streamInfo?.sampleRateText ?? "—")
+                    Hairline()
+                    InfoRow(label: "Каналы", value: player.streamInfo?.channelsText ?? "—")
+                    Hairline()
+                    InfoRow(label: "Буфер", value: player.streamInfo?.bufferText ?? "—")
+                    Hairline()
+                    InfoRow(label: "Сервер", value: streamServer)
+                    HStack(spacing: Space.l) {
+                        TextButton(title: "Обновить", systemImage: "arrow.clockwise") {
+                            player.refreshStreamInfo()
+                        }
+                        TextButton(
+                            title: "Скопировать диагностику",
+                            systemImage: "doc.on.doc"
+                        ) {
+                            copyDiagnostics()
+                        }
+                        Spacer()
+                    }
+                    .padding(.vertical, Space.m)
+                }
+
                 section("Библиотека") {
                     SettingsRow(
                         title: "Каталог станций",
@@ -217,6 +253,56 @@ struct SettingsView: View {
     }
 
     // MARK: - State
+
+    private var playerStatusText: String {
+        switch player.status {
+        case .idle: return "Простой"
+        case .loading: return "Подключение"
+        case .playing: return "Эфир"
+        case .paused: return "Пауза"
+        case .error: return "Ошибка"
+        }
+    }
+
+    private var streamServer: String {
+        guard let station = player.station,
+              let host = URL(string: station.url)?.host
+        else { return "—" }
+        return host
+    }
+
+    private func copyDiagnostics() {
+        let info = player.streamInfo
+        let station = player.station
+        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let lines = [
+            "RadioMac \(version) (\(build))",
+            "macOS \(ProcessInfo.processInfo.operatingSystemVersionString)",
+            "Дата: \(timestamp)",
+            "",
+            "Станция: \(station?.name ?? "—")",
+            "URL: \(station?.url ?? "—")",
+            "Сервер: \(streamServer)",
+            "Статус: \(playerStatusText)",
+            "Кодек: \(info?.codec ?? "—")",
+            "Битрейт: \(info?.bitrateText ?? "—")",
+            "Частота: \(info?.sampleRateText ?? "—")",
+            "Каналы: \(info?.channelsText ?? "—")",
+            "Буфер: \(info?.bufferText ?? "—")",
+            "Эквалайзер: \(equalizerSubtitle)",
+            "Ошибка: \(player.errorMessage ?? "—")",
+        ]
+
+        NSPasteboard.general.clearContents()
+        let copied = NSPasteboard.general.setString(
+            lines.joined(separator: "\n"),
+            forType: .string
+        )
+        toasts.show(
+            copied ? "Диагностика скопирована" : "Не удалось скопировать диагностику",
+            kind: copied ? .success : .error
+        )
+    }
 
     private var equalizerSubtitle: String {
         guard equalizer.isSupported else { return "Недоступен на этом Mac" }

@@ -5,6 +5,7 @@ enum StationFilter: Equatable {
     case all
     case favorites
     case genre(String)
+    case group(String)
 }
 
 enum StationEditorRequest: Identifiable {
@@ -80,6 +81,10 @@ final class MainViewModel: ObservableObject {
                 if !station.isFavorite { return false }
             case .genre(let genre):
                 if GenreCatalog.normalize(station.genre) != genre { return false }
+            case .group(let group):
+                guard let stationGroup = station.group,
+                      stationGroup.localizedCaseInsensitiveCompare(group) == .orderedSame
+                else { return false }
             }
 
             guard !query.isEmpty else { return true }
@@ -88,6 +93,7 @@ final class MainViewModel: ObservableObject {
                 station.genre.lowercased(),
                 station.url.lowercased(),
                 station.comment?.lowercased() ?? "",
+                station.group?.lowercased() ?? "",
             ]
             return haystacks.contains { $0.contains(query) }
         }
@@ -129,6 +135,22 @@ final class MainViewModel: ObservableObject {
 
     func toggleFavorite(_ station: RadioStation) {
         library.toggleFavorite(id: station.id)
+    }
+
+    /// Reordering makes sense only for the full, unfiltered library.
+    var canReorder: Bool {
+        guard case .all = filter else { return false }
+        return searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    func moveStation(id: String, before targetID: String) {
+        guard canReorder else { return }
+        library.move(id: id, before: targetID)
+    }
+
+    func moveStationToEnd(id: String) {
+        guard canReorder else { return }
+        library.moveToEnd(id: id)
     }
 
     // MARK: - Intents

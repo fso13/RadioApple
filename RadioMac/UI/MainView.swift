@@ -113,7 +113,14 @@ struct MainView: View {
 
             stationTable
 
-            HStack {
+            HStack(spacing: Space.m) {
+                if model.canReorder {
+                    Text("Перетащите строки, чтобы изменить порядок")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
                 Spacer()
                 PrimaryButton(title: "Добавить станцию", systemImage: "plus") {
                     model.newStation()
@@ -146,22 +153,20 @@ struct MainView: View {
                 ScrollView {
                     LazyVStack(spacing: 0) {
                         ForEach(Array(model.visible.enumerated()), id: \.element.id) { index, station in
-                            StationRow(
-                                station: station,
-                                index: index,
-                                isSelected: index == model.selectedIndex && model.keyboardNavigated,
-                                isCurrent: player.station?.id == station.id,
-                                isPlaying: player.station?.id == station.id && player.isPlaying,
-                                isLoading: player.station?.id == station.id && player.status == .loading,
-                                onPlay: {
-                                    model.select(index)
-                                    player.play(station)
-                                },
-                                onToggleFavorite: { model.toggleFavorite(station) },
-                                onEdit: { model.edit(station) },
-                                onDelete: { pendingDelete = station }
-                            )
-                            .id(station.id)
+                            stationRow(station, index: index)
+                                .id(station.id)
+                        }
+
+                        if model.canReorder {
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(height: 14)
+                                .contentShape(Rectangle())
+                                .onDrop(of: [.text], isTargeted: nil) { providers in
+                                    handleStationDrop(providers) { id in
+                                        model.moveStationToEnd(id: id)
+                                    }
+                                }
                         }
                     }
                     .padding(.bottom, Space.s)
@@ -186,6 +191,55 @@ struct MainView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func stationRow(_ station: RadioStation, index: Int) -> some View {
+        let row = StationRow(
+            station: station,
+            index: index,
+            isSelected: index == model.selectedIndex && model.keyboardNavigated,
+            isCurrent: player.station?.id == station.id,
+            isPlaying: player.station?.id == station.id && player.isPlaying,
+            isLoading: player.station?.id == station.id && player.status == .loading,
+            onPlay: {
+                model.select(index)
+                player.play(station)
+            },
+            onToggleFavorite: { model.toggleFavorite(station) },
+            onEdit: { model.edit(station) },
+            onDelete: { pendingDelete = station }
+        )
+
+        if model.canReorder {
+            row
+                .onDrag {
+                    NSItemProvider(object: station.id as NSString)
+                }
+                .onDrop(of: [.text], isTargeted: nil) { providers in
+                    handleStationDrop(providers) { id in
+                        model.moveStation(id: id, before: station.id)
+                    }
+                }
+        } else {
+            row
+        }
+    }
+
+    /// Loads the dragged station id and hands it to `onDrop` on the main queue.
+    private func handleStationDrop(
+        _ providers: [NSItemProvider],
+        onDrop: @escaping (String) -> Void
+    ) -> Bool {
+        guard model.canReorder, let provider = providers.first else { return false }
+        provider.loadObject(ofClass: NSString.self) { object, _ in
+            guard let value = object as? NSString else { return }
+            let id = value as String
+            DispatchQueue.main.async {
+                onDrop(id)
+            }
+        }
+        return true
     }
 
     private var emptyState: some View {
@@ -240,12 +294,14 @@ struct MainView: View {
     private var emptyIcon: String {
         if !model.searchText.isEmpty { return "magnifyingglass" }
         if model.filter == .favorites { return "star" }
+        if case .group = model.filter { return "folder" }
         return "dot.radiowaves.left.and.right"
     }
 
     private var emptyTitle: String {
         if !model.searchText.isEmpty { return "Ничего не найдено" }
         if model.filter == .favorites { return "В избранном пусто" }
+        if case .group = model.filter { return "В группе пусто" }
         return "Добавьте первую станцию"
     }
 
@@ -256,12 +312,16 @@ struct MainView: View {
         if model.filter == .favorites {
             return "Отмечайте станции звёздочкой, чтобы они были под рукой."
         }
+        if case .group = model.filter {
+            return "Добавьте станции в группу через редактор станции."
+        }
         return "Вставьте прямую ссылку на поток — название и жанр можно указать рядом."
     }
 
     private var emptyActionTitle: String? {
         if !model.searchText.isEmpty { return "Сбросить поиск" }
         if model.filter == .favorites { return "Показать все" }
+        if case .group = model.filter { return "Показать все" }
         return "Добавить станцию"
     }
 
@@ -273,6 +333,9 @@ struct MainView: View {
             }
         }
         if model.filter == .favorites {
+            return { model.setFilter(.all) }
+        }
+        if case .group = model.filter {
             return { model.setFilter(.all) }
         }
         return model.newStation
@@ -294,6 +357,7 @@ struct MainView: View {
             station.url = draft.url
             station.genre = draft.genre
             station.comment = draft.comment.isEmpty ? nil : draft.comment
+            station.group = draft.group.isEmpty ? nil : draft.group
             station.logoURL = draft.logoURL.isEmpty ? nil : draft.logoURL
             library.update(station)
             toasts.show("Станция сохранена", kind: .success)
@@ -303,6 +367,7 @@ struct MainView: View {
                 url: draft.url,
                 genre: draft.genre,
                 comment: draft.comment,
+                group: draft.group,
                 logoURL: draft.logoURL
             )
             toasts.show("Станция добавлена", kind: .success)
