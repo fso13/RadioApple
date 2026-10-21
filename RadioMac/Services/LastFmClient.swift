@@ -153,7 +153,7 @@ final class LastFmClient: @unchecked Sendable {
         let base = filtered.keys.sorted()
             .map { "\($0)\(filtered[$0] ?? "")" }
             .joined() + secret
-        let digest = Insecure.MD5.hash(data: Data(base.utf8))
+        let digest = SHA256.hash(data: Data(base.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
     }
 
