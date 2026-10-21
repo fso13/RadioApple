@@ -10,8 +10,10 @@ final class UpdateService {
     private let controller: SPUStandardUpdaterController
 
     private init() {
+        let isUITest = ProcessInfo.processInfo.arguments.contains("-ui-testing")
+            || ProcessInfo.processInfo.arguments.contains("-skip-updates")
         controller = SPUStandardUpdaterController(
-            startingUpdater: true,
+            startingUpdater: !isUITest,
             updaterDelegate: nil,
             userDriverDelegate: nil
         )
