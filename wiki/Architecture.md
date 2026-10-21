@@ -1,0 +1,109 @@
+# Архитектура
+
+RadioMac — нативное приложение на **Swift 5** (SwiftUI + AppKit), без внешних
+пакетных зависимостей. Аудио — BASS 2.4, вендорные библиотеки лежат в `ThirdParty/BASS`.
+
+## Слои
+
+```
+┌─────────────────────────────────────────────┐
+│ AppKit: NSStatusItem, NSPanel, NSEvent      │
+├─────────────────────────────────────────────┤
+│ SwiftUI: MainView, Settings, EQ, Editor     │
+├─────────────────────────────────────────────┤
+│ AppEnvironment + MainViewModel / Router     │
+├─────────────────────────────────────────────┤
+│ Services: player, library, EQ, metadata,    │
+│ logos, now playing, theme, login item       │
+├─────────────────────────────────────────────┤
+│ RadioEngine (BASS), UserDefaults, сеть      │
+└─────────────────────────────────────────────┘
+```
+
+## Запуск и окно
+
+- `RadioMacApp` — `@main`, `NSApplicationDelegateAdaptor`, accessory-режим.
+- `AppDelegate` создаёт `AppEnvironment`, `StatusItemController` и `MainWindowController`.
+- `Info.plist` содержит `LSUIElement = true`: приложение не показывается в Dock и Cmd+Tab.
+- `MainWindowController` держит безрамочный `NSPanel` (780×660) с `NSHostingView`.
+  Панель может становиться key, чтобы работали текстовые поля и шорткаты; прозрачный фон
+  и внутренний отступ 10 pt дают «страницу» с тенью.
+- Перетаскивание — за область шапки; закрытие окна скрывает панель, но не останавливает эфир.
+- `KeyboardRouter` — локальный монитор `NSEvent`, поэтому однобуквенные шорткаты
+  не конфликтуют с вводом в поиске и форме.
+
+## Сервисы
+
+| Сервис | Ответственность |
+| --- | --- |
+| `RadioEngine` | единственный владелец BASS-хэндлов, потоки, ICY, стоп/пауза, EQ |
+| `RadioPlayerService` | состояние плеера, громкость, опрос метаданных, Now Playing |
+| `StationLibrary` | каталог, избранное, добавление/удаление, логотипы, персистентность |
+| `EqualizerService` | полосы, пресеты, дебаунс записи |
+| `NowPlayingLookup` | Radio Paradise, SomaFM, Icecast, ICY, обложки iTunes |
+| `LogoResolver` | Radio Browser, сайт станции, favicon |
+| `NowPlayingCenter` | `MPNowPlayingInfoCenter`, `MPRemoteCommandCenter` |
+| `Preferences` | ключи `UserDefaults` и миграция из Flutter |
+| `AppSettings` | громкость, автозапуск, последняя станция |
+| `ThemeService` | системная/светлая/тёмная тема |
+| `LaunchAtLogin` | `SMAppService.mainApp` |
+
+`AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
+`MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.
+
+## Потоки
+
+- BASS вызывается только на последовательной `workQueue` — никаких гонок за хэндлы.
+- Результаты и ICY-метаданные приходят в UI на main-очереди.
+- Метаданные и обложки загружаются асинхронно (`URLSession`, `async/await`),
+  с проверкой поколения, чтобы ответ старой станции не перетёр новый трек.
+- Опрос метаданных — таймер раз в 20 секунд; отменяется при остановке.
+
+## Данные
+
+`UserDefaults` (контейнер песочницы):
+
+| Ключ | Значение |
+| --- | --- |
+| `stations_v1` | JSON станций (включая `isFavorite`) |
+| `volume`, `last_station_id` | громкость и последняя станция |
+| `resume_last_station`, `auto_start` | поведение |
+| `theme_preference` | тема |
+| `eq_enabled`, `eq_preset`, `eq_gains`, `eq_custom_gains` | эквалайзер |
+| `native_migration_v1` | флаг миграции из Flutter |
+
+Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
+совместимы. Миграция копирует `flutter.*` → нативные ключи один раз и не перетирает
+новые значения.
+
+## UI и дизайн-система
+
+| Файл | Что задаёт |
+| --- | --- |
+| `UI/Palette.swift` | монохромная семантическая палитра (свет/тьма) |
+| `UI/DesignSystem.swift` | отступы, радиусы, шкала шрифтов, панель, хайрлайны |
+| `UI/Components.swift` | шапка, кнопки, поиск, строки, тосты |
+| `UI/MainView.swift` | главная страница |
+| `UI/Sidebar.swift` | жанры и обложка |
+| `UI/StationRow.swift` | строка таблицы |
+| `UI/PlayerBar.swift` | нижний транспорт |
+| `UI/SettingsView.swift`, `HelpView.swift`, `EqualizerView.swift`, `StationEditorView.swift` | страницы и листы |
+| `UI/BrandMark.swift`, `StationLogo.swift`, `ImageCache.swift` | бренд, обложки, кэш |
+
+Принципы: одна краска (чернила), крупная типографика, тонкие линии вместо карточек,
+радиусы 2–4 pt (панель — 12 pt), цвет только в обложках и LIVE.
+
+## Безопасность
+
+- App Sandbox включён; сетевой клиент — единственное сетевое право.
+- Запись — только в контейнер `~/Library/Containers/com.fso13.radioMac/`.
+- Нет аккаунтов, телеметрии и сторонних SDK.
+- Вендорные dylib подписываются вместе с приложением и проверяются по SHA-256.
+
+## Исходники
+
+- [RadioMacApp.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/RadioMacApp.swift)
+- [AppDelegate.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/AppDelegate.swift)
+- [MainWindowController.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Window/MainWindowController.swift)
+- [RadioEngine.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/RadioEngine.swift)
+- [RadioPlayerService.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/RadioPlayerService.swift)

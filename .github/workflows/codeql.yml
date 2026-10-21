@@ -27,9 +27,16 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: swift
+          # The repo still contains the Flutter macos/ project with a Podfile.
+          # Autobuild picks it and runs `pod install`; build the native app instead.
+          build-mode: manual
 
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
+      - name: Build (manual)
+        run: |
+          xcodebuild -project RadioMac.xcodeproj -scheme RadioMac \
+            -configuration Debug -destination 'platform=macOS' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            ONLY_ACTIVE_ARCH=YES build
 
       - name: Analyze
         uses: github/codeql-action/analyze@v4

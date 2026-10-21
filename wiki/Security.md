@@ -1,0 +1,92 @@
+# Безопасность
+
+## Поддерживаемые версии
+
+| Версия | Поддержка |
+| --- | --- |
+| 1.x | да |
+| < 1.0 | нет |
+
+## Как сообщить об уязвимости
+
+Не открывайте публичный issue. Используйте
+[GitHub Security Advisory](https://github.com/fso13/RadioApple/security/advisories/new)
+или напишите мейнтейнеру. Укажите версию, macOS, шаги воспроизведения и оценку влияния.
+
+## Модель угроз
+
+RadioMac — локальное приложение без аккаунтов и серверной части. Оно открывает
+аудиопотоки по HTTPS/HTTP, загружает метаданные, обложки и логотипы. Пользовательские
+данные не покидают Mac.
+
+- **Песочница** включена (`com.apple.security.app-sandbox`).
+- Сетевое право — только `com.apple.security.network.client`.
+- Запись — только в контейнер `~/Library/Containers/com.fso13.radioMac/`.
+- Нет телеметрии, аналитики и сторонних SDK.
+- Нет исполняемых плагинов, кроме аудиобиблиотек BASS из поставки.
+
+## Зависимости
+
+- Пакетных менеджеров в рантайме нет: только системные фреймворки macOS.
+- `ThirdParty/BASS` — вендорные BASS 2.4 и аддоны (un4seen). Целостность проверяется
+  по `ThirdParty/BASS/SHA256SUMS`.
+- Python-инструменты сборки закреплены: `scripts/requirements-installer.txt`,
+  `scripts/requirements-dev.txt`.
+
+## Автоматические проверки
+
+| Проверка | Где | Что делает |
+| --- | --- | --- |
+| CodeQL (`swift`) | `codeql.yml` | семантический анализ кода |
+| SwiftLint | `lint.yml` | статический анализ стиля и ошибок |
+| actionlint | `lint.yml` | проверка workflow |
+| ShellCheck | `lint.yml` | проверка shell-скриптов |
+| OSV-Scanner | `security.yml` | уязвимости в зависимостях (OSV.dev) |
+| SBOM + Grype | `security.yml` | SBOM приложения и скан CVE (порог critical) |
+| Dependency Review | `security.yml` | блокировка PR с уязвимыми зависимостями |
+| Dependabot | `dependabot.yml` | обновления actions и pip-инструментов |
+| SHA-256 BASS | CI и сборка | целостность вендорных бинарников |
+
+Результаты сканов загружаются в **Security → Code scanning**.
+
+SBOM (`RadioMac-<версия>.spdx.json`) публикуется в релизе. Он описывает приложение
+и его компоненты; вендорные C-библиотеки BASS не индексируются OSV/NVD, поэтому для них
+действует контроль SHA-256 и ручная проверка обновлений un4seen.
+
+## Целостность релиза
+
+- DMG и PKG подписываются; при наличии секретов — Developer ID и нотарификация.
+- В релизе лежат `SHA256SUMS.txt` и SBOM.
+- Проверка контрольных сумм:
+
+  ```bash
+  shasum -a 256 -c SHA256SUMS.txt
+  ```
+
+- Проверка подписи:
+
+  ```bash
+  codesign --verify --strict --verbose=2 /Applications/RadioMac.app
+  spctl --assess --type execute --verbose /Applications/RadioMac.app
+  ```
+
+Если сборка ad-hoc, macOS может потребовать снять карантин:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/RadioMac.app
+```
+
+## Секреты в CI
+
+`release.yml` принимает сертификаты и пароли только из GitHub Secrets. Сертификат
+импортируется во временную keychain, файл `.p12` удаляется после импорта. Секреты
+не печатаются и не попадают в артефакты. Без секретов релиз собирается ad-hoc.
+
+## Известные ограничения
+
+- `libbass_fx.dylib` из поставки не загружается на части систем (`error 41`) —
+  эквалайзер недоступен, см. [Эквалайзер](Equalizer).
+- `libbass_aac.dylib` собран только под x86_64; AAC играет через CoreAudio.
+- HLS-потоки не поддерживаются.
+- Сторонние потоки и API могут быть недоступны или geo-заблокированы — это
+  не уязвимость приложения.

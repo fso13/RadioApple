@@ -14,7 +14,8 @@
 [![Pages](https://github.com/fso13/RadioApple/actions/workflows/pages.yml/badge.svg)](https://github.com/fso13/RadioApple/actions/workflows/pages.yml)
 
 Сайт: [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) ·
-Релизы: [github.com/fso13/RadioApple/releases](https://github.com/fso13/RadioApple/releases)
+[Вики](https://github.com/fso13/RadioApple/wiki) ·
+[Релизы](https://github.com/fso13/RadioApple/releases)
 
 | Главный экран | Тёмная тема |
 | --- | --- |
@@ -208,6 +209,7 @@ ThirdParty/BASS/              bass.h, bass_fx_shim.h, три dylib и SHA256SUMS
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
+wiki/                         исходники вики (публикуются scripts/publish_wiki.sh)
 CHANGELOG.md                  история версий (источник заметок к релизу)
 SECURITY.md                   политика безопасности и процесс CVE
 Install RadioMac.command      лаунчер: собрать → установить → запустить
@@ -221,6 +223,8 @@ scripts/verify_third_party.sh проверка SHA-256 вендорных биб
 scripts/release_notes.py      тело релиза из CHANGELOG
 scripts/check_site.py         проверка ссылок и alt-текстов сайта
 scripts/preview_site.sh       локальный сервер сайта
+scripts/check_wiki.py         проверка ссылок и навигации вики
+scripts/publish_wiki.sh       публикация wiki/ в GitHub Wiki
 scripts/requirements-*.txt    закреплённые версии Python-инструментов
 scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов на диске
 ```
@@ -255,7 +259,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 | `ci.yml` | push/PR в `main` | Debug-сборка, 13 тестов, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
-| `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта |
+| `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
 | `codeql.yml` | push/PR, расписание | CodeQL для Swift |
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 вендорных библиотек |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
@@ -308,6 +312,14 @@ Source: **GitHub Actions***. Кнопка скачивания подтягив�
 scripts/preview_site.sh            # http://127.0.0.1:8000
 python3 scripts/check_site.py      # ссылки, alt-тексты, обязательные блоки
 ```
+
+### Вики
+
+Подробная документация — [github.com/fso13/RadioApple/wiki](https://github.com/fso13/RadioApple/wiki).
+Исходники лежат в `wiki/`, публикация — `scripts/publish_wiki.sh`. GitHub создаёт
+wiki-репозиторий только после первой страницы в веб-интерфейсе, поэтому один раз нужно
+нажать «Create the first page» на странице вики. Проверка ссылок и навигации —
+`scripts/check_wiki.py`, она же выполняется в `lint.yml`.
 
 ### Безопасность
 

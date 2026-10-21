@@ -51,8 +51,8 @@ jobs:
           python3 scripts/generate_xcodeproj.py
           git diff --exit-code -- RadioMac.xcodeproj
 
-  site:
-    name: Static site
+  docs:
+    name: Site & wiki
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -63,3 +63,6 @@ jobs:
 
       - name: Check JavaScript
         run: node --check site/app.js
+
+      - name: Validate wiki
+        run: python3 scripts/check_wiki.py
