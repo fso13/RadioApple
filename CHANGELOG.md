@@ -5,59 +5,52 @@
 
 ## [Unreleased]
 
+## [1.1.0] — 2026-10-21
+
 ### Добавлено
 
-- Информация о потоке в настройках: кодек, битрейт, частота, каналы, буфер, сервер
-  и копирование диагностики.
-- Группы станций: поле «Группа» в редакторе, фильтр групп в навигации
-  и изменение порядка перетаскиванием в режиме «Все».
-- Будильник-радио: расписание по дням недели, выбор станции, плавное нарастание
-  громкости и локальное уведомление.
-- Диагностика: opt-in локальный журнал событий, обнаружение аварийных завершений,
-  копирование и очистка. Данные не отправляются, URL обрезаются до домена.
-- Swift 6: проект переведён на языковой режим Swift 6, strict concurrency complete,
-  аудит `@MainActor`/`Sendable`; предупреждения компилятора считаются ошибками.
-- Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`;
-  Release workflow обновляет cask вместе с релизом.
-- Last.fm: opt-in OAuth, now-playing и scrobble после 4 минут; API-ключи приложения
-  из build settings/GitHub Secrets, сессия в Keychain, отключение одной кнопкой.
-- Audio engine: AVPlayer для HLS, AAC и MP3; BASS полностью удалена.
-- Эквалайзер: нативный 10-полосный Biquad DSP в AVPlayer audio tap; BASS_FX/BASS удалены.
-- Удалены BASS, BASS_FX и BASS_AAC; HLS/AAC/MP3 идут через AVPlayer, EQ — нативный DSP.
-- AVPlayer: HLS/AAC/MP3, HLS timed metadata и ICY side-channel.
-- Автопереподключение: статус «Переподключение…», backoff 1/2/5/10 с, лимит попыток
-  и ручной retry.
-- Автоматизация: App Intents/Shortcuts («Играть станцию», «Пауза», «Открыть»), URL
+- Sparkle 2: appcast, EdDSA-подпись, проверка обновлений в приложении и CI,
+  публикация appcast в latest release.
+- App Intents/Shortcuts («Играть станцию», «Пауза», «Открыть RadioMac») и URL-схема
   `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
 - Radio Browser: поиск по названию/жанру/стране, превью, добавление в библиотеку
-  и защита от дублей по URL/external ID.
+  и защита от дублей по URL/`stationuuid`.
 - Импорт/экспорт JSON, M3U и OPML с drag-and-drop, режимами add/replace и
   сохранением избранного.
-- Настройки на станцию: смещение громкости, EQ-пресет и автозапуск.
+- Настройки на станцию: смещение громкости в dB, EQ-пресет и автозапуск.
+- Мини-плеер в меню-баре: обложка, трек, play/pause, громкость и быстрый выбор станции.
+- XCUITest главного сценария/настроек и светлые/тёмные снапшоты в CI.
+- Панель потока: кодек, битрейт, частота, каналы, буфер, сервер и копирование диагностики.
+- Группы станций, будильник-радио, локальная диагностика и Last.fm
+  (now-playing/scrobble с ключами из GitHub Secrets).
+- Homebrew Cask: tap `fso13/tap`, установка `brew install --cask radiomac`.
 - Flutter-исходники убраны из `main`; версия сохранена в ветке `flutter-legacy`
-  и теге `flutter-legacy-1.0`. CodeQL переведён на autobuild.
+  и теге `flutter-legacy-1.0`.
+
+### Изменено
+
+- Audio engine: AVPlayer для HLS, AAC и MP3; нативный EQ через `MTAudioProcessingTap`.
+- Swift 6: strict concurrency complete, аудит `@MainActor`/`Sendable`,
+  предупреждения компилятора считаются ошибками.
+- CodeQL переведён на autobuild без Flutter-проекта.
+- Обновлены release-скрипты: Sparkle-подпись, appcast и проверка feed/key в CI.
+
+### Удалено
+
+- BASS, BASS_FX и BASS_AAC, вендорные dylib/заголовки и bridging header.
+- Flutter-приложение из `main` (сохранено в `flutter-legacy`).
+
+### Исправлено
+
+- HLS timed metadata и ICY side-channel.
+- Автопереподключение с backoff 1/2/5/10 с, лимитом попыток и ручным retry.
+- Нативный EQ AVPlayer для HLS/AAC/MP3.
+- Панель потока получает реальные параметры AVPlayer; копирование диагностики.
 
 ### Безопасность
 
-- Pillow обновлён до 13.0.0: закрыты 9 advisories OSV, затрагивавших 12.3.0
-  (в скане OSV — 18 записей с учётом повторов). Инструмент используется только
-  для генерации иконок и фона установщика, в приложение не входит.
-
-## [1.0.2] — 2026-10-21
-
-### Добавлено
-- Sparkle 2: appcast, EdDSA-подпись, проверка обновлений в приложении и CI,
-  публикация appcast в latest release.
-- App Intents/Shortcuts и URL-схема `radiomac://`.
-- Radio Browser: поиск, превью, добавление без дублей.
-- Импорт/экспорт JSON, M3U и OPML с drag-and-drop.
-- Настройки на станцию: громкость, EQ-пресет, автозапуск.
-- Мини-плеер в меню-баре с обложкой, транспортом, громкостью и быстрым выбором станции.
-- XCUITest главного сценария/настроек и светлые/тёмные снапшоты в CI.
-- Панель потока: кодек, битрейт, частота, каналы, буфер, сервер и копирование диагностики.
-
-### Исправлено
-- HLS timed metadata, автопереподключение, нативный EQ AVPlayer, удаление BASS.
+- Pillow обновлён до 13.0.0: закрыты advisories OSV, затрагивавшие 12.3.0.
+  Инструмент используется только для генерации иконок и фона установщика.
 
 ## [1.0.1] — 2026-10-21
 
@@ -103,7 +96,7 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.0.2...HEAD
-[1.0.2]: https://github.com/fso13/RadioApple/releases/tag/v1.0.2
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/fso13/RadioApple/releases/tag/v1.1.0
 [1.0.1]: https://github.com/fso13/RadioApple/releases/tag/v1.0.1
 [1.0.0]: https://github.com/fso13/RadioApple/releases/tag/v1.0.0
