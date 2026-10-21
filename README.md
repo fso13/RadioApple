@@ -56,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (33 XCTest-кейсов, host-приложение):
+Тесты (34 XCTest-кейсов, host-приложение):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -113,6 +113,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   добавление в библиотеку и защита от дублей по URL/external ID.
 - **Импорт и экспорт**: JSON, M3U и OPML, drag-and-drop, режимы «Добавить/Заменить»
   с сохранением избранного.
+- **Настройки станции**: смещение громкости в dB, свой EQ-пресет и автозапуск
+  при старте RadioMac; сохраняются в библиотеке.
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
@@ -247,7 +249,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                33 логических тестов (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
+RadioMacTests/                34 логических теста (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
 site/                         статический сайт для GitHub Pages
@@ -297,7 +299,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 33 теста, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 34 теста, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
