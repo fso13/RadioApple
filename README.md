@@ -26,18 +26,15 @@
 | --- | --- | --- |
 | ![Настройки](site/assets/screenshots/settings.jpg) | ![Эквалайзер](site/assets/screenshots/equalizer.jpg) | ![Редактор станции](site/assets/screenshots/station-editor.jpg) |
 
-## Две реализации в репозитории
+## Flutter-версия
 
-| | Нативная (актуальная) | Flutter (предыдущая) |
-| --- | --- | --- |
-| Исходники | `RadioMac/`, `RadioMac.xcodeproj` | `lib/`, `macos/`, `pubspec.yaml` |
-| Запуск | Xcode → `RadioMac` или `xcodebuild` | `flutter run -d macos` |
-| UI | SwiftUI + AppKit (`NSStatusItem`, `NSPanel`) | Flutter Material |
-| Движок | тот же BASS (`ThirdParty/BASS`) | тот же BASS |
+Flutter-приложение больше не лежит в `main`: оно сохранено в ветке
+[`flutter-legacy`](https://github.com/fso13/RadioApple/tree/flutter-legacy) и теге
+`flutter-legacy-1.0`. Актуальная версия — нативная (`RadioMac/`, `RadioMac.xcodeproj`).
 
-Flutter-версия оставлена как есть. Нативное приложение использует тот же bundle id
-`com.fso13.radioMac`, поэтому при первом запуске **подхватывает данные Flutter-версии**:
-станции, избранное, громкость, последнюю станцию, пресет эквалайзера и тему.
+Нативное приложение использует тот же bundle id `com.fso13.radioMac`, поэтому при
+первом запуске **подхватывает данные Flutter-версии**: станции, избранное, громкость,
+последнюю станцию, пресет эквалайзера и тему.
 
 ## Требования
 
@@ -297,9 +294,8 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype, SHA-256 вендорных библиотек |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
-CodeQL собирает нативный проект вручную (`build-mode: manual`): в репозитории остаётся
-Flutter-папка `macos/` с Podfile, и autobuild пытался делать `pod install` вместо
-сборки `RadioMac.xcodeproj`.
+CodeQL собирает нативный проект через autobuild: Flutter-папки `macos/` с Podfile
+больше нет, поэтому анализатор находит корневой `RadioMac.xcodeproj`.
 
 ### Как выпустить релиз
 
@@ -367,15 +363,11 @@ wiki-репозиторий только после первой страниц�
 
 ## Ограничения
 
-- **Эквалайзер.** `libbass_fx.dylib` из поставки загружается, но BASS его отвергает
-  (`error 41`) на macOS 27 / Apple Silicon: эффект не применяется. UI и настройки работают,
-  в окне эквалайзера показывается предупреждение. Чтобы включить коррекцию, положите
-  совместимую сборку `libbass_fx.dylib` в `ThirdParty/BASS/` и пересоберите приложение.
-- **AAC-плагин.** `libbass_aac.dylib` собран только под x86_64/i386 и на Apple Silicon не
-  загружается. AAC-потоки (например, Radio Maximum `.aacp`) играют через CoreAudio-кодеки
-  BASS — проверено.
-- **HLS.** Поток `SOUNDPARK DEEP` (`hls.m3u8`) остался в каталоге из Flutter-версии; BASS
-  не умеет HLS, поведение не изменилось.
+- **Эквалайзер.** Если BASS_FX недоступен (`error 41`), работает нативный 10-полосный
+  Biquad DSP. В режиме AVPlayer эквалайзер пока недоступен.
+- **AAC.** «Авто» отправляет AAC на AVPlayer; `libbass_aac` для этого пути не нужен.
+- **HLS.** Потоки `.m3u8` играют через AVPlayer; ICY к HLS неприменим, трек-метаданные
+  HLS ещё в работе (RM-02).
 - Песочница включена: приложение пишет только в свой контейнер
   `~/Library/Containers/com.fso13.radioMac/`.
 
