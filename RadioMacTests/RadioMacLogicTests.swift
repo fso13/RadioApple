@@ -232,6 +232,52 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertEqual(library.stations.count, DefaultStations.catalog.count)
     }
 
+    func testLastFmKeychainRoundtrip() {
+        let service = "com.fso13.radioMac.lastfm.tests.\(UUID().uuidString)"
+        let credentials = LastFmCredentials(
+            apiKey: "key",
+            apiSecret: "secret",
+            sessionKey: "session",
+            username: "user"
+        )
+        do {
+            try LastFmCredentialStore.save(credentials, service: service, account: "test")
+        } catch {
+            XCTFail("Keychain save failed: \(error)")
+            return
+        }
+        XCTAssertEqual(
+            LastFmCredentialStore.load(service: service, account: "test"),
+            credentials
+        )
+        LastFmCredentialStore.clear(service: service, account: "test")
+        XCTAssertNil(LastFmCredentialStore.load(service: service, account: "test"))
+    }
+
+    func testLastFmSignatureAndScrobbleRule() {
+        let signature = LastFmClient.signature(
+            ["method": "auth.getToken", "api_key": "abc"],
+            secret: "secret"
+        )
+        XCTAssertEqual(signature, "f86444211049e605f18c05a5964aabfc")
+
+        let withFormat = LastFmClient.signature(
+            ["format": "json", "method": "auth.getToken", "api_key": "abc"],
+            secret: "secret"
+        )
+        XCTAssertEqual(withFormat, signature)
+
+        XCTAssertFalse(LastFmService.shouldScrobble(elapsed: 239.9))
+        XCTAssertTrue(LastFmService.shouldScrobble(elapsed: 240))
+        XCTAssertTrue(LastFmService.shouldScrobble(elapsed: 600))
+
+        let client = LastFmClient(apiKey: "abc", apiSecret: "secret")
+        let url = try? client.authURL(token: "token-1")
+        XCTAssertNotNil(url)
+        XCTAssertTrue(url?.absoluteString.contains("api_key=abc") == true)
+        XCTAssertTrue(url?.absoluteString.contains("token=token-1") == true)
+    }
+
     func testDiagnosticsStoreAndRedaction() {
         let directory = FileManager.default.temporaryDirectory
             .appendingPathComponent("radiomac-diag-\(UUID().uuidString)", isDirectory: true)

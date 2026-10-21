@@ -8,6 +8,7 @@ struct SettingsView: View {
     @ObservedObject var equalizer: EqualizerService
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var alarm: AlarmService
+    @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
@@ -26,6 +27,7 @@ struct SettingsView: View {
     @State private var confirmRestore = false
     @State private var confirmQuit = false
     @State private var showDiagnostics = false
+    @State private var showLastFm = false
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -80,6 +82,11 @@ struct SettingsView: View {
         .sheet(isPresented: $showDiagnostics) {
             DiagnosticsView(diagnostics: diagnostics) {
                 showDiagnostics = false
+            }
+        }
+        .sheet(isPresented: $showLastFm) {
+            LastFmSetupView(lastFm: lastFm) {
+                showLastFm = false
             }
         }
         .alert("Завершить работу?", isPresented: $confirmQuit) {
@@ -194,6 +201,40 @@ struct SettingsView: View {
                         Spacer()
                     }
                     .padding(.vertical, Space.m)
+                }
+
+                section("Last.fm") {
+                    ToggleRow(
+                        title: "Скробблинг",
+                        subtitle: lastFmStatusText,
+                        isOn: lastFm.isEnabled,
+                        onChange: { value in
+                            lastFm.setEnabled(value)
+                            if value && !lastFm.isConnected {
+                                showLastFm = true
+                            }
+                        }
+                    )
+                    Hairline()
+                    HStack(spacing: Space.l) {
+                        Text(lastFm.isConnected ? "Аккаунт" : "Подключение")
+                            .font(Typeface.body)
+                            .foregroundStyle(palette.textSecondary)
+                        Spacer()
+                        TextButton(
+                            title: lastFm.isConnected ? "Настроить" : "Подключить",
+                            systemImage: "person.crop.circle"
+                        ) {
+                            showLastFm = true
+                        }
+                    }
+                    .padding(.vertical, Space.m)
+
+                    Text("Opt-in. Now-playing и скроббл после 4 минут; ключи хранятся в Keychain, отключается одной кнопкой.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, Space.m)
                 }
 
                 section("Диагностика") {
@@ -331,6 +372,13 @@ struct SettingsView: View {
     }
 
     // MARK: - State
+
+    private var lastFmStatusText: String {
+        if lastFm.isConnected, let username = lastFm.username {
+            return "Подключено: \(username)"
+        }
+        return lastFm.isEnabled ? "Требуется подключение" : "Выключено"
+    }
 
     private func crashText(_ date: Date) -> String {
         let formatter = DateFormatter()

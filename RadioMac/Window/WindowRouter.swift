@@ -27,6 +27,7 @@ struct RootView: View {
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var equalizer: EqualizerService
     @ObservedObject var alarm: AlarmService
+    @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
     @ObservedObject var toasts: ToastCenter
 
@@ -55,6 +56,7 @@ struct RootView: View {
                         equalizer: equalizer,
                         player: player,
                         alarm: alarm,
+                        lastFm: lastFm,
                         diagnostics: diagnostics,
                         library: library,
                         toasts: toasts,
