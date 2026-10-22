@@ -80,7 +80,8 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let publisher = Publishers.MergeMany(
             player.$status.map { _ in () }.eraseToAnyPublisher(),
             player.$nowPlaying.map { _ in () }.eraseToAnyPublisher(),
-            player.$station.map { _ in () }.eraseToAnyPublisher()
+            player.$station.map { _ in () }.eraseToAnyPublisher(),
+            environment.sleepTimer.$remaining.map { _ in () }.eraseToAnyPublisher()
         )
         publisher
             .receive(on: RunLoop.main)
