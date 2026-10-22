@@ -40,6 +40,7 @@ struct PanelHeader<Trailing: View>: View {
     var body: some View {
         ZStack {
             WindowDragArea()
+                .accessibilityHidden(true)
 
             HStack(spacing: Space.s) {
                 if let onBack {
@@ -307,6 +308,7 @@ struct SearchLine: View {
                 .foregroundStyle(palette.textPrimary)
                 .focused($isFocused)
                 .accessibilityIdentifier("station-search")
+                .accessibilityLabel("Поиск станций")
 
                 if text.isEmpty {
                     Text("⌘F")
@@ -381,8 +383,8 @@ struct NavItem: View {
 // MARK: - Page heading
 
 struct PageHeading: View {
-    let title: String
-    var subtitle: String?
+    let title: LocalizedStringKey
+    var subtitle: LocalizedStringKey?
 
     @Environment(\.palette) private var palette
 
@@ -403,15 +405,15 @@ struct PageHeading: View {
 // MARK: - Settings rows
 
 struct SettingsRow<Trailing: View>: View {
-    private let title: String
-    private let subtitle: String?
+    private let title: LocalizedStringKey
+    private let subtitle: LocalizedStringKey?
     private let trailing: Trailing
 
     @Environment(\.palette) private var palette
 
     init(
-        title: String,
-        subtitle: String? = nil,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey? = nil,
         @ViewBuilder trailing: () -> Trailing
     ) {
         self.title = title
@@ -468,7 +470,10 @@ struct ToggleRow: View {
     }
 
     var body: some View {
-        SettingsRow(title: title, subtitle: subtitle) {
+        SettingsRow(
+            title: LocalizedStringKey(title),
+            subtitle: subtitle.map { LocalizedStringKey($0) }
+        ) {
             Toggle("", isOn: $value)
                 .labelsHidden()
                 .toggleStyle(.switch)
@@ -488,7 +493,7 @@ struct ToggleRow: View {
 }
 
 struct InfoRow: View {
-    let label: String
+    let label: LocalizedStringKey
     let value: String
 
     @Environment(\.palette) private var palette

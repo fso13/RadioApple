@@ -8,6 +8,7 @@ struct MainView: View {
     @ObservedObject var library: StationLibrary
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var equalizer: EqualizerService
+    @ObservedObject var sleepTimer: SleepTimerService
     @ObservedObject var toasts: ToastCenter
 
     let onOpenSettings: () -> Void
@@ -125,7 +126,7 @@ struct MainView: View {
                 if model.canReorder {
                     Text("Перетащите строки, чтобы изменить порядок")
                         .font(Typeface.caption)
-                        .foregroundStyle(palette.textTertiary)
+                        .foregroundStyle(palette.textSecondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
@@ -155,7 +156,7 @@ struct MainView: View {
         }
         .font(Typeface.overline)
         .tracking(1.2)
-        .foregroundStyle(palette.textTertiary)
+        .foregroundStyle(palette.textSecondary)
     }
 
     @ViewBuilder
@@ -186,6 +187,9 @@ struct MainView: View {
                     .padding(.bottom, Space.s)
                 }
                 .scrollIndicators(.automatic)
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel("Список станций")
+                .accessibilityIdentifier("station-list")
                 .mask(
                     LinearGradient(
                         stops: [
@@ -268,6 +272,7 @@ struct MainView: View {
         PlayerBar(
             player: player,
             equalizer: equalizer,
+            sleepTimer: sleepTimer,
             onOpenEqualizer: onOpenEqualizer,
             onPrevious: { move(by: -1) },
             onNext: { move(by: 1) },

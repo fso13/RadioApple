@@ -27,6 +27,7 @@ struct BrandMark: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("RadioMac")
+        .accessibilityAddTraits(.isStaticText)
     }
 }
 

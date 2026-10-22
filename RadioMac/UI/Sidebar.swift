@@ -140,7 +140,7 @@ struct HeroArtwork: View {
         .help(station.map { "\($0.name) — пауза / играть" } ?? "Нет активной станции")
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(station.map { "Обложка: \($0.name)" } ?? "Нет обложки")
-        .accessibilityAddTraits(station == nil ? [] : .isButton)
+        .accessibilityAddTraits(station == nil ? .isImage : [.isButton, .isImage])
     }
 
     private var placeholder: some View {

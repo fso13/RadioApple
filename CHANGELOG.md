@@ -5,6 +5,18 @@
 
 ## [Unreleased]
 
+## [1.3.0] — 2026-10-22
+
+### Добавлено
+
+- Таймер сна 15/30/60/90 минут с пятисекундным затуханием, индикатором в
+  PlayerBar и меню-баре, отменой.
+- Настраиваемые глобальные горячие клавиши play/pause и следующей станции
+  на Carbon; проверка системных конфликтов и работа при скрытом окне.
+- Локальная история последних 100 треков: поиск, копирование, очистка,
+  станция и время; доступ из настроек и меню-бара.
+- String Catalog ru/en, VoiceOver-метки, Reduce Motion и UI-аудит доступности.
+
 ## [1.2.1] — 2026-10-21
 
 ### Исправлено
@@ -116,7 +128,8 @@
 - `libbass_aac.dylib` собран только под x86_64; AAC-потоки играют через CoreAudio.
 - HLS-поток `SOUNDPARK DEEP` остаётся неиграбельным (BASS не поддерживает HLS).
 
-[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/fso13/RadioApple/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/fso13/RadioApple/releases/tag/v1.3.0
 [1.2.1]: https://github.com/fso13/RadioApple/releases/tag/v1.2.1
 [1.2.0]: https://github.com/fso13/RadioApple/releases/tag/v1.2.0
 [1.1.0]: https://github.com/fso13/RadioApple/releases/tag/v1.1.0

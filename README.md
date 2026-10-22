@@ -60,7 +60,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (35 unit + 2 UI XCTest-кейса):
+Тесты (38 unit + 4 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -133,7 +133,15 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Нативный эквалайзер**: 10-полосный Biquad DSP в audio tap AVPlayer для HLS,
   AAC и MP3; перезапуск станции при смене настроек не нужен.
 - **Транспорт**: пауза/играть, стоп, **переключение на предыдущую/следующую станцию** в текущей
-  выборке, громкость, эквалайзер, LIVE. Если ничего не выбрано, Play включает первую станцию.
+  выборке, громкость, эквалайзер, LIVE.
+- **Таймер сна**: 15/30/60/90 минут, плавное затухание за 5 секунд, индикатор
+  в окне и меню-баре, отмена.
+- **Глобальные горячие клавиши**: настраиваемые play/pause и следующая станция
+  через Carbon, работают при скрытом окне; проверка конфликтов с системой.
+- **История треков**: последние 100 треков со станцией и временем, поиск,
+  копирование и очистка; хранится только локально.
+- **Локализация и доступность**: String Catalog ru/en, VoiceOver-метки, Reduce Motion,
+  контраст и UI-аудит основных экранов. Если ничего не выбрано, Play включает первую станцию.
 - **Метаданные трека**: ICY-теги, Icecast `status-json.xsl`, API SomaFM и Radio Paradise,
   обложка из iTunes; заголовок и обложка уходят в Control Center (`MPNowPlayingInfoCenter`)
   вместе с командами play/pause.
@@ -162,8 +170,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
-| **Образ** | `dist/RadioMac-1.2.1.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.2.1.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Образ** | `dist/RadioMac-1.3.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-1.3.0.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -197,7 +205,7 @@ scripts/install.sh --skip-build     # установить уже собранн
 ```bash
 scripts/make_installer.sh                 # Release (universal) + dist/*.dmg + dist/*.pkg
 scripts/make_installer.sh --skip-build    # только упаковать
-scripts/make_installer.sh --version 1.2.1
+scripts/make_installer.sh --version 1.3.0
 ```
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
@@ -318,7 +326,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 35 unit + 2 UI, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 38 unit + 4 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -331,12 +339,12 @@ CodeQL собирает нативный проект через autobuild: Flut
 
 ### Как выпустить релиз
 
-1. Добавьте в `CHANGELOG.md` секцию `## [1.2.1] — 2026-10-21`.
+1. Добавьте в `CHANGELOG.md` секцию `## [1.3.0] — 2026-10-22`.
 2. Поставьте тег и отправьте его:
 
    ```bash
-   git tag v1.2.1
-   git push origin v1.2.1
+   git tag v1.3.0
+   git push origin v1.3.0
    ```
 
 3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,

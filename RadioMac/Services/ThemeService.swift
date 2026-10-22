@@ -57,12 +57,21 @@ final class ThemeService: ObservableObject {
 /// down through the environment so every subview can read `@Environment(\.palette)`.
 struct ThemedRoot<Content: View>: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         let palette = AppPalette.resolved(for: colorScheme)
         content()
             .environment(\.palette, palette)
+            .accessibilityElement(children: .contain)
+            .accessibilityLabel("RadioMac")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transaction { transaction in
+                if reduceMotion {
+                    transaction.animation = nil
+                    transaction.disablesAnimations = true
+                }
+            }
     }
 }

@@ -19,6 +19,7 @@ PROJECT_NAME = "RadioMac"
 ASSETS = SOURCES_DIR / "Resources" / "Assets.xcassets"
 INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
 ENTITLEMENTS = SOURCES_DIR / "Resources" / "RadioMac.entitlements"
+LOCALIZATIONS = SOURCES_DIR / "Resources" / "Localizable.xcstrings"
 TESTS_DIR = ROOT / "RadioMacTests"
 UI_TESTS_DIR = ROOT / "RadioMacUITests"
 WIDGET_DIR = ROOT / "RadioMacWidget"
@@ -83,7 +84,7 @@ def build() -> tuple[str, str]:
     # The shared state is already an app source; keep one PBX file reference.
     all_files = list(dict.fromkeys([
         *sources, *test_sources, *ui_test_sources, *widget_sources,
-        ASSETS, INFO_PLIST, ENTITLEMENTS, widget_info, widget_entitlements,
+        ASSETS, INFO_PLIST, ENTITLEMENTS, LOCALIZATIONS, widget_info, widget_entitlements,
     ]))
     assert shared_state.exists(), f"missing file: {shared_state}"
     for path in all_files:
@@ -161,6 +162,7 @@ def build() -> tuple[str, str]:
     ui_test_build_files = [build_file(path) for path in ui_test_sources]
     widget_build_files = [build_file(path) for path in widget_sources]
     asset_build_file = build_file(ASSETS)
+    localizations_build_file = build_file(LOCALIZATIONS)
 
     # ------------------------------------------------------------------ sections
     build_section = ["/* Begin PBXBuildFile section */"]
@@ -187,6 +189,7 @@ def build() -> tuple[str, str]:
         kind = {
             ".swift": "sourcecode.swift",
             ".xcassets": "folder.assetcatalog",
+            ".xcstrings": "text.json.xcstrings",
             ".entitlements": "text.plist.entitlements",
             ".dylib": "compiled.mach-o.dylib",
             ".h": "sourcecode.c.h",
@@ -258,7 +261,7 @@ def build() -> tuple[str, str]:
     group_section.append(
         group(
             folder_groups["Resources"],
-            [ref(ASSETS), ref(INFO_PLIST), ref(ENTITLEMENTS)],
+            [ref(ASSETS), ref(INFO_PLIST), ref(ENTITLEMENTS), ref(LOCALIZATIONS)],
             path="Resources",
         )
     )
@@ -295,7 +298,7 @@ def build() -> tuple[str, str]:
         phase(frameworks_phase, "PBXFrameworksBuildPhase", [f"{sparkle_build} /* Sparkle in Frameworks */"]),
         "/* End PBXFrameworksBuildPhase section */",
         "/* Begin PBXResourcesBuildPhase section */",
-        phase(resources_phase, "PBXResourcesBuildPhase", [asset_build_file]),
+        phase(resources_phase, "PBXResourcesBuildPhase", [asset_build_file, localizations_build_file]),
         "/* End PBXResourcesBuildPhase section */",
         "/* Begin PBXSourcesBuildPhase section */",
         phase(sources_phase, "PBXSourcesBuildPhase", source_build_files),
@@ -366,7 +369,7 @@ def build() -> tuple[str, str]:
         'CODE_SIGN_IDENTITY = "-";',
         "CODE_SIGN_STYLE = Manual;",
         "COMBINE_HIDPI_IMAGES = YES;",
-        "CURRENT_PROJECT_VERSION = 5;",
+        "CURRENT_PROJECT_VERSION = 6;",
         "ENABLE_HARDENED_RUNTIME = NO;",
         "ENABLE_PREVIEWS = YES;",
         "INFOPLIST_FILE = RadioMac/Resources/Info.plist;",
@@ -379,7 +382,7 @@ def build() -> tuple[str, str]:
         '\t"-framework",',
         '\tAppIntents,',
         ");",
-        "MARKETING_VERSION = 1.2.1;",
+        "MARKETING_VERSION = 1.3.0;",
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",
         'PRODUCT_NAME = "$(TARGET_NAME)";',
         "SWIFT_STRICT_CONCURRENCY = complete;",
@@ -444,14 +447,14 @@ def build() -> tuple[str, str]:
             "CODE_SIGN_ENTITLEMENTS = RadioMacWidget/RadioMacWidget.entitlements;",
             'CODE_SIGN_IDENTITY = "-";',
             "CODE_SIGN_STYLE = Manual;",
-            "CURRENT_PROJECT_VERSION = 5;",
+            "CURRENT_PROJECT_VERSION = 6;",
             "GENERATE_INFOPLIST_FILE = NO;",
             "INFOPLIST_FILE = RadioMacWidget/Info.plist;",
             "LD_RUNPATH_SEARCH_PATHS = (",
             '\t"$(inherited)",',
             '\t"@executable_path/../../../../Frameworks",',
             ");",
-            "MARKETING_VERSION = 1.2.1;",
+            "MARKETING_VERSION = 1.3.0;",
             "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac.widget;",
             'PRODUCT_NAME = "$(TARGET_NAME)";',
             "SKIP_INSTALL = YES;",

@@ -77,6 +77,19 @@ enum DebugHarness {
             )
             return true
         }
+        if let name = value(after: "-hotkeytest", in: arguments) {
+            let output = scratchDirectory(named: "").appendingPathComponent(name)
+            let lines = [
+                "playPause=\(environment.hotKeys.playPause.display)",
+                "next=\(environment.hotKeys.nextStation.display)",
+                "error=\(environment.hotKeys.errorText)",
+            ]
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output, atomically: true, encoding: .utf8
+            )
+            NSApp.terminate(nil)
+            return true
+        }
         if let name = value(after: "-rbtest", in: arguments) {
             runRadioBrowserTest(
                 output: scratchDirectory(named: "").appendingPathComponent(name)
@@ -250,7 +263,9 @@ enum DebugHarness {
 
         player.$status
             .sink { status in
-                lines.append("[\(stamp())] state=\(status.rawValue) attempts=\(player.reconnectAttempts) error=\(player.errorMessage ?? "-")")
+                let attempts = player.reconnectAttempts
+                let error = player.errorMessage ?? "-"
+                lines.append("[\(stamp())] state=\(status.rawValue) attempts=\(attempts) error=\(error)")
             }
             .store(in: &playtestCancellables)
 
@@ -298,7 +313,10 @@ enum DebugHarness {
 
         player.$status
             .sink { status in
-                lines.append("[\(stamp())] state=\(status.rawValue) engine=\(player.activeEngineName) eq=\(equalizer.enabled) supported=\(equalizer.isSupported)")
+                let engine = player.activeEngineName
+                let eq = equalizer.enabled
+                let supported = equalizer.isSupported
+                lines.append("[\(stamp())] state=\(status.rawValue) engine=\(engine) eq=\(eq) supported=\(supported)")
             }
             .store(in: &playtestCancellables)
 

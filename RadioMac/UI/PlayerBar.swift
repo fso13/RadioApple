@@ -4,6 +4,7 @@ import SwiftUI
 struct PlayerBar: View {
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var equalizer: EqualizerService
+    @ObservedObject var sleepTimer: SleepTimerService
 
     let onOpenEqualizer: () -> Void
     let onPrevious: () -> Void
@@ -28,7 +29,7 @@ struct PlayerBar: View {
                         .truncationMode(.tail)
                     Text(subtitle)
                         .font(Typeface.caption)
-                        .foregroundStyle(player.status == .error ? palette.red : palette.textSecondary)
+                        .foregroundStyle(player.status == .error ? palette.red : palette.textPrimary)
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
@@ -37,6 +38,7 @@ struct PlayerBar: View {
                 transport
 
                 HStack(spacing: Space.s + 2) {
+                    sleepMenu
                     CircleIconButton(
                         systemName: "slider.vertical.3",
                         size: 11,
@@ -79,7 +81,7 @@ struct PlayerBar: View {
                         Text("OFF AIR")
                             .font(Typeface.monoSmall)
                             .tracking(1.1)
-                            .foregroundStyle(palette.textTertiary)
+                            .foregroundStyle(palette.textSecondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .trailing)
@@ -87,6 +89,35 @@ struct PlayerBar: View {
             .padding(.horizontal, Space.xl)
             .frame(height: 68)
         }
+    }
+
+    private var sleepMenu: some View {
+        Menu {
+            ForEach(SleepTimerService.Option.allCases) { option in
+                Button(option.title) { sleepTimer.start(minutes: option.rawValue) }
+            }
+            if sleepTimer.isActive {
+                Divider()
+                Button("Отменить таймер") { sleepTimer.cancel() }
+            }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: "moon.zzz")
+                    .font(.system(size: 10, weight: .medium))
+                if sleepTimer.isActive {
+                    Text(sleepTimer.remainingText)
+                        .font(Typeface.monoSmall)
+                        .monospacedDigit()
+                }
+            }
+            .foregroundStyle(sleepTimer.isActive ? palette.textPrimary : palette.textTertiary)
+            .frame(height: 24)
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .help(sleepTimer.isActive ? "Таймер сна: \(sleepTimer.remainingText)" : "Таймер сна")
+        .accessibilityLabel(sleepTimer.isActive ? "Таймер сна, осталось \(sleepTimer.remainingText)" : "Таймер сна")
     }
 
     // MARK: - Transport

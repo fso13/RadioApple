@@ -37,6 +37,7 @@ final class RadioPlayerService: ObservableObject {
     private var icyLive = false
     private var cancellables: Set<AnyCancellable> = []
     private var wantsPlayback = false
+    private var transientVolume: Double = 1
     private let reconnectPolicy = ReconnectPolicy()
     private var reconnectTask: Task<Void, Never>?
     private var stableTask: Task<Void, Never>?
@@ -257,7 +258,13 @@ final class RadioPlayerService: ObservableObject {
     private func effectiveVolume(for station: RadioStation?) -> Double {
         let offset = station?.volumeOffsetDB ?? 0
         let multiplier = pow(10, offset / 20)
-        return min(1, max(0, volume * multiplier))
+        return min(1, max(0, volume * multiplier * transientVolume))
+    }
+
+    /// Sleep-timer fade. Not persisted: the user's volume returns after it ends.
+    func setFadeFactor(_ factor: Double) {
+        transientVolume = min(1, max(0, factor))
+        nativeEngine.setVolume(effectiveVolume(for: station))
     }
 
     func consumeError() -> String? {

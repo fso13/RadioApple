@@ -13,6 +13,9 @@ final class AppEnvironment {
     let alarm: AlarmService
     let lastFm: LastFmService
     let diagnostics: DiagnosticsService
+    let sleepTimer: SleepTimerService
+    let hotKeys: GlobalHotKeyService
+    let history: TrackHistoryService
     let updates = UpdateService.shared
     let toasts = ToastCenter()
     let router = WindowRouter()
@@ -25,6 +28,9 @@ final class AppEnvironment {
         library = StationLibrary()
         equalizer = EqualizerService()
         player = RadioPlayerService(settings: settings, library: library, equalizer: equalizer)
+        sleepTimer = SleepTimerService(player: player)
+        hotKeys = GlobalHotKeyService(player: player, library: library)
+        history = TrackHistoryService(player: player)
         alarm = AlarmService(library: library, player: player)
         lastFm = LastFmService(player: player)
         diagnostics = DiagnosticsService(player: player)
@@ -32,6 +38,7 @@ final class AppEnvironment {
 
         library.load()
         player.start()
+        hotKeys.start()
         alarm.start()
         diagnostics.start()
     }
@@ -81,6 +88,8 @@ final class MainWindowController: NSWindowController {
     // MARK: - Setup
 
     private func configurePanel() {
+        panel.title = "RadioMac"
+        panel.setAccessibilityLabel("RadioMac")
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
@@ -108,6 +117,9 @@ final class MainWindowController: NSWindowController {
             alarm: environment.alarm,
             lastFm: environment.lastFm,
             diagnostics: environment.diagnostics,
+            sleepTimer: environment.sleepTimer,
+            hotKeys: environment.hotKeys,
+            history: environment.history,
             updates: environment.updates,
             toasts: environment.toasts,
             onClose: { [weak self] in self?.hide() },
@@ -118,6 +130,9 @@ final class MainWindowController: NSWindowController {
         // view's fitting size; the panel must stay exactly 420×680.
         let container = NSView(frame: NSRect(origin: .zero, size: Self.panelSize))
         container.wantsLayer = true
+        container.setAccessibilityElement(true)
+        container.setAccessibilityRole(.group)
+        container.setAccessibilityLabel("RadioMac")
 
         let hosting = NSHostingView(rootView: root)
         hosting.sizingOptions = []
@@ -199,6 +214,11 @@ final class MainWindowController: NSWindowController {
 
     func showSettings() {
         show(route: .settings)
+    }
+
+    func showHistory() {
+        show(route: .main)
+        environment.router.sheet = .history
     }
 
     func hide() {

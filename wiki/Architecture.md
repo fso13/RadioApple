@@ -65,6 +65,9 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `MiniPlayerView` | поповер меню-бара: обложка, транспорт, громкость, станции |
 | `SharedPlaybackState` | общий JSON состояния для WidgetKit |
 | `RadioMacWidget` | виджет macOS 14+ и Control Center macOS 26+ |
+| `SleepTimerService` | таймер сна и пятисекундное затухание |
+| `GlobalHotKeyService` | Carbon play/pause и следующая станция |
+| `TrackHistoryService` | последние 100 треков локально |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.

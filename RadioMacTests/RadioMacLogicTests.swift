@@ -1,4 +1,5 @@
 import AudioToolbox
+import Carbon.HIToolbox
 import XCTest
 
 @testable import RadioMac
@@ -722,6 +723,47 @@ final class RadioMacLogicTests: XCTestCase {
         model.setFilter(.all)
         XCTAssertTrue(model.canReorder)
         XCTAssertTrue(model.visible.contains { $0.id == grouped.id })
+    }
+
+    func testSleepTimerFormatting() {
+        XCTAssertEqual(SleepTimerService.format(15 * 60), "15:00")
+        XCTAssertEqual(SleepTimerService.format(61), "01:01")
+        XCTAssertEqual(SleepTimerService.format(0), "00:00")
+        XCTAssertEqual(SleepTimerService.Option.allCases.map(\.rawValue), [15, 30, 60, 90])
+    }
+
+    func testHotKeyDisplayAndSystemConflicts() {
+        XCTAssertEqual(HotKeyCombo.defaultPlayPause.display, "⌥⌘P")
+        XCTAssertNil(HotKeyCombo.defaultPlayPause.systemConflictReason)
+        XCTAssertNotNil(
+            HotKeyCombo(key: .space, modifiers: UInt32(cmdKey)).systemConflictReason
+        )
+        XCTAssertNotNil(
+            HotKeyCombo(key: .rightArrow, modifiers: UInt32(controlKey)).systemConflictReason
+        )
+    }
+
+    func testTrackHistoryPrunesFiltersAndClears() {
+        let history = TrackHistoryService(defaults: scratchDefaults())
+        let station = RadioStation(
+            id: "history-station",
+            name: "History FM",
+            url: "https://example.com/history",
+            genre: "Jazz"
+        )
+        for index in 0..<105 {
+            history.record(
+                NowPlaying(raw: "Artist \(index) — Track \(index)", artist: "Artist \(index)", title: "Track \(index)"),
+                station: station,
+                at: Date(timeIntervalSince1970: TimeInterval(index))
+            )
+        }
+        XCTAssertEqual(history.entries.count, 100)
+        XCTAssertEqual(history.entries.first?.title, "Track 104")
+        XCTAssertEqual(history.filtered("track 104").count, 1)
+        XCTAssertEqual(history.filtered("missing").count, 0)
+        history.clear()
+        XCTAssertTrue(history.entries.isEmpty)
     }
 
     func testSharedPlaybackStateRoundTrip() {

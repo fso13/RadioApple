@@ -46,6 +46,37 @@ final class RadioMacUITests: XCTestCase {
         settingsApp.terminate()
     }
 
+    func testEnglishSettingsLocalization() {
+        let app = XCUIApplication()
+        app.launchArguments = [
+            "-showSettings",
+            "-skip-lastfm-keychain",
+            "-skip-updates",
+            "-AppleLanguages", "(en)",
+            "-AppleLocale", "en_US",
+        ]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Settings"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.staticTexts["Appearance"].waitForExistence(timeout: 5))
+        app.terminate()
+    }
+
+    func testMainAccessibilityAudit() throws {
+        let app = launch(theme: "light", extra: ["-skip-updates"])
+        XCTAssertTrue(app.textFields["station-search"].waitForExistence(timeout: 15))
+        try app.performAccessibilityAudit { issue in
+            if issue.auditType == .contrast { return true }
+            switch issue.element?.elementType {
+            case .touchBar, .menuButton, .valueIndicator, .group, .other:
+                return true
+            default:
+                print("AUDIT ISSUE: \(issue.compactDescription) element=\(String(describing: issue.element))")
+                return false
+            }
+        }
+        app.terminate()
+    }
+
     func testLightAndDarkSnapshots() {
         var images: [String: Data] = [:]
         for theme in ["light", "dark"] {

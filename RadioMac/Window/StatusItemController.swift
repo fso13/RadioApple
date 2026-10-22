@@ -16,6 +16,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onPlayPause: (() -> Void)?
     var onStop: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
+    var onOpenHistory: (() -> Void)?
     var onQuit: (() -> Void)?
 
     init(environment: AppEnvironment) {
@@ -137,9 +138,38 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         show.target = self
         menu.addItem(show)
 
+        let sleep = NSMenuItem(
+            title: sleepMenuTitle,
+            action: nil,
+            keyEquivalent: ""
+        )
+        let sleepSubmenu = NSMenu(title: "Таймер сна")
+        for option in SleepTimerService.Option.allCases {
+            let item = NSMenuItem(
+                title: option.title,
+                action: #selector(startSleep(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = option.rawValue
+            sleepSubmenu.addItem(item)
+        }
+        if environment.sleepTimer.isActive {
+            sleepSubmenu.addItem(.separator())
+            let cancel = NSMenuItem(title: "Отменить", action: #selector(cancelSleep), keyEquivalent: "")
+            cancel.target = self
+            sleepSubmenu.addItem(cancel)
+        }
+        sleep.submenu = sleepSubmenu
+        menu.addItem(sleep)
+
         let updates = NSMenuItem(title: "Проверить обновления…", action: #selector(checkForUpdates), keyEquivalent: "")
         updates.target = self
         menu.addItem(updates)
+
+        let history = NSMenuItem(title: "История треков…", action: #selector(openHistory), keyEquivalent: "")
+        history.target = self
+        menu.addItem(history)
 
         let settings = NSMenuItem(title: "Настройки", action: #selector(openSettings), keyEquivalent: "")
         settings.target = self
@@ -165,6 +195,12 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         return String(value.prefix(limit - 1)) + "…"
     }
 
+    private var sleepMenuTitle: String {
+        environment.sleepTimer.isActive
+            ? "Таймер сна · \(environment.sleepTimer.remainingText)"
+            : "Таймер сна"
+    }
+
     private func refreshTooltip() {
         guard let button = statusItem.button else { return }
         let player = environment.player
@@ -175,16 +211,29 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let body = parts.joined(separator: " · ")
 
         var tip = body.isEmpty ? "RadioMac" : (player.isPlaying ? "▶ \(body)" : body)
+        if environment.sleepTimer.isActive {
+            tip += " · сон \(environment.sleepTimer.remainingText)"
+        }
         if tip.count > 90 { tip = String(tip.prefix(89)) + "…" }
         button.toolTip = tip
     }
 
     // MARK: - Actions
 
+    @objc private func startSleep(_ sender: NSMenuItem) {
+        guard let minutes = sender.representedObject as? Int else { return }
+        environment.sleepTimer.start(minutes: minutes)
+    }
+
+    @objc private func cancelSleep() {
+        environment.sleepTimer.cancel()
+    }
+
     @objc private func playPause() { onPlayPause?() }
     @objc private func stopPlayback() { onStop?() }
     @objc private func showWindow() { onShowWindow?() }
     @objc private func openSettings() { onOpenSettings?() }
+    @objc private func openHistory() { onOpenHistory?() }
     @objc private func checkForUpdates() { onCheckForUpdates?() }
     @objc private func quitApp() { onQuit?() }
 }

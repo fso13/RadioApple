@@ -7,6 +7,7 @@ enum WindowRoute {
 
 enum WindowSheet: String, Identifiable {
     case equalizer
+    case history
 
     var id: String { rawValue }
 }
@@ -29,6 +30,9 @@ struct RootView: View {
     @ObservedObject var alarm: AlarmService
     @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
+    @ObservedObject var sleepTimer: SleepTimerService
+    @ObservedObject var hotKeys: GlobalHotKeyService
+    @ObservedObject var history: TrackHistoryService
     let updates: UpdateService
     @ObservedObject var toasts: ToastCenter
 
@@ -45,6 +49,7 @@ struct RootView: View {
                         library: library,
                         player: player,
                         equalizer: equalizer,
+                        sleepTimer: sleepTimer,
                         toasts: toasts,
                         onOpenSettings: { router.route = .settings },
                         onClose: onClose,
@@ -59,12 +64,16 @@ struct RootView: View {
                         alarm: alarm,
                         lastFm: lastFm,
                         diagnostics: diagnostics,
+                        sleepTimer: sleepTimer,
+                        hotKeys: hotKeys,
+                        history: history,
                         updates: updates,
                         library: library,
                         toasts: toasts,
                         onBack: { router.route = .main },
                         onClose: onClose,
                         onOpenEqualizer: { router.sheet = .equalizer },
+                        onOpenHistory: { router.sheet = .history },
                         onQuit: onQuit
                     )
                 }
@@ -73,6 +82,10 @@ struct RootView: View {
                 switch sheet {
                 case .equalizer:
                     EqualizerView(equalizer: equalizer) {
+                        router.sheet = nil
+                    }
+                case .history:
+                    HistoryView(history: history) {
                         router.sheet = nil
                     }
                 }

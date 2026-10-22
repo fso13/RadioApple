@@ -1,4 +1,5 @@
 import AppKit
+import Carbon.HIToolbox
 import SwiftUI
 
 /// Settings page: appearance, behaviour, sound, library, help and about.
@@ -10,6 +11,9 @@ struct SettingsView: View {
     @ObservedObject var alarm: AlarmService
     @ObservedObject var lastFm: LastFmService
     @ObservedObject var diagnostics: DiagnosticsService
+    @ObservedObject var sleepTimer: SleepTimerService
+    @ObservedObject var hotKeys: GlobalHotKeyService
+    @ObservedObject var history: TrackHistoryService
     let updates: UpdateService
     @ObservedObject var library: StationLibrary
     @ObservedObject var toasts: ToastCenter
@@ -17,6 +21,7 @@ struct SettingsView: View {
     let onBack: () -> Void
     let onClose: () -> Void
     let onOpenEqualizer: () -> Void
+    let onOpenHistory: () -> Void
     let onQuit: () -> Void
 
     @Environment(\.palette) private var palette
@@ -112,6 +117,56 @@ struct SettingsView: View {
                     themeChoices
                 }
 
+                section("Таймер сна") {
+                    SettingsRow(
+                        title: sleepTimer.isActive ? "Осталось \(sleepTimer.remainingText)" : "Выключен",
+                        subtitle: "Плавное затухание за 5 секунд"
+                    ) {
+                        HStack(spacing: Space.s) {
+                            ForEach(SleepTimerService.Option.allCases) { option in
+                                TextButton(title: "\(option.rawValue)") {
+                                    sleepTimer.start(minutes: option.rawValue)
+                                }
+                            }
+                            if sleepTimer.isActive {
+                                TextButton(title: "Отмена", systemImage: "xmark") {
+                                    sleepTimer.cancel()
+                                }
+                            }
+                        }
+                    }
+                }
+
+                section("История треков") {
+                    SettingsRow(
+                        title: "Последние \(history.entries.count) треков",
+                        subtitle: "Поиск, копирование и очистка; хранится только локально"
+                    ) {
+                        TextButton(title: "Открыть", systemImage: "clock.arrow.circlepath") {
+                            onOpenHistory()
+                        }
+                    }
+                }
+
+                section("Глобальные горячие клавиши") {
+                    HotKeyRow(
+                        title: HotKeyAction.playPause.title,
+                        combo: hotKeys.playPause,
+                        onChange: hotKeys.setPlayPause
+                    )
+                    Hairline()
+                    HotKeyRow(
+                        title: HotKeyAction.nextStation.title,
+                        combo: hotKeys.nextStation,
+                        onChange: hotKeys.setNext
+                    )
+                    if !hotKeys.errorText.isEmpty {
+                        Text(hotKeys.errorText)
+                            .font(Typeface.caption)
+                            .foregroundStyle(palette.red)
+                    }
+                }
+
                 section("Поведение") {
                     ToggleRow(
                         title: "Продолжать последнюю станцию",
@@ -163,7 +218,7 @@ struct SettingsView: View {
                 }
 
                 section("Звук") {
-                    SettingsRow(title: "Эквалайзер", subtitle: equalizerSubtitle) {
+                    SettingsRow(title: "Эквалайзер", subtitle: LocalizedStringKey(equalizerSubtitle)) {
                         TextButton(title: "Настроить", systemImage: "arrow.right", iconPosition: .trailing) {
                             onOpenEqualizer()
                         }
@@ -336,7 +391,7 @@ struct SettingsView: View {
     }
 
     private func section<Content: View>(
-        _ title: String,
+        _ title: LocalizedStringKey,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -623,5 +678,60 @@ struct SettingsView: View {
         settings.setAutoStartEnabled(result.enabled)
         launchAtStartup = result.enabled
         launchAtLoginSupported = result.supported
+    }
+}
+
+
+private struct HotKeyRow: View {
+    let title: String
+    let combo: HotKeyCombo
+    let onChange: (HotKeyCombo) -> Void
+
+    @Environment(\.palette) private var palette
+
+    private let modifiers: [(String, UInt32)] = [
+        ("⌥⌘", UInt32(optionKey | cmdKey)),
+        ("⌃⌥", UInt32(controlKey | optionKey)),
+        ("⇧⌥", UInt32(shiftKey | optionKey)),
+        ("Без модификаторов", 0),
+    ]
+
+    var body: some View {
+        HStack(spacing: Space.m) {
+            Text(title)
+                .font(Typeface.body)
+                .foregroundStyle(palette.textPrimary)
+            Spacer()
+            Menu {
+                Section("Клавиша") {
+                    ForEach(HotKeyKey.allCases) { key in
+                        Button(key.title) {
+                            onChange(HotKeyCombo(key: key, modifiers: combo.modifiers))
+                        }
+                    }
+                }
+                Section("Модификаторы") {
+                    ForEach(modifiers, id: \.1) { item in
+                        Button(item.0) {
+                            onChange(HotKeyCombo(key: combo.key, modifiers: item.1))
+                        }
+                    }
+                }
+            } label: {
+                Text(combo.display)
+                    .font(Typeface.mono)
+                    .foregroundStyle(palette.textPrimary)
+                    .padding(.horizontal, Space.m)
+                    .frame(height: 28)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: Radius.xs)
+                            .strokeBorder(palette.separatorStrong, lineWidth: 1)
+                    )
+            }
+            .menuStyle(.borderlessButton)
+            .menuIndicator(.hidden)
+            .fixedSize()
+            .accessibilityLabel("\(title): \(combo.display)")
+        }
     }
 }
