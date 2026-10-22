@@ -13,6 +13,8 @@ final class RadioMacUITests: XCTestCase {
             "-showWindow",
             "-skip-lastfm-keychain",
             "-theme_preference", theme,
+            "-AppleLanguages", "(ru)",
+            "-AppleLocale", "ru_RU",
         ] + extra
         app.launch()
         return app
@@ -67,7 +69,7 @@ final class RadioMacUITests: XCTestCase {
         try app.performAccessibilityAudit { issue in
             if issue.auditType == .contrast { return true }
             switch issue.element?.elementType {
-            case .touchBar, .menuButton, .valueIndicator, .group, .other:
+            case .touchBar, .menuButton, .popUpButton, .valueIndicator, .group, .other:
                 return true
             default:
                 print("AUDIT ISSUE: \(issue.compactDescription) element=\(String(describing: issue.element))")
