@@ -58,7 +58,7 @@
         if (!Number.isNaN(date.getTime())) {
           setText(
             "[data-release-date]",
-            date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })
+            " · " + date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })
           );
         }
       }
