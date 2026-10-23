@@ -30,7 +30,9 @@ jobs:
 
       - name: Point download links at this repository
         run: |
-          printf 'window.RADIO_MAC_REPO = "%s";\n' "$GITHUB_REPOSITORY" > site/config.js
+          owner="${GITHUB_REPOSITORY%%/*}"
+          printf 'window.RADIO_MAC_REPO = "%s";\nwindow.RADIO_WINDOWS_REPO = "%s/RadioWindows";\n' \
+            "$GITHUB_REPOSITORY" "$owner" > site/config.js
 
       - name: Validate site
         run: python3 scripts/check_site.py

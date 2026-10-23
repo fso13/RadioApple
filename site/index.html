@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>RadioMac — интернет-радио в меню-баре macOS</title>
-  <meta name="description" content="RadioMac — нативный плеер интернет-радио для меню-бара macOS. 47 станций и Radio Browser, метаданные, эквалайзер, таймер сна, глобальные клавиши, история, виджет и Control Center. Без иконки в Dock.">
+  <title>RadioMac — интернет-радио для macOS и Windows</title>
+  <meta name="description" content="RadioMac — нативный плеер интернет-радио для меню-бара macOS. 47 станций и Radio Browser, метаданные, эквалайзер, таймер сна, глобальные клавиши, история, виджет и Control Center. Есть версия RadioWindows для Windows 10 и 11.">
   <meta name="theme-color" content="#fafafa" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0d0d0e" media="(prefers-color-scheme: dark)">
   <link rel="icon" href="assets/favicon.png" type="image/png">
@@ -14,7 +14,7 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://fso13.github.io/RadioApple/">
   <meta property="og:title" content="RadioMac — интернет-радио в меню-баре">
-  <meta property="og:description" content="Нативный плеер интернет-радио для macOS: 47 станций и Radio Browser, метаданные, эквалайзер, мини-плеер и виджет. Скачать DMG.">
+  <meta property="og:description" content="Нативный плеер интернет-радио для macOS: 47 станций и Radio Browser, метаданные, эквалайзер, мини-плеер и виджет. Скачать DMG. Версия для Windows — установщик и портативная сборка.">
   <meta property="og:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:image" content="https://fso13.github.io/RadioApple/assets/screenshots/main-light.jpg">
@@ -33,6 +33,7 @@
         <a href="#shortcuts">Клавиши</a>
         <a href="#automation">Автоматизация</a>
         <a href="#install">Установка</a>
+        <a href="#windows">Windows</a>
         <a class="nav__gh" href="https://github.com/fso13/RadioApple" data-repo-link>GitHub <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
@@ -56,7 +57,7 @@
           <li><span data-size>≈ 3 МБ</span></li>
         </ul>
         <p class="hero__date" data-release-date></p>
-        <p class="hero__note">Сборка для macOS 14 и новее. Исходный код и все релизы — на GitHub.</p>
+        <p class="hero__note">Сборка для macOS 14 и новее. Есть <a href="#windows">версия для Windows</a>. Исходный код и все релизы — на GitHub.</p>
       </div>
       <figure class="hero__art">
         <img src="assets/screenshots/main-light.jpg" width="1560" height="1320" fetchpriority="high"
@@ -270,6 +271,56 @@
       </figure>
     </section>
 
+    <section class="section" id="windows" aria-labelledby="windows-title">
+      <div class="section__head">
+        <p class="eyebrow">Windows · трей</p>
+        <h2 id="windows-title">RadioWindows — то же радио для&nbsp;Windows</h2>
+      </div>
+      <div class="platform">
+        <div class="platform__copy">
+          <p class="platform__lede">Порт RadioMac на .NET 10 и Avalonia: безрамочное окно, трей вместо меню-бара, те же 47 станций, жанры, группы, избранное, Radio Browser, история, будильник и Last.fm. Звук — BASS 2.4, эквалайзер — 10 полос BASS_FX.</p>
+          <div class="hero__actions">
+            <a class="btn btn--primary" data-win-download
+               href="https://github.com/fso13/RadioWindows/releases/latest/download/RadioWindows-Setup.exe">
+              Скачать установщик
+            </a>
+            <a class="btn btn--ghost" data-win-portable
+               href="https://github.com/fso13/RadioWindows/releases/latest/download/RadioWindows-Portable.zip">
+              Портативная сборка
+            </a>
+          </div>
+          <ul class="meta">
+            <li>Windows 10 1809+ / 11</li>
+            <li>x64 · self-contained</li>
+            <li><span data-win-size>≈ 40 МБ</span></li>
+          </ul>
+          <p class="hero__date">Версия <span data-win-version>1.1.0</span><span data-win-release-date></span></p>
+          <p class="note">
+            Установщик ставится в профиль пользователя и не требует прав администратора.
+            Контрольные суммы — <a data-win-checksums
+              href="https://github.com/fso13/RadioWindows/releases/latest/download/SHA256SUMS.txt">SHA256SUMS.txt</a>,
+            исходники и все релизы — <a href="https://github.com/fso13/RadioWindows">на GitHub</a>.
+          </p>
+          <p class="note">
+            Сборка не подписана EV-сертификатом: если SmartScreen предупреждает, нажмите
+            «Подробнее» → «Выполнить в любом случае».
+          </p>
+        </div>
+        <div class="platform__shots">
+          <figure class="shot">
+            <img src="assets/screenshots/windows-main.png" width="800" height="680" loading="lazy"
+                 alt="Главное окно RadioWindows: жанры и обложка слева, таблица станций справа, транспорт внизу">
+            <figcaption>Тот же редакционный интерфейс</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="assets/screenshots/windows-mini-player.png" width="320" height="430" loading="lazy"
+                 alt="Мини-плеер RadioWindows из трея: обложка, трек, play/pause, громкость и быстрый выбор станции">
+            <figcaption>Мини-плеер из трея</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
     <section class="section" id="security" aria-labelledby="security-title">
       <div class="section__head">
         <p class="eyebrow">Безопасность</p>
@@ -296,6 +347,7 @@
       <nav class="footer__links" aria-label="Ссылки">
         <a href="https://github.com/fso13/RadioApple" data-repo-link>GitHub</a>
         <a href="https://github.com/fso13/RadioApple/releases" data-releases-link>Релизы</a>
+        <a href="https://github.com/fso13/RadioWindows">RadioWindows</a>
         <a href="https://github.com/fso13/RadioApple/wiki">Документация</a>
         <a href="https://github.com/fso13/RadioApple/blob/main/CHANGELOG.md">Changelog</a>
         <a href="https://github.com/fso13/RadioApple/security">Безопасность</a>

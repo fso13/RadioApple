@@ -10,7 +10,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 
-REQUIRED_MARKERS = ["data-download", "data-version", 'id="features"', 'id="install"']
+REQUIRED_MARKERS = ["data-download", "data-version", "data-win-download", "data-win-version", 'id="features"', 'id="install"', 'id="windows"']
 EXTERNAL_PREFIXES = ("http://", "https://", "mailto:", "tel:", "data:", "javascript:", "#")
 
 

@@ -15,6 +15,8 @@
 
 Сайт: [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) ·
 [Вики](https://github.com/fso13/RadioApple/wiki) ·
+[Windows-версия](https://github.com/fso13/RadioWindows) ·
+[Скачать для Windows](https://fso13.github.io/RadioApple/#windows) ·
 [Планы развития](ROADMAP.md) ·
 [Релизы](https://github.com/fso13/RadioApple/releases)
 

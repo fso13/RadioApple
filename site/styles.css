@@ -617,3 +617,50 @@ code {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Windows platform */
+
+.platform {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.02fr);
+  gap: clamp(28px, 5vw, 56px);
+  align-items: start;
+}
+
+.platform__lede {
+  margin: 0 0 24px;
+  max-width: 52ch;
+  font-size: clamp(16px, 1.4vw, 18px);
+  color: var(--ink-soft);
+}
+
+.platform__copy .note {
+  margin-top: 18px;
+}
+
+.platform__shots {
+  display: grid;
+  grid-template-columns: minmax(0, 1.55fr) minmax(0, 0.9fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.platform__shots .shot img {
+  box-shadow: var(--shadow);
+}
+
+.platform__shots .shot:last-child {
+  max-width: 260px;
+}
+
+@media (max-width: 960px) {
+  .platform {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .platform__shots {
+    grid-template-columns: 1fr;
+  }
+}
