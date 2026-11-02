@@ -29,6 +29,7 @@
       <a class="brand" href="#top" aria-label="RadioMac — на главную">RadioMac<sup>®</sup></a>
       <nav class="nav" aria-label="Основная навигация">
         <a href="#features">Возможности</a>
+        <a href="#local-music">Музыка</a>
         <a href="#screens">Скриншоты</a>
         <a href="#shortcuts">Клавиши</a>
         <a href="#automation">Автоматизация</a>
@@ -212,6 +213,44 @@
           <figcaption>Мини-плеер в меню-баре</figcaption>
         </figure>
       </div>
+    </section>
+
+    <section class="section" id="local-music" aria-labelledby="local-music-title">
+      <div class="section__head">
+        <p class="eyebrow">Локальная музыка</p>
+        <h2 id="local-music-title">Свои файлы и плейлисты рядом с&nbsp;радио</h2>
+      </div>
+      <ol class="steps">
+        <li>
+          <h3>Добавьте папку</h3>
+          <p>MP3, M4A, AAC, ALAC, FLAC, WAV, AIFF и CAF. Доступ выдаётся через системное окно выбора
+            и запоминается security-scoped закладкой macOS — после перезапуска ничего выбирать не нужно.
+            Теги, длительность и обложки читаются из файлов; если тегов нет, название и исполнитель
+            берутся из имени файла.</p>
+        </li>
+        <li>
+          <h3>Соберите плейлисты</h3>
+          <p>Создавайте списки, добавляйте треки из меню строки, перетаскивайте файлы и папки.
+            M3U/M3U8 импортируются и экспортируются с абсолютными, относительными путями и
+            <code>file://</code>; потоковые ссылки пропускаются. Очередь играет следующий и предыдущий
+            трек, перемотка — по полосе в нижней панели.</p>
+        </li>
+        <li>
+          <h3>Подтяните обложки и альбомы</h3>
+          <p>Обогащение метаданных из Apple Music и Deezer: автоматически для новых треков,
+            для одного трека из меню и для всей библиотеки. В редакторе можно выбрать кандидата
+            с процентом совпадения. Метаданные живут в библиотеке приложения, аудиофайлы не изменяются.</p>
+        </li>
+      </ol>
+      <figure class="shot">
+        <img src="assets/screenshots/music.jpg" width="1560" height="1320" loading="lazy"
+             alt="Локальная музыка RadioMac: плейлисты, таблица треков с альбомами и длительностью">
+        <figcaption>Локальные файлы, плейлисты и очередь воспроизведения</figcaption>
+      </figure>
+      <p class="note">
+        Подробнее — в вики: <a href="https://github.com/fso13/RadioApple/wiki/LocalMusic">Локальная музыка и плейлисты</a>.
+        Страница открывается по <kbd>⌘L</kbd>, поиск по трекам — по <kbd>⌘F</kbd>.
+      </p>
     </section>
 
     <section class="section" id="shortcuts" aria-labelledby="shortcuts-title">

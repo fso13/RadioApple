@@ -16,6 +16,14 @@
 | Sparkle | релиз | appcast + EdDSA, `SPARKLE_PRIVATE_KEY` |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
+## Заметки к обновлению
+
+`scripts/make_appcast.py` берёт из `CHANGELOG.md` секцию `## [версия]`, превращает
+её в HTML и кладёт в `<description>` элемента appcast. Sparkle показывает этот
+текст в окне обновления, поэтому пользователь видит, что изменилось, а не только
+номер версии. `scripts/check_appcast.py` падает, если заметок нет или файл
+сгенерирован без них; ссылка на полный список ведёт на страницу релиза.
+
 > **CodeQL и Flutter-папка.** В репозитории остаётся Flutter-версия с `macos/Podfile`.
 > Поэтому CodeQL использует `build-mode: manual` и собирает нативный
 > `RadioMac.xcodeproj` через `xcodebuild`. Autobuild находил старый Flutter-проект

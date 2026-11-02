@@ -46,7 +46,15 @@ def main() -> int:
             print("error: appcast has no Sparkle EdDSA signature", file=sys.stderr)
             return 1
 
-    print("Sparkle feed: OK")
+        description = (item.findtext("description") or "").strip()
+        if "<li>" not in description and "<p>" not in description:
+            print(
+                "error: appcast item has no release notes (update dialog would be empty)",
+                file=sys.stderr,
+            )
+            return 1
+
+    print("Sparkle feed: OK (release notes included)")
     return 0
 
 
