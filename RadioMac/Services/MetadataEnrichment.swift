@@ -171,15 +171,102 @@ final class MetadataEnrichmentService: @unchecked Sendable {
     static let shared = MetadataEnrichmentService()
 
     private let providers: [any TrackMetadataProvider]
+    private let artworkSession: URLSession
     private let lock = NSLock()
     private var cache: [String: [TrackEnrichment]] = [:]
     private let cacheLimit = 400
 
-    init(providers: [any TrackMetadataProvider]? = nil) {
+    init(
+        providers: [any TrackMetadataProvider]? = nil,
+        artworkSession: URLSession = MetadataHTTP.session()
+    ) {
         self.providers = providers ?? [
             AppleMusicMetadataProvider(),
             DeezerMetadataProvider(),
         ]
+        self.artworkSession = artworkSession
+    }
+
+    // MARK: - Covers for albums and artists
+
+    /// Album covers from the iTunes album index, which knows the release better
+    /// than a song search and returns a proper collection artwork.
+    func albumArtworkCandidates(title: String, artist: String?) async -> [TrackEnrichment] {
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else { return [] }
+        let terms = [artist, title]
+            .compactMap { LocalTrack.trimmed($0) }
+            .filter { !$0.isEmpty }
+        guard !terms.isEmpty else { return [] }
+
+        var components = URLComponents(string: "https://itunes.apple.com/search")
+        components?.queryItems = [
+            URLQueryItem(name: "term", value: terms.joined(separator: " ")),
+            URLQueryItem(name: "media", value: "music"),
+            URLQueryItem(name: "entity", value: "album"),
+            URLQueryItem(name: "limit", value: "8"),
+        ]
+        guard let url = components?.url,
+              let json = await MetadataHTTP.json(url, session: artworkSession) as? [String: Any],
+              let results = json["results"] as? [[String: Any]]
+        else { return [] }
+
+        let found = results.compactMap { item -> TrackEnrichment? in
+            guard let collection = LocalTrack.trimmed(item["collectionName"] as? String) else {
+                return nil
+            }
+            let artwork = LocalTrack.trimmed(item["artworkUrl100"] as? String)?
+                .replacingOccurrences(of: "100x100bb", with: "600x600bb")
+            guard artwork != nil else { return nil }
+            return TrackEnrichment(
+                title: collection,
+                artist: LocalTrack.trimmed(item["artistName"] as? String),
+                album: collection,
+                year: MetadataHTTP.year(from: item["releaseDate"] as? String),
+                artworkURL: artwork,
+                source: "Apple Music"
+            )
+        }
+        return Self.uniqueArtwork(found)
+    }
+
+    /// Artist portraits from Deezer's artist index. Falls back to album covers
+    /// in `MusicLibrary.artworkCandidates(for:)` when no portrait is found.
+    func artistArtworkCandidates(name: String) async -> [TrackEnrichment] {
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedName.isEmpty else { return [] }
+
+        var components = URLComponents(string: "https://api.deezer.com/search/artist")
+        components?.queryItems = [
+            URLQueryItem(name: "q", value: trimmedName),
+            URLQueryItem(name: "limit", value: "8"),
+        ]
+        guard let url = components?.url,
+              let json = await MetadataHTTP.json(url, session: artworkSession) as? [String: Any],
+              let results = json["data"] as? [[String: Any]]
+        else { return [] }
+
+        let found = results.compactMap { item -> TrackEnrichment? in
+            guard let artistName = LocalTrack.trimmed(item["name"] as? String) else { return nil }
+            let artwork = LocalTrack.trimmed(item["picture_xl"] as? String)
+                ?? LocalTrack.trimmed(item["picture_big"] as? String)
+            guard artwork != nil else { return nil }
+            return TrackEnrichment(
+                title: artistName,
+                artist: artistName,
+                artworkURL: artwork,
+                source: "Deezer"
+            )
+        }
+        return Self.uniqueArtwork(found)
+    }
+
+    private static func uniqueArtwork(_ values: [TrackEnrichment]) -> [TrackEnrichment] {
+        var seen: Set<String> = []
+        return values.filter { value in
+            guard let artwork = value.artworkURL else { return false }
+            return seen.insert(artwork).inserted
+        }
     }
 
     func bestMatch(for track: LocalTrack) async -> TrackEnrichment? {

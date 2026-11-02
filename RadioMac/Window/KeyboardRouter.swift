@@ -1,6 +1,6 @@
 import AppKit
 
-/// Keyboard handling for the panel, ported from the Flutter shortcuts:
+/// Keyboard handling for the panel:
 /// Esc hides (or leaves search), Space toggles, ↑/↓ move the selection,
 /// Enter plays, 1–9 jump to a station, ⌘F focuses search, ⌘N adds a station,
 /// ⌘L opens the local music page.

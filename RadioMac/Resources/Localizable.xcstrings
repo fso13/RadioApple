@@ -1600,6 +1600,456 @@
           }
         }
       }
+    },
+    "Без альбома": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown album"
+          }
+        }
+      }
+    },
+    "Без группировки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No grouping"
+          }
+        }
+      }
+    },
+    "Без жанра": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown genre"
+          }
+        }
+      }
+    },
+    "Группировка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grouping"
+          }
+        }
+      }
+    },
+    "Группировка треков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track grouping"
+          }
+        }
+      }
+    },
+    "По альбому": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By album"
+          }
+        }
+      }
+    },
+    "По жанру": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By genre"
+          }
+        }
+      }
+    },
+    "По исполнителю": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By artist"
+          }
+        }
+      }
+    },
+    "Альбомы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Albums"
+          }
+        }
+      }
+    },
+    "Исполнители": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artists"
+          }
+        }
+      }
+    },
+    "Поиск альбомов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search albums"
+          }
+        }
+      }
+    },
+    "Поиск исполнителей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search artists"
+          }
+        }
+      }
+    },
+    "Поиск плейлистов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search playlists"
+          }
+        }
+      }
+    },
+    "Поиск в плейлисте": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search in playlist"
+          }
+        }
+      }
+    },
+    "Пока нет альбомов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No albums yet"
+          }
+        }
+      }
+    },
+    "Пока нет исполнителей": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No artists yet"
+          }
+        }
+      }
+    },
+    "Обложка…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cover…"
+          }
+        }
+      }
+    },
+    "Играть альбом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play album"
+          }
+        }
+      }
+    },
+    "Играть исполнителя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play artist"
+          }
+        }
+      }
+    },
+    "Обложка альбома": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Album cover"
+          }
+        }
+      }
+    },
+    "Обложка исполнителя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artist cover"
+          }
+        }
+      }
+    },
+    "Выбрать файл…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose file…"
+          }
+        }
+      }
+    },
+    "Ссылка на изображение": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Image URL"
+          }
+        }
+      }
+    },
+    "Обложку альбома можно заменить в меню карточки или на его странице.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change an album cover from the card menu or from the album page."
+          }
+        }
+      }
+    },
+    "Обложку исполнителя можно заменить в меню карточки или на его странице.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change an artist cover from the card menu or from the artist page."
+          }
+        }
+      }
+    },
+    "Плейлисты хранят ссылки на файлы — музыка не копируется.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists keep links to files — music is not copied."
+          }
+        }
+      }
+    },
+    "Обложка применится ко всем трекам альбома; аудиофайлы не изменяются.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The cover applies to every track of the album; audio files are not modified."
+          }
+        }
+      }
+    },
+    "Обложка исполнителя хранится отдельно и не заменяет обложки альбомов.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The artist cover is stored separately and does not replace album covers."
+          }
+        }
+      }
+    },
+    "Измените запрос или сбросьте поиск.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the query or reset the search."
+          }
+        }
+      }
+    },
+    "Можно вставить ссылку вручную. Изображение сохранится в кэше приложения, аудиофайл не изменяется.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "You can paste a URL by hand. The image is stored in the app cache; the audio file is not modified."
+          }
+        }
+      }
+    },
+    "Не удалось прочитать выбранный файл.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not read the selected file."
+          }
+        }
+      }
+    },
+    "Не удалось сохранить обложку в кэш приложения.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not save the cover to the app cache."
+          }
+        }
+      }
+    },
+    "Файл скопирован в кэш обложек. Сохраните, чтобы применить.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The file is copied to the cover cache. Save to apply it."
+          }
+        }
+      }
+    },
+    "В сети ничего не нашлось — выберите файл или укажите ссылку.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing found online — choose a file or paste a URL."
+          }
+        }
+      }
+    },
+    "ВАРИАНТЫ ИЗ СЕТИ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ONLINE OPTIONS"
+          }
+        }
+      }
+    },
+    "Добавьте папку с музыкой — альбомы соберутся из тегов треков.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a music folder — albums are built from track tags."
+          }
+        }
+      }
+    },
+    "Исполнители появятся, когда в библиотеке будут треки с тегом исполнителя.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artists appear once the library has tracks with an artist tag."
+          }
+        }
+      }
+    },
+    "Создайте плейлист или импортируйте M3U — треки останутся в библиотеке.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a playlist or import an M3U — tracks stay in the library."
+          }
+        }
+      }
+    },
+    "Найдено вариантов: %lld. Выберите обложку ниже.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Found options: %lld. Pick a cover below."
+          }
+        }
+      }
+    },
+    "Свой порядок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Custom order"
+          }
+        }
+      }
+    },
+    "По дате добавления": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By date added"
+          }
+        }
+      }
+    },
+    "По названию": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By title"
+          }
+        }
+      }
+    },
+    "По длительности": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "By duration"
+          }
+        }
+      }
+    },
+    "Сортировка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorting"
+          }
+        }
+      }
+    },
+    "Перетащите строки, чтобы изменить порядок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag rows to change the order"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

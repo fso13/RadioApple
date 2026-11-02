@@ -112,6 +112,7 @@ struct MusicTrackEditorView: View {
                     Task { await searchOnline() }
                 }
                 .disabled(isSearching)
+                .padding(.trailing, Space.scrollLane)
             }
 
             if let message {

@@ -13,6 +13,9 @@ enum Space {
     static let xxl: CGFloat = 24
     static let xxxl: CGFloat = 32
     static let huge: CGFloat = 40
+    /// Reserved lane for the macOS overlay scrollbar (17 pt wide), so it never
+    /// covers the "⋯" menus and cover buttons at the trailing edge of a list.
+    static let scrollLane: CGFloat = 20
 }
 
 /// Nearly square corners, like the reference: print-like, not bubbly.

@@ -138,9 +138,10 @@ final class MainViewModel: ObservableObject {
         library.toggleFavorite(id: station.id)
     }
 
-    /// Reordering makes sense only for the full, unfiltered library.
+    /// Reordering works in any filter and genre list, but not in search
+    /// results: the library order is global while search hides the context.
     var canReorder: Bool {
-        guard case .all = filter else { return false }
+        guard visible.count > 1 else { return false }
         return searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
@@ -172,7 +173,7 @@ final class MainViewModel: ObservableObject {
         filter = value
     }
 
-    /// Mirrors the Flutter app: hiding the panel resets search, filter and selection.
+    /// Hiding the panel resets search, filter and selection.
     func resetAfterHide() {
         editor = nil
         searchText = ""

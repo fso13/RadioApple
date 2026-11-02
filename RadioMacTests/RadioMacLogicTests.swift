@@ -5,8 +5,7 @@ import XCTest
 
 @testable import RadioMac
 
-/// Ports the behaviour that was covered by `test/widget_test.dart` in the
-/// Flutter build, plus a few checks for persistence and the shipped catalog.
+/// Checks for playback logic, persistence and the shipped catalog.
 @MainActor
 final class RadioMacLogicTests: XCTestCase {
     // MARK: - Genres
@@ -61,7 +60,7 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertFalse(withoutLogo.hasComment)
     }
 
-    func testStationCodingRoundTripUsesFlutterKeys() throws {
+    func testStationCodingRoundTripUsesStableKeys() throws {
         let station = RadioStation(
             id: "x",
             name: "Радио",
@@ -149,35 +148,13 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertTrue(catalog.contains { $0.genre == GenreCatalog.rock })
     }
 
-    // MARK: - Persistence & migration
+    // MARK: - Persistence
 
     private func scratchDefaults() -> UserDefaults {
         let suite = "radio-mac.tests.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: suite)!
         defaults.removePersistentDomain(forName: suite)
         return defaults
-    }
-
-    func testPreferencesMigratorImportsFlutterKeysOnce() {
-        let defaults = scratchDefaults()
-        defaults.set(0.42, forKey: DefaultsKey.flutterPrefix + DefaultsKey.volume)
-        defaults.set("rock-maximum", forKey: DefaultsKey.flutterPrefix + DefaultsKey.lastStationID)
-        defaults.set(true, forKey: DefaultsKey.flutterPrefix + DefaultsKey.eqEnabled)
-        defaults.set("[1,2,3]", forKey: DefaultsKey.flutterPrefix + DefaultsKey.eqGains)
-        defaults.set("[]", forKey: DefaultsKey.flutterPrefix + DefaultsKey.stations)
-
-        PreferencesMigrator.migrateIfNeeded(defaults)
-
-        XCTAssertEqual(defaults.doubleLike(DefaultsKey.volume), 0.42)
-        XCTAssertEqual(defaults.string(forKey: DefaultsKey.lastStationID), "rock-maximum")
-        XCTAssertEqual(defaults.boolLike(DefaultsKey.eqEnabled), true)
-        XCTAssertEqual(defaults.string(forKey: DefaultsKey.eqGains), "[1,2,3]")
-        XCTAssertTrue(defaults.bool(forKey: DefaultsKey.migrationFlag))
-
-        // A second run must not overwrite values the native app has since changed.
-        defaults.set(0.9, forKey: DefaultsKey.volume)
-        PreferencesMigrator.migrateIfNeeded(defaults)
-        XCTAssertEqual(defaults.doubleLike(DefaultsKey.volume), 0.9)
     }
 
     func testSettingsRoundTripThroughUserDefaults() {
@@ -720,11 +697,28 @@ final class RadioMacLogicTests: XCTestCase {
             genre: GenreCatalog.jazz,
             group: "Morning"
         )
+        let second = library.add(
+            name: "Second Grouped",
+            url: "https://example.com/grouped-2.mp3",
+            genre: GenreCatalog.jazz,
+            group: "Morning"
+        )
 
         let model = MainViewModel(library: library)
         model.setFilter(.group("Morning"))
-        XCTAssertEqual(model.visible.map(\.id), [grouped.id])
-        XCTAssertFalse(model.canReorder, "reordering is disabled while a filter is active")
+        XCTAssertEqual(model.visible.map(\.id), [grouped.id, second.id])
+        XCTAssertTrue(model.canReorder, "filtered lists can be reordered too")
+
+        model.moveStation(id: second.id, before: grouped.id)
+        let stationIDs = library.stations.map(\.id)
+        XCTAssertLessThan(
+            stationIDs.firstIndex(of: second.id) ?? .max,
+            stationIDs.firstIndex(of: grouped.id) ?? .max
+        )
+
+        model.searchText = "grouped"
+        XCTAssertFalse(model.canReorder, "search results are not reordered")
+        model.clearSearch()
 
         model.setFilter(.all)
         XCTAssertTrue(model.canReorder)

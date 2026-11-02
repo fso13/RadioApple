@@ -49,7 +49,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `NowPlayingLookup` | Radio Paradise, SomaFM, Icecast, ICY, обложки iTunes |
 | `LogoResolver` | Radio Browser, сайт станции, favicon |
 | `NowPlayingCenter` | `MPNowPlayingInfoCenter`, `MPRemoteCommandCenter` |
-| `Preferences` | ключи `UserDefaults` и миграция из Flutter |
+| `Preferences` | ключи `UserDefaults` |
 | `AppSettings` | громкость, автозапуск, последняя станция |
 | `ThemeService` | системная/светлая/тёмная тема |
 | `LaunchAtLogin` | `SMAppService.mainApp` |
@@ -68,7 +68,7 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `SleepTimerService` | таймер сна и пятисекундное затухание |
 | `GlobalHotKeyService` | Carbon play/pause и следующая станция |
 | `TrackHistoryService` | последние 100 треков локально |
-| `MusicLibrary` | локальная музыка: папки-источники, теги, плейлисты, M3U, обогащение |
+| `MusicLibrary` | локальная музыка: папки-источники, теги, альбомы, исполнители, плейлисты, обложки, M3U, обогащение |
 | `LocalAudioMetadata` | теги и обложки из файлов через AVFoundation, кэш обложек |
 | `MusicPlaylistFile` | импорт и экспорт M3U/M3U8 для локальных файлов |
 | `MetadataEnrichmentService` | нормализация, оценка совпадений и кэш запросов |
@@ -121,16 +121,15 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `diagnostics_enabled` | согласие на локальный журнал |
 | `lastfm_enabled` | согласие на Last.fm |
 | `audio_engine` | удалён: всегда AVPlayer |
-| `native_migration_v1` | флаг миграции из Flutter |
 | `music_auto_enrich` | автоматическое обогащение новых локальных треков |
+| `music_sort_order` | выбранная сортировка локальной музыки |
 
-Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
-совместимы. Миграция копирует `flutter.*` → нативные ключи один раз и не перетирает
-новые значения.
+Станции кодируются Codable с ключом `logoUrl`; формат хранения стабилен между версиями.
 
-Локальная музыка в `UserDefaults` не хранится: треки, плейлисты и закладки доступа
-лежат в `Application Support/RadioMac/music-library.json`, обложки — в
-`Caches/RadioMac/Artwork/`. Файлы на диске не изменяются.
+Треки, плейлисты, выбранные обложки исполнителей и закладки доступа лежат в
+`Application Support/RadioMac/music-library.json`, обложки — в
+`Caches/RadioMac/Artwork/`; в `UserDefaults` хранятся только настройки вроде
+автообогащения и выбранной сортировки. Файлы на диске не изменяются.
 
 ## UI и дизайн-система
 
@@ -143,7 +142,10 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `UI/Sidebar.swift` | жанры и обложка |
 | `UI/StationRow.swift` | строка таблицы |
 | `UI/PlayerBar.swift` | нижний транспорт |
-| `UI/MusicView.swift`, `UI/MusicTrackRow.swift` | страница локальной музыки, плейлисты и таблица треков |
+| `UI/MusicView.swift`, `UI/MusicViewPages.swift`, `UI/MusicViewSidebar.swift` | страница локальной музыки, навигация, альбомы, исполнители и плейлисты |
+| `UI/MusicViewReorder.swift` | перетаскивание строк и сохранение своего порядка |
+| `UI/MusicPages.swift`, `UI/MusicTrackRow.swift` | карточки коллекций, страницы альбомов и исполнителей, строка трека |
+| `UI/MusicArtworkEditorView.swift` | обложка из сети, файла или ссылки |
 | `UI/MusicTrackEditorView.swift`, `UI/MusicSourcesView.swift`, `UI/MusicPlaylistPromptView.swift` | метаданные, источники, имя плейлиста |
 | `UI/SettingsView.swift`, `HelpView.swift`, `EqualizerView.swift`, `StationEditorView.swift` | страницы и листы |
 | `UI/BrandMark.swift`, `StationLogo.swift`, `ImageCache.swift` | бренд, обложки, кэш |

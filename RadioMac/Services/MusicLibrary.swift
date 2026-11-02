@@ -27,9 +27,11 @@ enum MusicLibraryError: LocalizedError {
 /// files are never modified.
 @MainActor
 final class MusicLibrary: ObservableObject {
-    @Published private(set) var tracks: [LocalTrack] = []
+    @Published var tracks: [LocalTrack] = []
     @Published private(set) var playlists: [MusicPlaylist] = []
     @Published private(set) var sources: [MusicSource] = []
+    /// Manually picked artist covers, keyed by the displayed artist name.
+    @Published var artistArtwork: [String: String] = [:]
 
     @Published private(set) var isScanning = false
     @Published private(set) var scanStatus: String?
@@ -41,7 +43,7 @@ final class MusicLibrary: ObservableObject {
 
     private let storageURL: URL?
     private let defaults: UserDefaults
-    private let enrichment = MetadataEnrichmentService.shared
+    let enrichment = MetadataEnrichmentService.shared
 
     private var activeScopes: [String: URL] = [:]
     private var startedScopes: Set<String> = []
@@ -100,6 +102,8 @@ final class MusicLibrary: ObservableObject {
 
     func sorted(_ items: [LocalTrack], by order: MusicSortOrder) -> [LocalTrack] {
         switch order {
+        case .manual:
+            return items
         case .added:
             return items.sorted { $0.addedAt > $1.addedAt }
         case .title:
@@ -134,6 +138,171 @@ final class MusicLibrary: ObservableObject {
         }
     }
 
+    /// Rows of the music table, split into sections when a grouping is picked.
+    func sections(
+        query: String,
+        playlistID: String?,
+        sort: MusicSortOrder,
+        grouping: MusicGrouping
+    ) -> [MusicTrackSection] {
+        Self.sections(
+            from: filteredTracks(query: query, playlistID: playlistID, sort: sort),
+            grouping: grouping
+        )
+    }
+
+    /// Splits already filtered tracks into groups. Groups are ordered by name
+    /// with the unnamed one last; tracks inside a group follow album and
+    /// track-number order, so an album never mixes its songs up.
+    static func sections(from items: [LocalTrack], grouping: MusicGrouping) -> [MusicTrackSection] {
+        guard grouping != .none else {
+            return [MusicTrackSection(id: "all", title: "", subtitle: nil, tracks: items)]
+        }
+
+        var buckets: [String: GroupBucket] = [:]
+        for item in items {
+            let key = groupKey(for: item, grouping: grouping)
+            if var bucket = buckets[key] {
+                bucket.tracks.append(item)
+                buckets[key] = bucket
+            } else {
+                buckets[key] = GroupBucket(
+                    title: groupTitle(for: item, grouping: grouping),
+                    subtitle: groupSubtitle(for: item, grouping: grouping),
+                    isUnnamed: isUnnamed(item, grouping: grouping),
+                    tracks: [item]
+                )
+            }
+        }
+
+        return buckets
+            .map { key, bucket in
+                (
+                    bucket,
+                    MusicTrackSection(
+                        id: "\(grouping.rawValue):\(key)",
+                        title: bucket.title,
+                        subtitle: bucket.subtitle,
+                        tracks: bucket.tracks.sorted { comesBefore($0, $1, grouping: grouping) }
+                    )
+                )
+            }
+            .sorted { left, right in
+                if left.0.isUnnamed != right.0.isUnnamed { return !left.0.isUnnamed }
+                let order = left.1.title.localizedStandardCompare(right.1.title)
+                if order != .orderedSame { return order == .orderedAscending }
+                let leftSubtitle = left.1.subtitle ?? ""
+                let rightSubtitle = right.1.subtitle ?? ""
+                let subtitleOrder = leftSubtitle.localizedStandardCompare(rightSubtitle)
+                if subtitleOrder != .orderedSame { return subtitleOrder == .orderedAscending }
+                return left.1.id < right.1.id
+            }
+            .map { $0.1 }
+    }
+
+    // MARK: - Grouping internals
+
+    private struct GroupBucket {
+        var title: String
+        var subtitle: String?
+        var isUnnamed: Bool
+        var tracks: [LocalTrack]
+    }
+
+    /// Sorts after every real name, so "Без исполнителя" is always last.
+    private static let unknownGroupKey = "\u{FFFF}"
+
+    private static func groupKey(for track: LocalTrack, grouping: MusicGrouping) -> String {
+        switch grouping {
+        case .none:
+            return ""
+        case .artist:
+            return track.displayArtist ?? unknownGroupKey
+        case .album:
+            guard let album = track.displayAlbum else { return unknownGroupKey }
+            // The same album title by different artists is a different album.
+            return album + "\u{1F}" + (track.displayArtist ?? "")
+        case .genre:
+            return track.displayGenre ?? unknownGroupKey
+        }
+    }
+
+    private static func groupTitle(for track: LocalTrack, grouping: MusicGrouping) -> String {
+        switch grouping {
+        case .none: return ""
+        case .artist: return track.displayArtist ?? "Без исполнителя"
+        case .album: return track.displayAlbum ?? "Без альбома"
+        case .genre: return track.displayGenre ?? "Без жанра"
+        }
+    }
+
+    private static func groupSubtitle(for track: LocalTrack, grouping: MusicGrouping) -> String? {
+        guard grouping == .album, track.displayAlbum != nil else { return nil }
+        let parts = [track.displayArtist, track.year.map(String.init)].compactMap { $0 }
+        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+    }
+
+    private static func isUnnamed(_ track: LocalTrack, grouping: MusicGrouping) -> Bool {
+        switch grouping {
+        case .none: return false
+        case .artist: return track.displayArtist == nil
+        case .album: return track.displayAlbum == nil
+        case .genre: return track.displayGenre == nil
+        }
+    }
+
+    private static func comesBefore(
+        _ lhs: LocalTrack,
+        _ rhs: LocalTrack,
+        grouping: MusicGrouping
+    ) -> Bool {
+        var comparisons: [Bool?]
+        switch grouping {
+        case .none:
+            comparisons = []
+        case .artist:
+            comparisons = [
+                lessOptional(lhs.displayAlbum, rhs.displayAlbum),
+                lessOptional(lhs.trackNumber, rhs.trackNumber),
+            ]
+        case .album:
+            comparisons = [lessOptional(lhs.trackNumber, rhs.trackNumber)]
+        case .genre:
+            comparisons = [
+                lessOptional(lhs.displayArtist, rhs.displayArtist),
+                lessOptional(lhs.displayAlbum, rhs.displayAlbum),
+                lessOptional(lhs.trackNumber, rhs.trackNumber),
+            ]
+        }
+        for comparison in comparisons {
+            if let comparison { return comparison }
+        }
+        return lhs.displayTitle.localizedStandardCompare(rhs.displayTitle) == .orderedAscending
+    }
+
+    /// `nil` sorts last; equal values fall through to the next comparison.
+    private static func lessOptional(_ lhs: String?, _ rhs: String?) -> Bool? {
+        switch (lhs, rhs) {
+        case (nil, nil): return nil
+        case (nil, _): return false
+        case (_, nil): return true
+        case let (left?, right?):
+            guard left != right else { return nil }
+            return left.localizedStandardCompare(right) == .orderedAscending
+        }
+    }
+
+    private static func lessOptional(_ lhs: Int?, _ rhs: Int?) -> Bool? {
+        switch (lhs, rhs) {
+        case (nil, nil): return nil
+        case (nil, _): return false
+        case (_, nil): return true
+        case let (left?, right?):
+            guard left != right else { return nil }
+            return left < right
+        }
+    }
+
     // MARK: - Loading
 
     func load() {
@@ -146,6 +315,7 @@ final class MusicLibrary: ObservableObject {
         tracks = snapshot.tracks.filter { !$0.path.isEmpty }
         playlists = snapshot.playlists
         sources = snapshot.sources
+        artistArtwork = snapshot.artistArtwork ?? [:]
         for source in sources {
             _ = startAccess(for: source)
         }
@@ -329,6 +499,35 @@ final class MusicLibrary: ObservableObject {
             }
         }
         for id in ids { MusicArtworkStore.remove(for: id) }
+        schedulePersist()
+    }
+
+    // MARK: - Ordering
+
+    /// Stores the custom order of the whole library, used by `.manual` sorting.
+    /// IDs that no longer exist are ignored; new tracks not listed keep their
+    /// relative order at the end.
+    func setTrackOrder(_ orderedIDs: [String]) {
+        let byID = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        var reordered = orderedIDs.compactMap { byID[$0] }
+        let seen = Set(reordered.map(\.id))
+        reordered.append(contentsOf: tracks.filter { !seen.contains($0.id) })
+        guard reordered.map(\.id) != tracks.map(\.id) else { return }
+        tracks = reordered
+        schedulePersist()
+    }
+
+    /// Stores the custom order inside one playlist.
+    func setTrackOrder(_ orderedIDs: [String], in playlistID: String) {
+        guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
+        let playable = Set(tracks.map(\.id))
+        let existing = Set(playlists[index].trackIDs)
+        var reordered = orderedIDs.filter { playable.contains($0) && existing.contains($0) }
+        let seen = Set(reordered)
+        reordered.append(contentsOf: playlists[index].trackIDs.filter { !seen.contains($0) })
+        guard reordered != playlists[index].trackIDs else { return }
+        playlists[index].trackIDs = reordered
+        playlists[index].updatedAt = Date()
         schedulePersist()
     }
 
@@ -769,9 +968,10 @@ final class MusicLibrary: ObservableObject {
         var tracks: [LocalTrack]
         var playlists: [MusicPlaylist]
         var sources: [MusicSource]
+        var artistArtwork: [String: String]?
     }
 
-    private func schedulePersist() {
+    func schedulePersist() {
         saveTask?.cancel()
         saveTask = Task { @MainActor [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
@@ -782,7 +982,12 @@ final class MusicLibrary: ObservableObject {
 
     private func persistNow() {
         guard persistenceEnabled, let storageURL else { return }
-        let snapshot = Snapshot(tracks: tracks, playlists: playlists, sources: sources)
+        let snapshot = Snapshot(
+            tracks: tracks,
+            playlists: playlists,
+            sources: sources,
+            artistArtwork: artistArtwork
+        )
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.withoutEscapingSlashes]
         guard let data = try? encoder.encode(snapshot) else { return }

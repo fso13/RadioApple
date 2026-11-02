@@ -1,7 +1,6 @@
 import Foundation
 
-/// Keys for `UserDefaults`. They intentionally match the Flutter build so that
-/// preferences can be imported once (`flutter.` prefix) and stay readable.
+/// Keys for `UserDefaults`.
 enum DefaultsKey {
     static let stations = "stations_v1"
     static let volume = "volume"
@@ -19,32 +18,18 @@ enum DefaultsKey {
     static let alarmSettings = "alarm_settings"
     static let diagnosticsEnabled = "diagnostics_enabled"
     static let lastFmEnabled = "lastfm_enabled"
-    static let migrationFlag = "native_migration_v1"
     static let musicAutoEnrich = "music_auto_enrich"
-
-    /// `shared_preferences` on macOS stores every entry with this prefix.
-    static let flutterPrefix = "flutter."
+    static let musicSortOrder = "music_sort_order"
 }
 
 extension UserDefaults {
-    /// Reads numbers that may have been persisted as strings by `shared_preferences`.
+    /// Reads numbers that may have been persisted as strings by older builds.
     func doubleLike(_ key: String) -> Double? {
         switch object(forKey: key) {
         case let number as NSNumber:
             return number.doubleValue
         case let string as String:
             return Double(string)
-        default:
-            return nil
-        }
-    }
-
-    func intLike(_ key: String) -> Int? {
-        switch object(forKey: key) {
-        case let number as NSNumber:
-            return number.intValue
-        case let string as String:
-            return Int(string)
         default:
             return nil
         }
@@ -65,48 +50,9 @@ extension UserDefaults {
         }
     }
 
-    /// JSON array of station dictionaries, stored either natively or by Flutter.
+    /// JSON array of station dictionaries.
     func stationsJSONString() -> String? {
-        if let raw = string(forKey: DefaultsKey.stations), !raw.isEmpty { return raw }
-        if let raw = string(forKey: DefaultsKey.flutterPrefix + DefaultsKey.stations), !raw.isEmpty {
-            return raw
-        }
-        return nil
-    }
-}
-
-/// One-shot import of the settings written by the previous Flutter version of
-/// the app (they live in the same sandbox container, keyed with `flutter.`).
-enum PreferencesMigrator {
-    static func migrateIfNeeded(_ defaults: UserDefaults = .standard) {
-        guard !defaults.bool(forKey: DefaultsKey.migrationFlag) else { return }
-
-        let keys = [
-            DefaultsKey.volume,
-            DefaultsKey.resumeLastStation,
-            DefaultsKey.lastStationID,
-            DefaultsKey.autoStart,
-            DefaultsKey.themePreference,
-            DefaultsKey.eqEnabled,
-            DefaultsKey.eqPreset,
-            DefaultsKey.eqGains,
-            DefaultsKey.eqCustomGains,
-        ]
-
-        for key in keys {
-            let source = DefaultsKey.flutterPrefix + key
-            guard defaults.object(forKey: key) == nil,
-                  let value = defaults.object(forKey: source)
-            else { continue }
-            defaults.set(value, forKey: key)
-        }
-
-        if let raw = defaults.string(forKey: DefaultsKey.flutterPrefix + DefaultsKey.stations),
-           defaults.object(forKey: DefaultsKey.stations) == nil,
-           !raw.isEmpty {
-            defaults.set(raw, forKey: DefaultsKey.stations)
-        }
-
-        defaults.set(true, forKey: DefaultsKey.migrationFlag)
+        guard let raw = string(forKey: DefaultsKey.stations), !raw.isEmpty else { return nil }
+        return raw
     }
 }

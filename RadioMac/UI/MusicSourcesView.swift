@@ -140,6 +140,7 @@ struct MusicSourcesView: View {
             TextButton(title: "Убрать", tint: palette.red) {
                 pendingRemove = source
             }
+            .padding(.trailing, Space.scrollLane)
         }
         .padding(.horizontal, Space.m)
         .padding(.vertical, 7)

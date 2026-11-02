@@ -38,7 +38,10 @@ APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
 `09-settings-dark.png`, `10-radio-browser.png`, `11-transfer.png`,
 `12-mini-player.png`, `13-music.png`, `14-music-playing.png`,
 `15-music-dark.png`, `16-music-editor.png`, `17-music-sources.png`,
-`18-mini-player-music.png`. Харнесс сам
+`18-mini-player-music.png`, `19-music-grouped.png`, `20-music-albums.png`,
+`21-music-album.png`, `22-music-artists.png`, `23-music-artist.png`,
+`24-music-artwork.png`, `25-music-playlists.png`, `26-music-playlist.png`.
+Харнесс сам
 переключает темы, открывает листы, запускает станцию и показывает
 демонстрационную библиотеку локальной музыки (в памяти, без записи в вашу), затем
 завершает приложение.

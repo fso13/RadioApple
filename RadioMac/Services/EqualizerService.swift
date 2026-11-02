@@ -88,7 +88,7 @@ final class EqualizerService: ObservableObject {
         defaults.set(customGains, forKey: DefaultsKey.eqCustomGains)
     }
 
-    /// Gains were stored by Flutter as a JSON string; accept both shapes.
+    /// Gains may have been stored as a JSON string by older builds; accept both shapes.
     private static func readGains(_ defaults: UserDefaults, key: String) -> [Double]? {
         if let values = defaults.array(forKey: key) as? [Double], !values.isEmpty {
             return EqualizerCatalog.clampGains(values)

@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 import UniformTypeIdentifiers
 
-/// Local music page: playlists on the left, the track table on the right and
-/// the shared transport bar at the bottom.
+/// Local music page: library navigation on the left, albums, artists,
+/// playlists or the track table on the right, and the shared transport bar.
 struct MusicView: View {
     @ObservedObject var model: MusicViewModel
     @ObservedObject var library: MusicLibrary
@@ -16,44 +16,103 @@ struct MusicView: View {
     let onClose: () -> Void
     let onOpenEqualizer: () -> Void
 
-    @Environment(\.palette) private var palette
-    @FocusState private var searchFocused: Bool
+    @Environment(\.palette) var palette
+    @FocusState var searchFocused: Bool
 
-    @State private var showSources = false
-    @State private var isTargeted = false
-    @State private var pendingDeleteTrack: LocalTrack?
-    @State private var pendingDeletePlaylist: MusicPlaylist?
+    @State var showSources = false
+    @State var isTargeted = false
+    @State var pendingDeleteTrack: LocalTrack?
+    @State var pendingDeletePlaylist: MusicPlaylist?
+    @State var artworkEditor: MusicArtworkEditor?
+
+    @State var albums: [MusicAlbum] = []
+    @State var artists: [MusicArtist] = []
 
     /// Cached so the 0.4 s playback tick does not re-sort a big library.
-    @State private var visibleTracks: [LocalTrack] = []
+    @State var visibleSections: [MusicTrackSection] = []
+    /// Flattened sections in display order — the queue the player receives.
+    @State var visibleTracks: [LocalTrack] = []
 
     // MARK: - Derived
 
-    private func recomputeVisibleTracks() {
-        visibleTracks = library.filteredTracks(
-            query: model.searchText,
-            playlistID: model.selectedPlaylistID,
-            sort: model.sort
-        )
+    var searchNeedle: String {
+        model.searchText
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+            .lowercased()
     }
 
-    private var selectedPlaylist: MusicPlaylist? {
+    var selectedPlaylist: MusicPlaylist? {
         model.selectedPlaylistID.flatMap { library.playlist(id: $0) }
     }
 
-    private var heading: String {
-        selectedPlaylist?.name ?? "Музыка"
+    var selectedAlbum: MusicAlbum? {
+        model.selectedAlbumID.flatMap { id in albums.first { $0.id == id } }
     }
 
-    private var subtitle: String {
+    var selectedArtist: MusicArtist? {
+        model.selectedArtistID.flatMap { id in artists.first { $0.id == id } }
+    }
+
+    var filteredAlbums: [MusicAlbum] {
+        guard !searchNeedle.isEmpty else { return albums }
+        return albums.filter { $0.searchText.contains(searchNeedle) }
+    }
+
+    var filteredArtists: [MusicArtist] {
+        guard !searchNeedle.isEmpty else { return artists }
+        return artists.filter { $0.searchText.contains(searchNeedle) }
+    }
+
+    var filteredPlaylists: [MusicPlaylist] {
+        guard !searchNeedle.isEmpty else { return library.playlists }
+        return library.playlists.filter {
+            $0.name
+                .folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+                .lowercased()
+                .contains(searchNeedle)
+        }
+    }
+
+    var tracksSubtitle: String {
         guard !visibleTracks.isEmpty else { return "Локальные файлы и плейлисты" }
-        let count = visibleTracks.count
-        return "\(count) \(Self.trackWord(count)) · \(LocalTrack.totalDurationText(visibleTracks))"
+        return "\(MusicCount.tracks(visibleTracks.count)) · \(LocalTrack.totalDurationText(visibleTracks))"
     }
 
-    private var queueTitle: String {
+    var queueTitle: String {
         selectedPlaylist?.name ?? "Все треки"
     }
+
+    func recomputeAll() {
+        recomputeCollections()
+        recomputeVisibleTracks()
+    }
+
+    func recomputeCollections() {
+        albums = library.albums
+        artists = library.artists
+        if let id = model.selectedAlbumID, !albums.contains(where: { $0.id == id }) {
+            model.selectedAlbumID = nil
+        }
+        if let id = model.selectedArtistID, !artists.contains(where: { $0.id == id }) {
+            model.selectedArtistID = nil
+        }
+        if let id = model.selectedPlaylistID, library.playlist(id: id) == nil {
+            model.selectedPlaylistID = nil
+        }
+    }
+
+    func recomputeVisibleTracks() {
+        visibleSections = library.sections(
+            query: model.searchText,
+            playlistID: selectedPlaylist?.id,
+            sort: model.sort,
+            grouping: model.grouping
+        )
+        visibleTracks = visibleSections.flatMap(\.tracks)
+    }
+
+    // MARK: - Body
 
     var body: some View {
         PanelSurface {
@@ -72,26 +131,26 @@ struct MusicView: View {
         }
         .onChange(of: model.focusSearchToken) { _, _ in searchFocused = true }
         .onChange(of: model.resignSearchToken) { _, _ in searchFocused = false }
-        .onAppear(perform: recomputeVisibleTracks)
+        .onAppear(perform: recomputeAll)
         .onChange(of: library.tracks) { _, tracks in
-            recomputeVisibleTracks()
+            recomputeAll()
             guard let current = player.localTrack,
                   let fresh = tracks.first(where: { $0.id == current.id })
             else { return }
             if fresh != current { player.refreshLocalTrack(fresh) }
         }
-        .onChange(of: library.playlists) { _, _ in
+        .onChange(of: library.playlists) { _, playlists in
             recomputeVisibleTracks()
+            guard let id = model.selectedPlaylistID,
+                  !playlists.contains(where: { $0.id == id })
+            else { return }
+            model.show(.playlists)
         }
+        .onChange(of: library.artistArtwork) { _, _ in recomputeCollections() }
         .onChange(of: model.searchText) { _, _ in recomputeVisibleTracks() }
         .onChange(of: model.selectedPlaylistID) { _, _ in recomputeVisibleTracks() }
         .onChange(of: model.sort) { _, _ in recomputeVisibleTracks() }
-        .onChange(of: library.playlists) { _, playlists in
-            if let id = model.selectedPlaylistID,
-               !playlists.contains(where: { $0.id == id }) {
-                model.selectedPlaylistID = nil
-            }
-        }
+        .onChange(of: model.grouping) { _, _ in recomputeVisibleTracks() }
         .dropDestination(for: URL.self) { urls, _ in
             _ = handleDrop(urls)
             return true
@@ -118,6 +177,9 @@ struct MusicView: View {
         }
         .sheet(item: $model.editor) { track in
             MusicTrackEditorView(track: track, library: library)
+        }
+        .sheet(item: $artworkEditor) { editor in
+            MusicArtworkEditorView(editor: editor)
         }
         .alert(
             "Удалить трек?",
@@ -147,7 +209,9 @@ struct MusicView: View {
             Button("Отмена", role: .cancel) { pendingDeletePlaylist = nil }
             Button("Удалить", role: .destructive) {
                 library.deletePlaylist(id: playlist.id)
-                if model.selectedPlaylistID == playlist.id { model.selectedPlaylistID = nil }
+                if model.selectedPlaylistID == playlist.id {
+                    model.show(.playlists)
+                }
                 toasts.show("Плейлист «\(playlist.name)» удалён", kind: .success)
                 pendingDeletePlaylist = nil
             }
@@ -158,7 +222,7 @@ struct MusicView: View {
 
     // MARK: - Header
 
-    private var header: some View {
+    var header: some View {
         PanelHeader(onBack: onBack) {
             HStack(spacing: Space.s) {
                 if library.isScanning || library.isEnriching {
@@ -173,6 +237,7 @@ struct MusicView: View {
                     Button("Добавить папку…") { chooseFolder() }
                     Button("Добавить файлы…") { chooseFiles() }
                     Divider()
+                    Button("Новый плейлист…") { model.presentCreatePlaylist() }
                     Button("Импорт M3U…") { importPlaylist() }
                     Button("Экспорт плейлиста в M3U…") { exportPlaylist() }
                         .disabled(selectedPlaylist == nil)
@@ -198,10 +263,10 @@ struct MusicView: View {
 
     // MARK: - Content
 
-    private var content: some View {
+    var content: some View {
         HStack(alignment: .top, spacing: Space.xxl) {
             sidebar
-            libraryColumn
+            pageColumn
         }
         .padding(.horizontal, Space.xxl)
         .padding(.top, Space.xl)
@@ -209,68 +274,53 @@ struct MusicView: View {
         .frame(maxHeight: .infinity)
     }
 
-    private var sidebar: some View {
-        VStack(alignment: .leading, spacing: Space.xs) {
-            sectionLabel("Библиотека")
-
-            NavItem(
-                label: "Все треки",
-                isSelected: model.selectedPlaylistID == nil,
-                isPlaying: player.isLocalPlayback && player.isPlaying
-            ) {
-                model.selectedPlaylistID = nil
-            }
-
-            sectionLabel("Плейлисты")
-
-            ScrollView {
-                VStack(alignment: .leading, spacing: 1) {
-                    if library.playlists.isEmpty {
-                        Text("Пока нет плейлистов")
-                            .font(Typeface.caption)
-                            .foregroundStyle(palette.textTertiary)
-                            .padding(.vertical, Space.xs)
-                    }
-                    ForEach(library.playlists) { playlist in
-                        playlistRow(playlist)
-                    }
+    var pageColumn: some View {
+        Group {
+            if let album = selectedAlbum {
+                albumPage(album)
+            } else if let artist = selectedArtist {
+                artistPage(artist)
+            } else if let playlist = selectedPlaylist {
+                playlistPage(playlist)
+            } else {
+                switch model.page {
+                case .allTracks:
+                    tracksPage(
+                        title: "Все треки",
+                        subtitle: tracksSubtitle,
+                        backTitle: nil,
+                        back: nil,
+                        prompt: "Поиск треков"
+                    )
+                case .albums:
+                    albumsPage
+                case .artists:
+                    artistsPage
+                case .playlists:
+                    playlistsPage
                 }
-                .padding(.trailing, Space.s)
-            }
-            .scrollIndicators(.hidden)
-
-            Spacer(minLength: Space.s)
-
-            TextButton(title: "Новый плейлист", systemImage: "plus") {
-                model.presentCreatePlaylist()
-            }
-            TextButton(title: "Импорт M3U", systemImage: "square.and.arrow.down") {
-                importPlaylist()
-            }
-            TextButton(title: "Источники…", systemImage: "folder") {
-                showSources = true
             }
         }
-        .frame(width: 178)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private var libraryColumn: some View {
-        VStack(spacing: 0) {
-            HStack(alignment: .top, spacing: Space.m) {
-                PageHeading(
-                    title: LocalizedStringKey(heading),
-                    subtitle: LocalizedStringKey(subtitle)
-                )
-                Spacer()
-                actionsMenu
-            }
+    // MARK: - Sidebar
 
-            SearchLine(
-                text: $model.searchText,
-                isFocused: $searchFocused,
-                prompt: "Поиск треков",
-                accessibilityLabel: "Поиск треков"
-            )
+    func tracksPage(
+        title: String,
+        subtitle: String,
+        backTitle: String?,
+        back: (() -> Void)?,
+        prompt: String
+    ) -> some View {
+        VStack(spacing: 0) {
+            headingRow(title: title, subtitle: subtitle, backTitle: backTitle, back: back)
+
+            HStack(alignment: .bottom, spacing: Space.m) {
+                searchLine(prompt: prompt)
+                sortMenu
+                groupingMenu
+            }
             .padding(.top, Space.l)
 
             columnHeader
@@ -278,19 +328,66 @@ struct MusicView: View {
                 .padding(.bottom, Space.xs)
 
             trackTable
-
             footer
         }
     }
 
-    private var actionsMenu: some View {
+    func headingRow(
+        title: String,
+        subtitle: String,
+        backTitle: String?,
+        back: (() -> Void)?
+    ) -> some View {
+        HStack(alignment: .top, spacing: Space.m) {
+            VStack(alignment: .leading, spacing: Space.xs) {
+                if let backTitle, let back {
+                    TextButton(title: backTitle, systemImage: "arrow.left", action: back)
+                }
+                PageHeading(
+                    title: LocalizedStringKey(title),
+                    subtitle: LocalizedStringKey(subtitle)
+                )
+            }
+            Spacer()
+            actionsMenu
+        }
+    }
+
+    func searchLine(prompt: String) -> some View {
+        SearchLine(
+            text: $model.searchText,
+            isFocused: $searchFocused,
+            prompt: LocalizedStringKey(prompt),
+            accessibilityLabel: prompt
+        )
+    }
+
+    func detailToolbar(backTitle: String, back: @escaping () -> Void) -> some View {
+        HStack(spacing: Space.m) {
+            TextButton(title: backTitle, systemImage: "arrow.left", action: back)
+            Spacer()
+            actionsMenu
+        }
+    }
+
+    var actionsMenu: some View {
         Menu {
             Button("Добавить папку…") { chooseFolder() }
             Button("Добавить файлы…") { chooseFiles() }
             Divider()
+            Button("Новый плейлист…") { model.presentCreatePlaylist() }
             Button("Импорт M3U…") { importPlaylist() }
             Button("Экспорт в M3U…") { exportPlaylist() }
                 .disabled(selectedPlaylist == nil)
+            if let playlist = selectedPlaylist {
+                Divider()
+                Button("Переименовать «\(playlist.name)»…") { model.presentRename(playlist) }
+                Button(role: .destructive) {
+                    pendingDeletePlaylist = playlist
+                } label: {
+                    Text("Удалить плейлист")
+                }
+            }
             Divider()
             Button("Обогатить из сети") { library.startEnrichment() }
                 .disabled(library.isEnriching)
@@ -314,14 +411,90 @@ struct MusicView: View {
         .help("Действия с локальной музыкой")
     }
 
-    private var columnHeader: some View {
+    /// Compact sort picker: custom order or one of the metadata orders.
+    var sortMenu: some View {
+        Menu {
+            ForEach(MusicSortOrder.allCases) { option in
+                Button {
+                    model.sort = option
+                } label: {
+                    if option == model.sort {
+                        Label(LocalizedStringKey(option.title), systemImage: "checkmark")
+                    } else {
+                        Text(LocalizedStringKey(option.title))
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "arrow.up.arrow.down")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(palette.textPrimary)
+                .frame(width: 30, height: 30)
+                .overlay(Rectangle().strokeBorder(palette.separatorStrong, lineWidth: 1))
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Сортировка: \(model.sort.title)")
+        .accessibilityLabel("Сортировка")
+        .accessibilityValue(Text(LocalizedStringKey(model.sort.title)))
+    }
+
+    /// Compact picker above the table: flat list, by artist, by album or by genre.
+    var groupingMenu: some View {
+        Menu {
+            ForEach(MusicGrouping.allCases) { option in
+                Button {
+                    model.grouping = option
+                } label: {
+                    if option == model.grouping {
+                        Label(LocalizedStringKey(option.title), systemImage: "checkmark")
+                    } else {
+                        Text(LocalizedStringKey(option.title))
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: 5) {
+                Image(systemName: "rectangle.3.group")
+                    .font(.system(size: 10, weight: .medium))
+                Text(LocalizedStringKey(model.grouping.shortTitle))
+                    .font(Typeface.captionMedium)
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            .foregroundStyle(model.grouping == .none ? palette.textPrimary : palette.accent)
+            .padding(.horizontal, Space.m)
+            .frame(height: 30)
+            .overlay(
+                Rectangle()
+                    .strokeBorder(
+                        model.grouping == .none
+                            ? palette.separatorStrong
+                            : palette.accent.opacity(0.55),
+                        lineWidth: 1
+                    )
+            )
+            .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Группировка треков")
+        .accessibilityLabel("Группировка треков")
+        .accessibilityValue(Text(LocalizedStringKey(model.grouping.title)))
+    }
+
+    var columnHeader: some View {
         HStack(spacing: Space.s) {
             Color.clear.frame(width: 10, height: 10)
             Color.clear.frame(width: 30, height: 10)
             Text("ТРЕК").frame(maxWidth: .infinity, alignment: .leading)
             Text("АЛЬБОМ").frame(width: 138, alignment: .leading)
             Text("ВРЕМЯ").frame(width: 42, alignment: .trailing)
-            Color.clear.frame(width: 24, height: 10)
+            Color.clear.frame(width: 24 + Space.scrollLane, height: 10)
         }
         .font(Typeface.overline)
         .tracking(1.2)
@@ -329,35 +502,36 @@ struct MusicView: View {
     }
 
     @ViewBuilder
-    private var trackTable: some View {
+    var trackTable: some View {
         if visibleTracks.isEmpty {
             emptyState
         } else {
             ScrollView {
-                LazyVStack(spacing: 0) {
-                    ForEach(visibleTracks) { track in
-                        MusicTrackRow(
-                            track: track,
-                            isCurrent: player.localTrack?.id == track.id,
-                            isPlaying: player.localTrack?.id == track.id && player.isPlaying,
-                            isLoading: player.localTrack?.id == track.id && player.status == .loading,
-                            isInPlaylist: selectedPlaylist != nil,
-                            playlists: library.playlists,
-                            onPlay: { play(track) },
-                            onEnrich: { enrich(track) },
-                            onEdit: { model.editor = track },
-                            onAddToPlaylist: { playlist in
-                                library.addTracks([track.id], to: playlist.id)
-                                toasts.show("Добавлено в «\(playlist.name)»", kind: .success)
-                            },
-                            onRemoveFromPlaylist: {
-                                if let playlist = selectedPlaylist {
-                                    library.removeTrack(track.id, from: playlist.id)
+                LazyVStack(
+                    spacing: 0,
+                    pinnedViews: model.grouping == .none ? [] : [.sectionHeaders]
+                ) {
+                    ForEach(visibleSections) { section in
+                        Section {
+                            ForEach(section.tracks) { track in
+                                reorderableTrackRow(track)
+                            }
+                        } header: {
+                            if model.grouping != .none {
+                                sectionHeader(section)
+                            }
+                        }
+                    }
+
+                    if canReorderTracks {
+                        Color.clear
+                            .frame(height: 14)
+                            .contentShape(Rectangle())
+                            .onDrop(of: [.text], isTargeted: nil) { providers in
+                                handleTrackDrop(providers) { id in
+                                    moveTrackToEnd(id)
                                 }
-                            },
-                            onRevealInFinder: { library.revealInFinder(track) },
-                            onDelete: { pendingDeleteTrack = track }
-                        )
+                            }
                     }
                 }
                 .padding(.bottom, Space.s)
@@ -380,17 +554,80 @@ struct MusicView: View {
         }
     }
 
-    private var footer: some View {
+    var trackPageActions: MusicTrackActions {
+        makeTrackActions(
+            queue: visibleTracks,
+            title: queueTitle,
+            isInPlaylist: selectedPlaylist != nil
+        )
+    }
+
+    /// Sticky header of a group: name, extra context, totals and "play group".
+    func sectionHeader(_ section: MusicTrackSection) -> some View {
+        HStack(alignment: .center, spacing: Space.s) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(LocalizedStringKey(section.title))
+                    .font(Typeface.section)
+                    .foregroundStyle(palette.textPrimary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+
+                if let subtitle = section.subtitle {
+                    Text(subtitle)
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textSecondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+            }
+            .accessibilityElement(children: .combine)
+            .accessibilityAddTraits(.isHeader)
+
+            Spacer(minLength: Space.s)
+
+            Text(sectionSummary(section))
+                .font(Typeface.monoSmall)
+                .foregroundStyle(palette.textTertiary)
+                .lineLimit(1)
+
+            CircleIconButton(
+                systemName: "play.fill",
+                size: 9,
+                help: "Играть группу «\(section.title)»"
+            ) {
+                play(section)
+            }
+        }
+        .padding(.top, Space.s)
+        .padding(.bottom, Space.s)
+        .background(palette.surface)
+        .overlay(alignment: .bottom) { Hairline() }
+        .zIndex(1)
+    }
+
+    func sectionSummary(_ section: MusicTrackSection) -> String {
+        "\(MusicCount.tracks(section.tracks.count)) · \(LocalTrack.totalDurationText(section.tracks))"
+    }
+
+    var footer: some View {
         HStack(spacing: Space.m) {
-            Text(
-                library.missingCount > 0
-                    ? "Не найдено файлов: \(library.missingCount)"
-                    : "Плейлисты хранят ссылки на файлы — музыка не копируется"
-            )
-            .font(Typeface.caption)
-            .foregroundStyle(library.missingCount > 0 ? palette.red : palette.textTertiary)
-            .lineLimit(1)
-            .truncationMode(.tail)
+            if canReorderTracks {
+                Text("Перетащите строки, чтобы изменить порядок")
+                    .font(Typeface.caption)
+                    .foregroundStyle(palette.textSecondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+            } else {
+                Text(
+                    library.missingCount > 0
+                        ? "Не найдено файлов: \(library.missingCount)"
+                        : "Плейлисты хранят ссылки на файлы — музыка не копируется"
+                )
+                .font(Typeface.caption)
+                .foregroundStyle(library.missingCount > 0 ? palette.red : palette.textTertiary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+            }
 
             Spacer()
 
@@ -408,7 +645,7 @@ struct MusicView: View {
 
             if let playlist = selectedPlaylist {
                 TextButton(title: "M3U", systemImage: "square.and.arrow.up") {
-                    exportPlaylist()
+                    exportPlaylist(playlist)
                 }
                 .help("Экспортировать «\(playlist.name)» в M3U")
             }
@@ -416,56 +653,43 @@ struct MusicView: View {
         .padding(.top, Space.xs)
     }
 
-    private var playerBar: some View {
-        PlayerBar(
-            player: player,
-            equalizer: equalizer,
-            sleepTimer: sleepTimer,
-            onOpenEqualizer: onOpenEqualizer,
-            onPrevious: { player.playPreviousLocalTrack() },
-            onNext: { player.playNextLocalTrack() },
-            canPrevious: player.isLocalPlayback && player.canPlayPreviousLocalTrack,
-            canNext: player.isLocalPlayback && player.canPlayNextLocalTrack,
-            canPlay: !visibleTracks.isEmpty || player.isLocalPlayback
-                || player.station != nil || player.isActive,
-            onPlayFallback: {
-                guard !visibleTracks.isEmpty else { return }
-                player.playLocalTracks(visibleTracks, startingAt: 0, title: queueTitle)
-            }
+    // MARK: - Album, artist and playlist pages
+
+    func makeTrackActions(
+        queue: [LocalTrack],
+        title: String,
+        isInPlaylist: Bool
+    ) -> MusicTrackActions {
+        MusicTrackActions(
+            isCurrent: { player.localTrack?.id == $0.id },
+            isPlaying: { player.localTrack?.id == $0.id && player.isPlaying },
+            isLoading: { player.localTrack?.id == $0.id && player.status == .loading },
+            isInPlaylist: isInPlaylist,
+            playlists: library.playlists,
+            onPlay: { play($0, queue: queue, title: title) },
+            onEnrich: { enrich($0) },
+            onEdit: { model.editor = $0 },
+            onAddToPlaylist: { track, playlist in
+                library.addTracks([track.id], to: playlist.id)
+                toasts.show("Добавлено в «\(playlist.name)»", kind: .success)
+            },
+            onRemoveFromPlaylist: { track in
+                if let playlist = selectedPlaylist {
+                    library.removeTrack(track.id, from: playlist.id)
+                }
+            },
+            onRevealInFinder: { library.revealInFinder($0) },
+            onDelete: { pendingDeleteTrack = $0 }
         )
+    }
+
+    func playableTracks(_ tracks: [LocalTrack]) -> [LocalTrack] {
+        tracks.filter { !$0.isMissing }
     }
 
     // MARK: - Empty state
 
-    private var emptyState: some View {
-        let searching = !model.searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        let playlist = selectedPlaylist
-
-        return EmptyStateView(
-            systemImage: searching ? "magnifyingglass" : "music.note.list",
-            title: searching
-                ? "Ничего не найдено"
-                : (playlist == nil ? "Добавьте музыку" : "Плейлист пуст"),
-            subtitle: searching
-                ? "Измените запрос или выберите «Все треки»."
-                : (playlist == nil
-                    ? "Выберите папку с музыкой или перетащите файлы и M3U-плейлисты "
-                        + "в окно. Обложки и альбомы подтянутся из сети."
-                    : "Добавьте треки из «Все треки» через меню строки или перетащите файлы."),
-            actionTitle: searching ? "Сбросить поиск" : (playlist == nil ? "Добавить папку" : "Все треки"),
-            action: {
-                if searching {
-                    model.searchText = ""
-                } else if playlist == nil {
-                    chooseFolder()
-                } else {
-                    model.selectedPlaylistID = nil
-                }
-            }
-        )
-    }
-
-    private func sectionLabel(_ title: String) -> some View {
+    func sectionLabel(_ title: String) -> some View {
         Text(title.uppercased())
             .font(Typeface.overline)
             .tracking(1.1)
@@ -475,66 +699,98 @@ struct MusicView: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    private func playlistRow(_ playlist: MusicPlaylist) -> some View {
-        let isSelected = model.selectedPlaylistID == playlist.id
-        return Button {
-            model.selectedPlaylistID = playlist.id
-        } label: {
-            HStack(spacing: Space.s) {
-                Text(playlist.name)
-                    .font(isSelected ? Typeface.headline : Typeface.body)
-                    .foregroundStyle(isSelected ? palette.textPrimary : palette.textSecondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Spacer(minLength: 2)
-                Text("\(playlist.trackCount)")
-                    .font(Typeface.monoSmall)
-                    .foregroundStyle(palette.textTertiary)
+    // MARK: - Player bar
+
+    /// The queue the transport bar starts when nothing is playing yet: the
+    /// opened album or artist, otherwise the visible track list.
+    var fallbackQueue: [LocalTrack] {
+        if let album = selectedAlbum { return playableTracks(album.tracks) }
+        if let artist = selectedArtist { return playableTracks(artist.tracks) }
+        return visibleTracks
+    }
+
+    var fallbackTitle: String {
+        if let album = selectedAlbum { return album.title }
+        if let artist = selectedArtist { return artist.name }
+        return queueTitle
+    }
+
+    var playerBar: some View {
+        PlayerBar(
+            player: player,
+            equalizer: equalizer,
+            sleepTimer: sleepTimer,
+            onOpenEqualizer: onOpenEqualizer,
+            onPrevious: { player.playPreviousLocalTrack() },
+            onNext: { player.playNextLocalTrack() },
+            canPrevious: player.isLocalPlayback && player.canPlayPreviousLocalTrack,
+            canNext: player.isLocalPlayback && player.canPlayNextLocalTrack,
+            canPlay: !fallbackQueue.isEmpty || player.isLocalPlayback
+                || player.station != nil || player.isActive,
+            onPlayFallback: {
+                guard !fallbackQueue.isEmpty else { return }
+                player.playLocalTracks(fallbackQueue, startingAt: 0, title: fallbackTitle)
             }
-            .padding(.vertical, 3)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
-        .contextMenu {
-            Button("Играть плейлист") { playPlaylist(playlist) }
-            Button("Переименовать…") { model.presentRename(playlist) }
-            Button("Экспорт в M3U…") {
-                model.selectedPlaylistID = playlist.id
-                exportPlaylist()
-            }
-            Divider()
-            Button(role: .destructive) { pendingDeletePlaylist = playlist } label: {
-                Label("Удалить плейлист", systemImage: "trash")
-            }
-        }
+        )
     }
 
     // MARK: - Actions
 
-    private func play(_ track: LocalTrack) {
+    func play(_ track: LocalTrack, queue: [LocalTrack], title: String) {
         if track.isMissing {
             toasts.show("Файл не найден: \(track.fileName)", kind: .error)
             return
         }
-        guard let index = visibleTracks.firstIndex(where: { $0.id == track.id }) else { return }
-        player.playLocalTracks(visibleTracks, startingAt: index, title: queueTitle)
+        let playable = playableTracks(queue)
+        guard let index = playable.firstIndex(where: { $0.id == track.id }) else { return }
+        player.playLocalTracks(playable, startingAt: index, title: title)
     }
 
-    private func playPlaylist(_ playlist: MusicPlaylist) {
-        let items = library.sorted(
-            library.tracks(in: playlist.id),
-            by: model.sort
+    func playAlbum(_ album: MusicAlbum) {
+        let playable = playableTracks(album.tracks)
+        guard !playable.isEmpty else {
+            toasts.show("В альбоме нет доступных файлов", kind: .info)
+            return
+        }
+        player.playLocalTracks(playable, startingAt: 0, title: album.title)
+    }
+
+    func playArtist(_ artist: MusicArtist) {
+        let playable = playableTracks(artist.tracks)
+        guard !playable.isEmpty else {
+            toasts.show("У исполнителя нет доступных файлов", kind: .info)
+            return
+        }
+        player.playLocalTracks(playable, startingAt: 0, title: artist.name)
+    }
+
+    func playPlaylist(_ playlist: MusicPlaylist) {
+        let items = library.sections(
+            query: "",
+            playlistID: playlist.id,
+            sort: model.sort,
+            grouping: model.grouping
         )
+        .flatMap(\.tracks)
+        .filter { !$0.isMissing }
         guard !items.isEmpty else {
             toasts.show("Плейлист пуст", kind: .info)
             return
         }
-        model.selectedPlaylistID = playlist.id
         player.playLocalTracks(items, startingAt: 0, title: playlist.name)
     }
 
-    private func enrich(_ track: LocalTrack) {
+    func play(_ section: MusicTrackSection) {
+        let playable = playableTracks(section.tracks)
+        guard !playable.isEmpty else {
+            toasts.show("В группе нет доступных файлов", kind: .info)
+            return
+        }
+        let title = section.subtitle.map { "\($0) — \(section.title)" } ?? section.title
+        player.playLocalTracks(playable, startingAt: 0, title: title)
+    }
+
+    func enrich(_ track: LocalTrack) {
         Task { @MainActor in
             if let match = await library.enrich(trackID: track.id) {
                 toasts.show(
@@ -547,13 +803,46 @@ struct MusicView: View {
         }
     }
 
-    private func submit(_ prompt: MusicPlaylistPrompt, name: String) {
+    func presentArtworkEditor(for album: MusicAlbum) {
+        artworkEditor = MusicArtworkEditor(
+            title: "Обложка альбома",
+            subtitle: album.artist.map { "\(album.title) — \($0)" } ?? album.title,
+            note: "Обложка применится ко всем трекам альбома; аудиофайлы не изменяются.",
+            currentURL: album.artworkURL,
+            search: { await library.artworkCandidates(for: album) },
+            save: { url in
+                library.setArtwork(url, for: album)
+                toasts.show(
+                    url == nil ? "Обложка альбома убрана" : "Обложка альбома обновлена",
+                    kind: .success
+                )
+            }
+        )
+    }
+
+    func presentArtworkEditor(for artist: MusicArtist) {
+        artworkEditor = MusicArtworkEditor(
+            title: "Обложка исполнителя",
+            subtitle: artist.details,
+            note: "Обложка исполнителя хранится отдельно и не заменяет обложки альбомов.",
+            currentURL: artist.artworkURL,
+            search: { await library.artworkCandidates(for: artist) },
+            save: { url in
+                library.setArtwork(url, for: artist)
+                toasts.show(
+                    url == nil ? "Обложка исполнителя убрана" : "Обложка исполнителя обновлена",
+                    kind: .success
+                )
+            }
+        )
+    }
+
+    func submit(_ prompt: MusicPlaylistPrompt, name: String) {
         switch prompt.mode {
         case .create:
-            if let playlist = library.createPlaylist(name: name) {
-                model.selectedPlaylistID = playlist.id
-                toasts.show("Плейлист «\(playlist.name)» создан", kind: .success)
-            }
+            guard let playlist = library.createPlaylist(name: name) else { return }
+            model.openPlaylist(playlist.id)
+            toasts.show("Плейлист «\(playlist.name)» создан", kind: .success)
         case .rename(let playlist):
             library.renamePlaylist(id: playlist.id, name: name)
             toasts.show("Плейлист переименован", kind: .success)
@@ -563,7 +852,7 @@ struct MusicView: View {
 
     // MARK: - Files
 
-    private func chooseFolder() {
+    func chooseFolder() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -586,7 +875,7 @@ struct MusicView: View {
         }
     }
 
-    private func chooseFiles() {
+    func chooseFiles() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -607,7 +896,7 @@ struct MusicView: View {
         }
     }
 
-    private func handleDrop(_ urls: [URL]) -> Bool {
+    func handleDrop(_ urls: [URL]) -> Bool {
         guard !urls.isEmpty else { return false }
         let playlists = urls.filter { LocalAudioMetadata.isPlaylistFile($0) }
         let audio = urls.filter { !LocalAudioMetadata.isPlaylistFile($0) }
@@ -628,7 +917,7 @@ struct MusicView: View {
         return true
     }
 
-    private func importPlaylist() {
+    func importPlaylist() {
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -642,14 +931,14 @@ struct MusicView: View {
         }
     }
 
-    private static var playlistTypes: [UTType] {
+    static var playlistTypes: [UTType] {
         [UTType(filenameExtension: "m3u"), UTType(filenameExtension: "m3u8")]
             .compactMap { $0 }
     }
 
     /// M3U files usually reference tracks next to them; sandboxed apps need a
     /// separate grant for that folder, so the user picks it once.
-    private func runImport(_ url: URL) async {
+    func runImport(_ url: URL) async {
         let folder = url.deletingLastPathComponent()
         if !library.hasAccess(toFolder: folder) {
             let panel = NSOpenPanel()
@@ -666,7 +955,7 @@ struct MusicView: View {
 
         do {
             let result = try await library.importPlaylist(from: url)
-            model.selectedPlaylistID = result.playlistID
+            model.openPlaylist(result.playlistID)
             var text = "Плейлист «\(result.name)»: \(result.addedTracks) новых треков"
             if result.skippedEntries > 0 {
                 text += ", пропущено \(result.skippedEntries)"
@@ -677,8 +966,8 @@ struct MusicView: View {
         }
     }
 
-    private func exportPlaylist() {
-        guard let playlist = selectedPlaylist,
+    func exportPlaylist(_ playlist: MusicPlaylist? = nil) {
+        guard let playlist = playlist ?? selectedPlaylist,
               let data = library.m3uData(for: playlist.id)
         else {
             toasts.show("Сначала выберите плейлист", kind: .info)
@@ -696,19 +985,6 @@ struct MusicView: View {
             toasts.show("Экспортировано: \(url.lastPathComponent)", kind: .success)
         } catch {
             toasts.show("Не удалось сохранить: \(error.localizedDescription)", kind: .error)
-        }
-    }
-
-    // MARK: - Helpers
-
-    private static func trackWord(_ count: Int) -> String {
-        let mod100 = count % 100
-        let mod10 = count % 10
-        if (11...14).contains(mod100) { return "треков" }
-        switch mod10 {
-        case 1: return "трек"
-        case 2, 3, 4: return "трека"
-        default: return "треков"
         }
     }
 }

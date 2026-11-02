@@ -24,7 +24,6 @@ final class AppEnvironment {
     let musicModel = MusicViewModel()
 
     init() {
-        PreferencesMigrator.migrateIfNeeded()
         settings = AppSettings()
         theme = ThemeService()
         library = StationLibrary()

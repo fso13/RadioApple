@@ -358,7 +358,90 @@ enum DebugHarness {
                 to: directory.appendingPathComponent("17-music-sources.png")
             )
         }
-        after { NSApp.terminate(nil) }
+        // Library pages are view modes: set them last so earlier music shots
+        // show the flat list and the default page.
+        after { environment.router.route = .music }
+        after {
+            scheduleLibraryPageSnapshots(
+                directory: directory,
+                environment: environment,
+                window: window
+            )
+        }
+    }
+
+    /// Renders the album, artist and playlist pages after the flat music shots.
+    private static func scheduleLibraryPageSnapshots(
+        directory: URL,
+        environment: AppEnvironment,
+        window: MainWindowController
+    ) {
+        environment.musicModel.grouping = .artist
+        Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 500_000_000)
+            window.snapshotPanel(to: directory.appendingPathComponent("19-music-grouped.png"))
+            environment.musicModel.grouping = .none
+
+            environment.musicModel.show(.albums)
+            environment.musicModel.albumsExpanded = true
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            window.snapshotPanel(to: directory.appendingPathComponent("20-music-albums.png"))
+
+            if let album = environment.music.albums.first {
+                environment.musicModel.openAlbum(album.id)
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                window.snapshotPanel(
+                    to: directory.appendingPathComponent("21-music-album.png")
+                )
+            }
+
+            environment.musicModel.show(.artists)
+            environment.musicModel.albumsExpanded = false
+            environment.musicModel.artistsExpanded = true
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            window.snapshotPanel(to: directory.appendingPathComponent("22-music-artists.png"))
+
+            if let artist = environment.music.artists.first {
+                environment.musicModel.openArtist(artist.id)
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                window.snapshotPanel(
+                    to: directory.appendingPathComponent("23-music-artist.png")
+                )
+            }
+
+            snapshotHosting(
+                ThemedRoot {
+                    MusicArtworkEditorView(
+                        editor: MusicArtworkEditor(
+                            title: "Обложка альбома",
+                            subtitle: "Quiet Piano — Erik Satie",
+                            currentURL: nil,
+                            search: { [] },
+                            save: { _ in }
+                        )
+                    )
+                },
+                size: NSSize(width: 600, height: 560),
+                to: directory.appendingPathComponent("24-music-artwork.png")
+            )
+
+            environment.musicModel.show(.playlists)
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            window.snapshotPanel(
+                to: directory.appendingPathComponent("25-music-playlists.png")
+            )
+
+            if let playlist = environment.music.playlists.first {
+                environment.musicModel.openPlaylist(playlist.id)
+                try? await Task.sleep(nanoseconds: 400_000_000)
+                window.snapshotPanel(
+                    to: directory.appendingPathComponent("26-music-playlist.png")
+                )
+            }
+
+            try? await Task.sleep(nanoseconds: 100_000_000)
+            NSApp.terminate(nil)
+        }
     }
 
     /// Snapshot helper: a few silent WAVs with tag-like file names, installed

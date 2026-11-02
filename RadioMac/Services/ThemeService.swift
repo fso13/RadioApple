@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Light/dark/system theme choice, persisted under the same key as the Flutter app.
+/// Light/dark/system theme choice, persisted in `UserDefaults`.
 @MainActor
 final class ThemeService: ObservableObject {
     enum Preference: String, CaseIterable, Identifiable, Sendable {

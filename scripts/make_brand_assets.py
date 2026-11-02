@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generate RadioMac brand assets for the app and the installer.
 
-* App icon (1024 and derived sizes) — replaces the Flutter template icon.
+* App icon (1024 and derived sizes).
 * `installer/RadioMac.icns` — volume icon.
 * `installer/background.png` / `background@2x.png` — the drag-and-drop DMG window.
 

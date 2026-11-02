@@ -36,16 +36,6 @@
 | --- | --- |
 | ![Локальная музыка](site/assets/screenshots/music.jpg) | ![Метаданные трека](site/assets/screenshots/music-editor.jpg) |
 
-## Flutter-версия
-
-Flutter-приложение больше не лежит в `main`: оно сохранено в ветке
-[`flutter-legacy`](https://github.com/fso13/RadioApple/tree/flutter-legacy) и теге
-`flutter-legacy-1.0`. Актуальная версия — нативная (`RadioMac/`, `RadioMac.xcodeproj`).
-
-Нативное приложение использует тот же bundle id `com.fso13.radioMac`, поэтому при
-первом запуске **подхватывает данные Flutter-версии**: станции, избранное, громкость,
-последнюю станцию, пресет эквалайзера и тему.
-
 ## Требования
 
 - macOS 14 (Sonoma) или новее
@@ -66,7 +56,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (45 unit + 4 UI XCTest-кейса):
+Тесты (44 unit + 4 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -101,7 +91,7 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Таблица станций**: номер, название и подпись, жанр, избранное, меню ⋮ и контекстное меню;
   поиск (⌘F) с подчёркиванием, счётчик в шапке, кнопка «Добавить станцию».
 - **Группы и порядок**: необязательная группа в редакторе станции, фильтр групп в навигации
-  и перетаскивание строк в режиме «Все», чтобы изменить порядок.
+  и перетаскивание строк для изменения порядка — в «Все», избранном, жанрах и группах.
 - **Диагностика потока**: кодек, битрейт, частота, каналы, буфер и сервер в настройках;
   кнопка «Скопировать диагностику» для issue.
 - **Будильник-радио**: дни недели, выбор станции, плавное нарастание громкости
@@ -128,9 +118,14 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   и очередью воспроизведения; MP3, M4A, AAC, ALAC, FLAC, WAV, AIFF и CAF.
   Доступ к папкам запоминается security-scoped закладками, перемотка и следующий/предыдущий
   трек, обложки из тегов; название и исполнитель из имени файла, если тегов нет.
-- **Плейлисты**: создание, переименование, удаление, добавление треков и порядок;
-  импорт и экспорт M3U/M3U8 (абсолютные, относительные пути и `file://`), drag-and-drop
-  плейлистов и папок, поиск и сортировка по названию, исполнителю, альбому и длительности.
+  Разделы «Все треки», «Альбомы» и «Исполнители»: раскрывающиеся списки в навигации,
+  карточки коллекций и страницы альбомов и исполнителей. Обложку можно подтянуть
+  из сети, выбрать файл или указать ссылку вручную. Порядок треков меняется
+  перетаскиванием и сохраняется; сортировка «Свой порядок» включается автоматически.
+- **Плейлисты**: отдельная вкладка с карточками, создание, переименование, удаление,
+  добавление треков, перетаскивание для своего порядка; импорт и экспорт M3U/M3U8
+  (абсолютные, относительные пути и `file://`), drag-and-drop плейлистов и папок,
+  поиск, сортировка и группировка таблицы «Все треки» по исполнителю, альбому и жанру.
 - **Обогащение метаданных**: обложки, альбомы, год и жанр из Apple Music (iTunes Search)
   и Deezer — автоматически для новых треков, вручную для одного трека и для всей
   библиотеки, с предпросмотром в редакторе. Правки хранятся в библиотеке, файлы не изменяются.
@@ -255,7 +250,7 @@ RadioMacWidget/              WidgetKit ext: виджет и Control Center
 RadioMac/
   RadioMacApp.swift           @main, запуск NSApplication как accessory-агента
   AppDelegate.swift           статус-итем, окно, меню правки для ⌘C/⌘V
-  Models/                     RadioStation (Codable, ключи как во Flutter), LocalTrack + MusicPlaylist, NowPlaying + парсер, EQ-пресеты, StreamInfo
+  Models/                     RadioStation (Codable, стабильные ключи хранения), LocalTrack + MusicPlaylist + MusicAlbum/MusicArtist, NowPlaying + парсер, EQ-пресеты, StreamInfo
   Data/                       встроенный каталог (47 станций) и справка
   Intents/                    App Intents, Shortcuts и URL-команды radiomac://
   Services/
@@ -268,14 +263,14 @@ RadioMac/
     UpdateService.swift       Sparkle 2 updater
     EqualizerService.swift    полосы, пресеты, дебаунс записи
     NowPlayingLookup.swift    SomaFM / Radio Paradise / Icecast / ICY + обложки iTunes
-    MusicLibrary.swift        локальная библиотека: папки, теги, плейлисты, M3U, закладки доступа
+    MusicLibrary.swift        локальная библиотека: папки, теги, альбомы, исполнители, плейлисты, обложки, M3U, закладки доступа
     LocalAudioMetadata.swift  чтение тегов и обложек через AVFoundation, кэш обложек
     MusicPlaylistFile.swift   импорт и экспорт M3U/M3U8 для локальных файлов
     MetadataEnrichment.swift  нормализация, поиск и оценка совпадений из онлайн-каталогов
     MetadataProviders.swift   Apple Music (iTunes Search) и Deezer
     LogoResolver.swift        Radio Browser и favicon-фолбэки
     NowPlayingCenter.swift    MPNowPlayingInfoCenter + MPRemoteCommandCenter
-    Preferences.swift         ключи UserDefaults и миграция из Flutter
+    Preferences.swift         ключи UserDefaults
     AppSettings.swift         громкость, автозапуск, последняя станция
     ThemeService.swift        тема и системный вид
     LaunchAtLogin.swift       SMAppService
@@ -294,7 +289,10 @@ RadioMac/
     RadioBrowserView.swift    поиск Radio Browser, превью и добавление
     StationTransferView.swift импорт/экспорт станций и drag-and-drop
     MiniPlayerView.swift      поповер в меню-баре
-    MusicView.swift           локальная музыка: плейлисты и таблица треков
+    MusicView.swift           локальная музыка: навигация, все треки, плейлисты и транспорт
+    MusicViewReorder.swift    перетаскивание строк и свой порядок треков
+    MusicPages.swift          карточки и страницы альбомов, исполнителей и плейлистов
+    MusicArtworkEditorView.swift обложка альбома или исполнителя: сеть, файл, ссылка
     MusicTrackRow.swift       строка таблицы треков
     MusicTrackEditorView.swift метаданные трека и онлайн-поиск
     MusicSourcesView.swift    папки-источники и обогащение
@@ -303,7 +301,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, MusicViewModel, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                45 логических тестов
+RadioMacTests/                56 логических тестов
 RadioMacUITests/              2 XCUITest: сценарий и свет/тьма (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
@@ -340,12 +338,10 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 и HLS-метаданные приходят в UI через замыкания на main-очереди. Плеер не перезапускает
 поток при изменении эквалайзера.
 
-### Отличия от Flutter-версии
+### Решения
 
-- Полностью новый визуальный язык: монохромная редакционная вёрстка вместо «кодовой» панели
-  Dracula; окно выросло до 780×660.
-- Нативные `Menu`/контекстные меню вместо bottom sheet; поиск и фильтры переехали в
-  навигацию по жанрам.
+- Монохромная редакционная вёрстка; окно 780×660.
+- Нативные `Menu` и контекстные меню; поиск и фильтры в навигации по жанрам.
 - Переключение станций вперёд/назад в текущей выборке и запуск первой станции кнопкой Play.
 - Анимации появления/скрытия окна, затухание списков, уважение Reduce Motion.
 - `-snapshot` / `-playtest` / `-musicplaytest` / `-enrichtest` — отладочные утилиты
@@ -355,7 +351,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 45 unit + 4 UI, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 44 unit + 4 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -363,8 +359,8 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 | `security.yml` | push/PR, расписание | OSV-Scanner, Dependency Review, SBOM + Grype |
 | `pages.yml` | изменения в `site/` | публикация сайта на GitHub Pages |
 
-CodeQL собирает нативный проект через autobuild: Flutter-папки `macos/` с Podfile
-больше нет, поэтому анализатор находит корневой `RadioMac.xcodeproj`.
+CodeQL собирает проект через autobuild: в репозитории один корневой `RadioMac.xcodeproj`,
+поэтому анализатор находит его автоматически.
 
 ### Как выпустить релиз
 
@@ -445,7 +441,7 @@ wiki-репозиторий только после первой страниц�
 
 ```bash
 APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
-open -n "$APP" --args -snapshot shots     # 01-main … 18-mini-player-music
+open -n "$APP" --args -snapshot shots     # 01-main … 26-music-playlist
 open -n "$APP" --args -playtest playtest.txt
 open -n "$APP" --args -musicplaytest local.txt
 open -n "$APP" --args -enrichtest enrich.txt
@@ -466,14 +462,13 @@ python3 scripts/generate_xcodeproj.py
 
 ## Тесты
 
-`RadioMacTests/RadioMacLogicTests.swift` — порт проверок из Flutter-версии плюс новые:
+`RadioMacTests/RadioMacLogicTests.swift` — проверки логики, парсеров и персистентности:
 
 - нормализация жанров, наличие логотипа/комментария, JSON-ключи (`logoUrl`);
 - парсер `StreamTitle='…'`, разделение «исполнитель — трек», отсев мусора;
 - `LogoResolver.hostOf` / `brandHost` (CDN отбрасываются);
 - 10 полос эквалайзера, клампинг, подписи частот;
 - целостность каталога (47 станций, уникальные id, валидные URL);
-- миграция `flutter.*` → нативные ключи (однократно, без перетирания);
 - `AppSettings` и `StationLibrary`: добавление, избранное, удаление, восстановление каталога,
   битый JSON и персистентность в отдельном `UserDefaults`-сьюте.
 

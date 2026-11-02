@@ -159,7 +159,7 @@ struct MainView: View {
             Text("СТАНЦИЯ").frame(maxWidth: .infinity, alignment: .leading)
             Text("ЖАНР").frame(width: 82, alignment: .leading)
             Color.clear.frame(width: 24, height: 10)
-            Color.clear.frame(width: 24, height: 10)
+            Color.clear.frame(width: 24 + Space.scrollLane, height: 10)
         }
         .font(Typeface.overline)
         .tracking(1.2)

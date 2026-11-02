@@ -55,20 +55,13 @@ struct MusicTrackRow: View {
                 .foregroundStyle(palette.textTertiary)
                 .frame(width: 42, alignment: .trailing)
 
-            Menu {
-                menuItems
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(hovering ? palette.textPrimary : palette.textTertiary)
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
+            // A wider trailing slot keeps the columns aligned with the header
+            // and the menu clear of the overlay scrollbar.
+            ZStack(alignment: .trailing) {
+                Color.clear.frame(width: 24 + Space.scrollLane, height: 24)
+                trackMenu
+                    .padding(.trailing, Space.scrollLane)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Действия с треком")
-            .accessibilityLabel("Действия с треком")
         }
         .padding(.vertical, 5)
         .background((hovering || isCurrent) ? palette.surfaceHover : Color.clear)
@@ -131,6 +124,23 @@ struct MusicTrackRow: View {
         if isCurrent { parts.append(isPlaying ? "играет" : "выбран") }
         if track.isMissing { parts.append("файл не найден") }
         return parts.joined(separator: ", ")
+    }
+
+    private var trackMenu: some View {
+        Menu {
+            menuItems
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(hovering ? palette.textPrimary : palette.textTertiary)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Действия с треком")
+        .accessibilityLabel("Действия с треком")
     }
 
     @ViewBuilder

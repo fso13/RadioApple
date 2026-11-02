@@ -7,7 +7,7 @@
 
 | Файл | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 13 тестов, `xcresult` при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 44 unit-теста, `xcresult` при падении |
 | `distribute.yml` | push в `main`, вручную | universal Release, DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись, нотарификация, SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, сверка `.xcodeproj`, сайт и вики |
@@ -24,10 +24,8 @@
 номер версии. `scripts/check_appcast.py` падает, если заметок нет или файл
 сгенерирован без них; ссылка на полный список ведёт на страницу релиза.
 
-> **CodeQL и Flutter-папка.** В репозитории остаётся Flutter-версия с `macos/Podfile`.
-> Поэтому CodeQL использует `build-mode: manual` и собирает нативный
-> `RadioMac.xcodeproj` через `xcodebuild`. Autobuild находил старый Flutter-проект
-> и пытался выполнить `pod install`, что приводило к падению.
+> **CodeQL.** Swift-проект собирается в режиме `build-mode: autobuild`:
+> в репозитории один корневой `RadioMac.xcodeproj`, анализатор находит его сам.
 
 ## CI
 

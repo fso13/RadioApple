@@ -6,7 +6,7 @@
 #   scripts/install.sh [--skip-build] [--no-launch] [--target DIR]
 #
 # The app keeps its data because the bundle identifier (and therefore the sandbox
-# container) stays the same as in the Flutter build.
+# container) stays the same across installs.
 #
 set -euo pipefail
 

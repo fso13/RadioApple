@@ -60,6 +60,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.arguments.contains("-showSettings") {
             windowController.showSettings()
         }
+        if ProcessInfo.processInfo.arguments.contains("-showMusic") {
+            windowController.showMusic()
+        }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {

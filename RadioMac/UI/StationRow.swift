@@ -66,20 +66,11 @@ struct StationRow: View {
             .help(station.isFavorite ? "Убрать из избранного" : "В избранное")
             .accessibilityLabel(station.isFavorite ? "Убрать из избранного" : "В избранное")
 
-            Menu {
-                menuItems
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(hovering ? palette.textPrimary : palette.textTertiary)
-                    .frame(width: 24, height: 24)
-                    .contentShape(Rectangle())
+            ZStack(alignment: .trailing) {
+                Color.clear.frame(width: 24 + Space.scrollLane, height: 24)
+                stationMenu
+                    .padding(.trailing, Space.scrollLane)
             }
-            .menuStyle(.borderlessButton)
-            .menuIndicator(.hidden)
-            .fixedSize()
-            .help("Действия со станцией")
-            .accessibilityLabel("Действия со станцией")
         }
         .padding(.vertical, 7)
         .background(
@@ -122,6 +113,23 @@ struct StationRow: View {
         if station.isFavorite { parts.append("в избранном") }
         if isCurrent { parts.append(isPlaying ? "играет" : "выбрана") }
         return parts.joined(separator: ", ")
+    }
+
+    private var stationMenu: some View {
+        Menu {
+            menuItems
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(hovering ? palette.textPrimary : palette.textTertiary)
+                .frame(width: 24, height: 24)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Действия со станцией")
+        .accessibilityLabel("Действия со станцией")
     }
 
     @ViewBuilder

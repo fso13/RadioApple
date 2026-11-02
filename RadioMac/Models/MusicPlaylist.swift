@@ -59,6 +59,7 @@ struct MusicSource: Identifiable, Hashable, Codable, Sendable {
 }
 
 enum MusicSortOrder: String, CaseIterable, Identifiable, Sendable {
+    case manual
     case added
     case title
     case artist
@@ -69,6 +70,7 @@ enum MusicSortOrder: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
+        case .manual: return "Свой порядок"
         case .added: return "По дате добавления"
         case .title: return "По названию"
         case .artist: return "По исполнителю"
@@ -76,6 +78,57 @@ enum MusicSortOrder: String, CaseIterable, Identifiable, Sendable {
         case .duration: return "По длительности"
         }
     }
+}
+
+/// How the local-music table groups its rows. `none` keeps the flat list.
+enum MusicGrouping: String, CaseIterable, Identifiable, Sendable {
+    case none
+    case artist
+    case album
+    case genre
+
+    var id: String { rawValue }
+
+    /// Full name shown in the grouping menu.
+    var title: String {
+        switch self {
+        case .none: return "Без группировки"
+        case .artist: return "По исполнителю"
+        case .album: return "По альбому"
+        case .genre: return "По жанру"
+        }
+    }
+
+    /// Compact name shown in the toolbar control.
+    var shortTitle: String {
+        switch self {
+        case .none: return "Группировка"
+        case .artist: return "Исполнитель"
+        case .album: return "Альбом"
+        case .genre: return "Жанр"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .none: return "rectangle.3.group"
+        case .artist: return "person"
+        case .album: return "square.stack"
+        case .genre: return "tag"
+        }
+    }
+}
+
+/// One group of the local-music table: an artist, an album or a genre.
+///
+/// `id` is built from the grouping and the raw group key, so two artists with
+/// an album of the same name produce different sections.
+struct MusicTrackSection: Identifiable, Equatable, Sendable {
+    let id: String
+    let title: String
+    /// Extra context under the title: the artist and year of an album.
+    let subtitle: String?
+    let tracks: [LocalTrack]
 }
 
 /// Result of importing files, folders or an M3U playlist.
