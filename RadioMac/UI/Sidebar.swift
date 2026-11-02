@@ -5,6 +5,7 @@ struct GenreNav: View {
     @ObservedObject var model: MainViewModel
     @ObservedObject var library: StationLibrary
     @ObservedObject var player: RadioPlayerService
+    let onOpenMusic: () -> Void
 
     @Environment(\.palette) private var palette
 
@@ -45,6 +46,14 @@ struct GenreNav: View {
                         model.setFilter(.favorites)
                     }
                     .id(ItemID.favorites)
+
+                    NavItem(
+                        label: "Локальные файлы",
+                        isSelected: false,
+                        isPlaying: player.isLocalPlayback && player.isPlaying
+                    ) {
+                        onOpenMusic()
+                    }
 
                     if !library.groups.isEmpty {
                         sectionLabel("Группы")

@@ -26,6 +26,14 @@ final class RadioPlayerService: ObservableObject {
     @Published private(set) var activeEngineName = "AVPlayer"
     @Published private(set) var reconnectAttempts = 0
 
+    /// Currently playing file from the local music library.
+    @Published private(set) var localTrack: LocalTrack?
+    /// Order used by the previous/next buttons while a local file plays.
+    @Published private(set) var localQueue: [LocalTrack] = []
+    @Published private(set) var localQueueTitle: String?
+    @Published private(set) var playbackElapsed: Double = 0
+    @Published private(set) var playbackDuration: Double?
+
     private let settings: AppSettings
     private let library: StationLibrary
     private let equalizer: EqualizerService
@@ -41,6 +49,7 @@ final class RadioPlayerService: ObservableObject {
     private let reconnectPolicy = ReconnectPolicy()
     private var reconnectTask: Task<Void, Never>?
     private var stableTask: Task<Void, Never>?
+    private var progressTimer: Timer?
 
     init(
         settings: AppSettings,
@@ -71,7 +80,7 @@ final class RadioPlayerService: ObservableObject {
         nativeEngine.setEQEnabled(equalizer.enabled)
         nativeEngine.setEQGains(equalizer.gains)
 
-        Publishers.CombineLatest3($station, $status, $nowPlaying)
+        Publishers.CombineLatest4($station, $status, $nowPlaying, $localTrack)
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
                 self?.publishSharedState()
@@ -114,6 +123,9 @@ final class RadioPlayerService: ObservableObject {
             self?.errorMessage = message
             self?.handleEngineState(.error)
         }
+        nativeEngine.onEnded = { [weak self] in
+            self?.handleLocalEnded()
+        }
     }
 
     private func observeLibrary() {
@@ -134,6 +146,7 @@ final class RadioPlayerService: ObservableObject {
         stableTask = nil
         reconnectAttempts = 0
         wantsPlayback = true
+        clearLocalPlayback()
 
         self.station = station
         nowPlaying = nil
@@ -175,6 +188,10 @@ final class RadioPlayerService: ObservableObject {
 
     /// Manual retry from the error state.
     func retryNow() {
+        if let localTrack {
+            playLocal(localTrack, queue: localQueue, title: localQueueTitle)
+            return
+        }
         guard let station else { return }
         reconnectTask?.cancel()
         reconnectTask = nil
@@ -192,7 +209,11 @@ final class RadioPlayerService: ObservableObject {
         case .paused:
             resumeActive()
         default:
-            if let station { play(station) }
+            if let localTrack {
+                playLocal(localTrack, queue: localQueue, title: localQueueTitle)
+            } else if let station {
+                play(station)
+            }
         }
     }
 
@@ -209,6 +230,8 @@ final class RadioPlayerService: ObservableObject {
     func resumeOrPlay() {
         if status == .paused {
             resumeActive()
+        } else if let localTrack {
+            playLocal(localTrack, queue: localQueue, title: localQueueTitle)
         } else if let station {
             play(station)
         }
@@ -227,6 +250,7 @@ final class RadioPlayerService: ObservableObject {
         stableTask?.cancel()
         stableTask = nil
         stopNowPlayingPoll()
+        clearLocalPlayback()
         nowPlayingGeneration += 1
         nativeEngine.stop()
         status = .idle
@@ -244,13 +268,24 @@ final class RadioPlayerService: ObservableObject {
     }
 
     private func publishSharedState() {
-        let state = SharedPlaybackState(
-            stationID: station?.id ?? "",
-            stationName: station?.name ?? "",
-            track: nowPlaying?.trayLine,
-            isPlaying: status == .playing,
-            updatedAt: Date()
-        )
+        let state: SharedPlaybackState
+        if let localTrack {
+            state = SharedPlaybackState(
+                stationID: localTrack.id,
+                stationName: localQueueTitle ?? "Локальная музыка",
+                track: localTrack.trayLine,
+                isPlaying: status == .playing,
+                updatedAt: Date()
+            )
+        } else {
+            state = SharedPlaybackState(
+                stationID: station?.id ?? "",
+                stationName: station?.name ?? "",
+                track: nowPlaying?.trayLine,
+                isPlaying: status == .playing,
+                updatedAt: Date()
+            )
+        }
         state.save()
         WidgetCenter.shared.reloadAllTimelines()
     }
@@ -277,9 +312,176 @@ final class RadioPlayerService: ObservableObject {
         refreshStreamInfoIfNeeded(force: true)
     }
 
+    // MARK: - Local files
+
+    var isLocalPlayback: Bool { localTrack != nil }
+
+    var localTrackIndex: Int? {
+        guard let localTrack else { return nil }
+        return localQueue.firstIndex { $0.id == localTrack.id }
+    }
+
+    var canPlayNextLocalTrack: Bool {
+        guard let index = localTrackIndex else { return false }
+        return index + 1 < localQueue.count
+    }
+
+    var canPlayPreviousLocalTrack: Bool {
+        guard let index = localTrackIndex else { return false }
+        return index > 0
+    }
+
+    /// Plays a file from the local library. `queue` defines what the previous
+    /// and next buttons do; `title` is what the menu bar and widget show.
+    func playLocal(
+        _ track: LocalTrack,
+        queue: [LocalTrack]? = nil,
+        title: String? = nil
+    ) {
+        if track.isMissing {
+            errorMessage = "Файл не найден: \(track.fileName)"
+            status = .error
+            syncSystemNowPlaying()
+            return
+        }
+
+        reconnectTask?.cancel()
+        reconnectTask = nil
+        stableTask?.cancel()
+        stableTask = nil
+        reconnectAttempts = 0
+        wantsPlayback = true
+
+        if let queue, !queue.isEmpty {
+            localQueue = queue
+        }
+        if !localQueue.contains(where: { $0.id == track.id }) {
+            localQueue = [track]
+        }
+        if let title {
+            localQueueTitle = title
+        }
+
+        station = nil
+        localTrack = track
+        nowPlaying = NowPlaying(
+            raw: track.trayLine,
+            artist: track.displayArtist,
+            title: track.displayTitle,
+            album: track.displayAlbum,
+            artworkURL: track.artworkURL,
+            duration: track.duration
+        )
+        streamInfo = nil
+        icyLive = false
+        nowPlayingGeneration += 1
+        errorMessage = nil
+        playbackElapsed = 0
+        playbackDuration = track.duration
+        status = .loading
+        startProgressTimer()
+        syncSystemNowPlaying()
+
+        nativeEngine.stop(emitIdle: false)
+        activeEngineName = "AVPlayer"
+        nativeEngine.setVolume(effectiveVolume(for: nil))
+        nativeEngine.play(url: track.url)
+    }
+
+    /// Plays a list (album, playlist or search result) starting at `index`.
+    func playLocalTracks(_ items: [LocalTrack], startingAt index: Int, title: String?) {
+        guard items.indices.contains(index) else { return }
+        playLocal(items[index], queue: items, title: title)
+    }
+
+    @discardableResult
+    func playNextLocalTrack() -> Bool {
+        guard let index = localTrackIndex, index + 1 < localQueue.count else { return false }
+        playLocal(localQueue[index + 1], queue: localQueue, title: localQueueTitle)
+        return true
+    }
+
+    @discardableResult
+    func playPreviousLocalTrack() -> Bool {
+        guard let index = localTrackIndex, index > 0 else { return false }
+        playLocal(localQueue[index - 1], queue: localQueue, title: localQueueTitle)
+        return true
+    }
+
+    /// Keeps the transport and Control Center in sync after an edit.
+    func refreshLocalTrack(_ track: LocalTrack) {
+        guard localTrack?.id == track.id else { return }
+        localTrack = track
+        if let duration = track.duration { playbackDuration = duration }
+        nowPlaying = NowPlaying(
+            raw: track.trayLine,
+            artist: track.displayArtist,
+            title: track.displayTitle,
+            album: track.displayAlbum,
+            artworkURL: track.artworkURL,
+            duration: track.duration
+        )
+        syncSystemNowPlaying()
+    }
+
+    func seekLocal(toFraction fraction: Double) {
+        guard isLocalPlayback, let duration = playbackDuration, duration > 0 else { return }
+        let seconds = min(max(0, fraction), 1) * duration
+        nativeEngine.seek(to: seconds)
+        playbackElapsed = seconds
+        syncSystemNowPlaying()
+    }
+
+    // MARK: - Local progress
+
+    private func startProgressTimer() {
+        stopProgressTimer()
+        progressTimer = Timer.scheduledTimer(withTimeInterval: 0.4, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.refreshLocalProgress() }
+        }
+    }
+
+    private func stopProgressTimer() {
+        progressTimer?.invalidate()
+        progressTimer = nil
+    }
+
+    private func refreshLocalProgress() {
+        guard localTrack != nil else { return }
+        guard status == .playing || status == .paused || status == .loading else { return }
+        let elapsed = nativeEngine.currentTime
+        if elapsed.isFinite, elapsed >= 0, abs(elapsed - playbackElapsed) > 0.05 {
+            playbackElapsed = elapsed
+        }
+        if let duration = nativeEngine.duration, duration > 0, playbackDuration != duration {
+            playbackDuration = duration
+        }
+    }
+
+    private func handleLocalEnded() {
+        guard localTrack != nil else { return }
+        if playNextLocalTrack() { return }
+        wantsPlayback = false
+        stopProgressTimer()
+        if let duration = playbackDuration { playbackElapsed = duration }
+        status = .idle
+        syncSystemNowPlaying()
+    }
+
+    private func clearLocalPlayback() {
+        localTrack = nil
+        localQueue = []
+        localQueueTitle = nil
+        playbackElapsed = 0
+        playbackDuration = nil
+        stopProgressTimer()
+    }
+
     // MARK: - Engine events
 
     private func handleEngineState(_ state: RadioPlaybackState) {
+        if handleLocalEngineState(state) { return }
+
         if state == .error {
             if wantsPlayback, station != nil {
                 scheduleReconnect()
@@ -322,6 +524,43 @@ final class RadioPlayerService: ObservableObject {
             break
         }
         syncSystemNowPlaying()
+    }
+
+    /// Returns true when a local file is the active source and the state was
+    /// fully handled here.
+    private func handleLocalEngineState(_ state: RadioPlaybackState) -> Bool {
+        guard localTrack != nil else { return false }
+        switch state {
+        case .playing:
+            reconnectAttempts = 0
+            if status != .playing {
+                status = .playing
+                syncSystemNowPlaying()
+            }
+        case .loading:
+            if status != .loading { status = .loading }
+        case .paused:
+            if !wantsPlayback, status != .paused {
+                status = .paused
+                syncSystemNowPlaying()
+            }
+        case .idle:
+            // End of a file arrives through `onEnded`; anything else is an
+            // explicit stop that the service already handles.
+            if !wantsPlayback, status != .idle {
+                status = .idle
+                syncSystemNowPlaying()
+            }
+        case .reconnecting:
+            break
+        case .error:
+            wantsPlayback = false
+            status = .error
+            if errorMessage == nil { errorMessage = "Не удалось открыть файл" }
+            stopProgressTimer()
+            syncSystemNowPlaying()
+        }
+        return true
     }
 
     private func scheduleReconnect() {
@@ -495,6 +734,24 @@ final class RadioPlayerService: ObservableObject {
     // MARK: - System Now Playing
 
     private func syncSystemNowPlaying() {
+        if let localTrack {
+            guard status != .idle else {
+                NowPlayingCenter.shared.clear()
+                return
+            }
+            NowPlayingCenter.shared.update(
+                title: localTrack.displayTitle,
+                artist: localTrack.displayArtist ?? localTrack.displayAlbum ?? "Локальная музыка",
+                album: localTrack.displayAlbum,
+                artworkURL: localTrack.artworkURL,
+                isPlaying: status == .playing,
+                isLive: false,
+                elapsed: playbackElapsed,
+                duration: playbackDuration
+            )
+            return
+        }
+
         guard let station, status != .idle else {
             NowPlayingCenter.shared.clear()
             return
@@ -519,6 +776,7 @@ final class RadioPlayerService: ObservableObject {
         NowPlayingCenter.shared.update(
             title: nowTitle,
             artist: nowArtist,
+            album: track?.album,
             artworkURL: artwork,
             isPlaying: status == .playing,
             isLive: true

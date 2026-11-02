@@ -2,6 +2,7 @@ import SwiftUI
 
 enum WindowRoute {
     case main
+    case music
     case settings
 }
 
@@ -33,6 +34,8 @@ struct RootView: View {
     @ObservedObject var sleepTimer: SleepTimerService
     @ObservedObject var hotKeys: GlobalHotKeyService
     @ObservedObject var history: TrackHistoryService
+    @ObservedObject var music: MusicLibrary
+    @ObservedObject var musicModel: MusicViewModel
     let updates: UpdateService
     @ObservedObject var toasts: ToastCenter
 
@@ -52,6 +55,19 @@ struct RootView: View {
                         sleepTimer: sleepTimer,
                         toasts: toasts,
                         onOpenSettings: { router.route = .settings },
+                        onOpenMusic: { router.route = .music },
+                        onClose: onClose,
+                        onOpenEqualizer: { router.sheet = .equalizer }
+                    )
+                case .music:
+                    MusicView(
+                        model: musicModel,
+                        library: music,
+                        player: player,
+                        equalizer: equalizer,
+                        sleepTimer: sleepTimer,
+                        toasts: toasts,
+                        onBack: { router.route = .main },
                         onClose: onClose,
                         onOpenEqualizer: { router.sheet = .equalizer }
                     )
@@ -69,7 +85,9 @@ struct RootView: View {
                         history: history,
                         updates: updates,
                         library: library,
+                        music: music,
                         toasts: toasts,
+                        onOpenMusic: { router.route = .music },
                         onBack: { router.route = .main },
                         onClose: onClose,
                         onOpenEqualizer: { router.sheet = .equalizer },

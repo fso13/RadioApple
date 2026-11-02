@@ -4,6 +4,7 @@ import SwiftUI
 struct MiniPlayerView: View {
     @ObservedObject var player: RadioPlayerService
     @ObservedObject var library: StationLibrary
+    @ObservedObject var music: MusicLibrary
     @ObservedObject var theme: ThemeService
     let onOpenWindow: () -> Void
 
@@ -40,7 +41,7 @@ struct MiniPlayerView: View {
                 .tracking(1.4)
                 .foregroundStyle(palette.textTertiary)
             Spacer()
-            Text(player.status == .playing ? "LIVE" : player.status.rawValue.uppercased())
+            Text(statusLine)
                 .font(Typeface.overline)
                 .tracking(1.2)
                 .foregroundStyle(player.status == .error ? palette.red : palette.textTertiary)
@@ -71,21 +72,49 @@ struct MiniPlayerView: View {
     }
 
     private var artworkURL: String? {
+        if let local = player.localTrack {
+            return local.hasArtwork ? local.artworkURL : nil
+        }
         if let artwork = player.nowPlaying?.artworkURL, !artwork.isEmpty { return artwork }
         guard let station = player.station, station.hasLogo else { return nil }
         return station.logoURL
     }
 
+    private var statusLine: String {
+        if player.isLocalPlayback {
+            switch player.status {
+            case .playing: return "МУЗЫКА"
+            case .paused: return "ПАУЗА"
+            case .idle: return "СТОП"
+            default: return player.status.rawValue.uppercased()
+            }
+        }
+        return player.status == .playing ? "LIVE" : player.status.rawValue.uppercased()
+    }
+
+    private var primaryTitle: String {
+        if let local = player.localTrack { return local.displayTitle }
+        return player.station?.name ?? "Нет активной станции"
+    }
+
+    private var secondaryTitle: String {
+        if let local = player.localTrack {
+            if player.status == .error { return player.errorMessage ?? "Не удалось открыть файл" }
+            return local.subtitle.isEmpty ? "Локальный файл" : local.subtitle
+        }
+        return player.nowPlaying?.trayLine ?? (player.isPlaying ? "Играет" : "Выберите станцию")
+    }
+
     private var track: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(player.station?.name ?? "Нет активной станции")
+            Text(primaryTitle)
                 .font(Typeface.body)
                 .fontWeight(.medium)
                 .foregroundStyle(palette.textPrimary)
                 .lineLimit(1)
-            Text(player.nowPlaying?.trayLine ?? (player.isPlaying ? "Играет" : "Выберите станцию"))
+            Text(secondaryTitle)
                 .font(Typeface.caption)
-                .foregroundStyle(palette.textSecondary)
+                .foregroundStyle(player.status == .error ? palette.red : palette.textSecondary)
                 .lineLimit(1)
         }
     }
@@ -123,8 +152,26 @@ struct MiniPlayerView: View {
 
     private var stationMenu: some View {
         Menu {
-            ForEach(library.stations.prefix(20)) { station in
-                Button(station.name) { player.play(station) }
+            Section("Станции") {
+                ForEach(library.stations.prefix(20)) { station in
+                    Button(station.name) { player.play(station) }
+                }
+            }
+            if !music.tracks.isEmpty {
+                Section("Локальная музыка") {
+                    Button("Все треки") {
+                        let items = music.sorted(music.tracks, by: .added)
+                        guard !items.isEmpty else { return }
+                        player.playLocalTracks(items, startingAt: 0, title: "Все треки")
+                    }
+                    ForEach(music.playlists) { playlist in
+                        Button(playlist.name) {
+                            let items = music.sorted(music.tracks(in: playlist.id), by: .added)
+                            guard !items.isEmpty else { return }
+                            player.playLocalTracks(items, startingAt: 0, title: playlist.name)
+                        }
+                    }
+                }
             }
         } label: {
             HStack {

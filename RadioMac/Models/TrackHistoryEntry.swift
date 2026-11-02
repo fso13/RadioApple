@@ -15,9 +15,27 @@ struct TrackHistoryEntry: Codable, Identifiable, Equatable, Sendable {
         artist: String?,
         playedAt: Date = Date()
     ) {
+        self.init(
+            id: id,
+            sourceID: station.id,
+            sourceName: station.name,
+            title: title,
+            artist: artist,
+            playedAt: playedAt
+        )
+    }
+
+    init(
+        id: String = UUID().uuidString,
+        sourceID: String,
+        sourceName: String,
+        title: String,
+        artist: String?,
+        playedAt: Date = Date()
+    ) {
         self.id = id
-        stationID = station.id
-        stationName = station.name
+        stationID = sourceID
+        stationName = sourceName
         self.title = title
         self.artist = artist
         self.playedAt = playedAt

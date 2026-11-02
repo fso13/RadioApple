@@ -12,6 +12,7 @@ struct MainView: View {
     @ObservedObject var toasts: ToastCenter
 
     let onOpenSettings: () -> Void
+    let onOpenMusic: () -> Void
     let onClose: () -> Void
     let onOpenEqualizer: () -> Void
 
@@ -80,6 +81,7 @@ struct MainView: View {
         PanelHeader(showBrand: true) {
             PanelMenu {
                 Button("Настройки…") { onOpenSettings() }
+                Button("Локальная музыка…") { onOpenMusic() }
                 Divider()
                 Button("Скрыть окно") { onClose() }
                 Button("Завершить RadioMac") { NSApp.terminate(nil) }
@@ -98,7 +100,12 @@ struct MainView: View {
 
     private var sidebar: some View {
         VStack(alignment: .leading, spacing: Space.xl) {
-            GenreNav(model: model, library: library, player: player)
+            GenreNav(
+                model: model,
+                library: library,
+                player: player,
+                onOpenMusic: onOpenMusic
+            )
 
             HeroArtwork(
                 station: player.station,
@@ -274,11 +281,28 @@ struct MainView: View {
             equalizer: equalizer,
             sleepTimer: sleepTimer,
             onOpenEqualizer: onOpenEqualizer,
-            onPrevious: { move(by: -1) },
-            onNext: { move(by: 1) },
-            canPrevious: canMove(by: -1),
-            canNext: canMove(by: 1),
-            canPlay: player.station != nil || player.isActive || !model.visible.isEmpty,
+            onPrevious: {
+                if player.isLocalPlayback, player.isActive {
+                    player.playPreviousLocalTrack()
+                } else {
+                    move(by: -1)
+                }
+            },
+            onNext: {
+                if player.isLocalPlayback, player.isActive {
+                    player.playNextLocalTrack()
+                } else {
+                    move(by: 1)
+                }
+            },
+            canPrevious: player.isLocalPlayback && player.isActive
+                ? player.canPlayPreviousLocalTrack
+                : canMove(by: -1),
+            canNext: player.isLocalPlayback && player.isActive
+                ? player.canPlayNextLocalTrack
+                : canMove(by: 1),
+            canPlay: player.station != nil || player.localTrack != nil
+                || player.isActive || !model.visible.isEmpty,
             onPlayFallback: {
                 guard let first = model.visible.first else { return }
                 model.select(0)

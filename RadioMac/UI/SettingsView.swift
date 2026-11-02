@@ -16,8 +16,10 @@ struct SettingsView: View {
     @ObservedObject var history: TrackHistoryService
     let updates: UpdateService
     @ObservedObject var library: StationLibrary
+    @ObservedObject var music: MusicLibrary
     @ObservedObject var toasts: ToastCenter
 
+    let onOpenMusic: () -> Void
     let onBack: () -> Void
     let onClose: () -> Void
     let onOpenEqualizer: () -> Void
@@ -34,6 +36,34 @@ struct SettingsView: View {
     @State private var confirmQuit = false
     @State private var showDiagnostics = false
     @State private var showLastFm = false
+
+    private var musicSummary: String {
+        let tracks = music.tracks.count
+        let playlists = music.playlists.count
+        return "\(tracks) \(Self.trackWord(tracks)) · \(playlists) \(Self.playlistWord(playlists))"
+    }
+
+    private static func trackWord(_ count: Int) -> String {
+        let mod100 = count % 100
+        let mod10 = count % 10
+        if (11...14).contains(mod100) { return "треков" }
+        switch mod10 {
+        case 1: return "трек"
+        case 2, 3, 4: return "трека"
+        default: return "треков"
+        }
+    }
+
+    private static func playlistWord(_ count: Int) -> String {
+        let mod100 = count % 100
+        let mod10 = count % 10
+        if (11...14).contains(mod100) { return "плейлистов" }
+        switch mod10 {
+        case 1: return "плейлист"
+        case 2, 3, 4: return "плейлиста"
+        default: return "плейлистов"
+        }
+    }
 
     private var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -146,6 +176,38 @@ struct SettingsView: View {
                             onOpenHistory()
                         }
                     }
+                }
+
+                section("Локальная музыка") {
+                    SettingsRow(
+                        title: LocalizedStringKey(musicSummary),
+                        subtitle: music.sources.isEmpty
+                            ? "MP3, FLAC, M4A, WAV и M3U-плейлисты из ваших папок"
+                            : "Источников: \(music.sources.count) · доступ хранится в закладках macOS"
+                    ) {
+                        TextButton(title: "Открыть", systemImage: "music.note.list") {
+                            onOpenMusic()
+                        }
+                    }
+                    Hairline()
+                    ToggleRow(
+                        title: "Подтягивать обложки и альбомы",
+                        subtitle: "Поиск в Apple Music и Deezer; файлы не изменяются",
+                        isOn: music.autoEnrich,
+                        onChange: { music.setAutoEnrich($0) }
+                    )
+                    if music.isScanning || music.isEnriching {
+                        Hairline()
+                        InfoRow(
+                            label: "Обработка",
+                            value: music.scanStatus ?? music.enrichmentStatus ?? "…"
+                        )
+                    }
+                    Text("Плейлисты и метаданные хранятся в библиотеке приложения: музыка не копируется и не перезаписывается.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.bottom, Space.m)
                 }
 
                 section("Глобальные горячие клавиши") {

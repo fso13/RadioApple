@@ -28,6 +28,16 @@ final class ImageCache {
     func load(_ urlString: String) async -> NSImage? {
         if let cached = image(for: urlString) { return cached }
         guard let url = URL(string: urlString) else { return nil }
+
+        if url.isFileURL {
+            guard let data = try? Data(contentsOf: url),
+                  let image = NSImage(data: data),
+                  image.size.width > 0
+            else { return nil }
+            store(image, for: urlString)
+            return image
+        }
+
         var request = URLRequest(url: url)
         request.timeoutInterval = 12
         request.setValue("RadioMac/1.0", forHTTPHeaderField: "User-Agent")

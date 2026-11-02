@@ -110,9 +110,10 @@ mkdir -p "$ROOT/.build"
 
 if [[ $SKIP_BUILD -eq 0 ]]; then
     info "Building $APP_NAME (Release, universal)"
+    # bash 3.2 (macOS) treats an empty array under `set -u` as unbound.
     if ! xcodebuild -project "$PROJECT" -scheme "$SCHEME" -configuration Release \
         -derivedDataPath "$DD" ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO \
-        "${BUILD_SETTINGS[@]}" build \
+        ${BUILD_SETTINGS[@]+"${BUILD_SETTINGS[@]}"} build \
         > "$ROOT/.build/installer-build.log" 2>&1; then
         tail -n 40 "$ROOT/.build/installer-build.log" >&2
         die "build failed (full log: .build/installer-build.log)"

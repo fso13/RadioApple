@@ -62,9 +62,12 @@ final class NowPlayingCenter {
     func update(
         title: String?,
         artist: String?,
+        album: String? = nil,
         artworkURL: String?,
         isPlaying: Bool,
-        isLive: Bool
+        isLive: Bool,
+        elapsed: TimeInterval? = nil,
+        duration: TimeInterval? = nil
     ) {
         var info: [String: Any] = [:]
 
@@ -74,9 +77,20 @@ final class NowPlayingCenter {
         let trimmedArtist = artist?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         if !trimmedArtist.isEmpty { info[MPMediaItemPropertyArtist] = trimmedArtist }
 
+        let trimmedAlbum = album?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmedAlbum.isEmpty { info[MPMediaItemPropertyAlbumTitle] = trimmedAlbum }
+
+        if let duration, duration.isFinite, duration > 0 {
+            info[MPMediaItemPropertyPlaybackDuration] = duration
+        }
+
         info[MPNowPlayingInfoPropertyIsLiveStream] = isLive
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
-        if isPlaying { info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0 }
+        if let elapsed, elapsed.isFinite, elapsed >= 0 {
+            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        } else if isPlaying {
+            info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = 0.0
+        }
 
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
         loadArtwork(from: artworkURL)
@@ -102,6 +116,15 @@ final class NowPlayingCenter {
 
         guard let raw = normalized, let url = URL(string: raw) else { return }
 
+        if url.isFileURL {
+            // Cached local cover: read it straight from disk.
+            guard let data = try? Data(contentsOf: url),
+                  let image = NSImage(data: data)
+            else { return }
+            applyArtwork(image)
+            return
+        }
+
         artworkTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
             guard let self, let data, let image = NSImage(data: data) else { return }
             let size = image.size == .zero ? CGSize(width: 300, height: 300) : image.size
@@ -114,5 +137,13 @@ final class NowPlayingCenter {
             }
         }
         artworkTask?.resume()
+    }
+
+    private func applyArtwork(_ image: NSImage) {
+        let size = image.size == .zero ? CGSize(width: 300, height: 300) : image.size
+        let artwork = MPMediaItemArtwork(boundsSize: size) { _ in image }
+        var updated = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]
+        updated[MPMediaItemPropertyArtwork] = artwork
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = updated
     }
 }

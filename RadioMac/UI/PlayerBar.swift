@@ -75,6 +75,14 @@ struct PlayerBar: View {
                             .font(Typeface.monoSmall)
                             .tracking(1.1)
                             .foregroundStyle(palette.textSecondary)
+                    } else if let duration = localDuration {
+                        Text(
+                            "\(LocalTrack.format(player.playbackElapsed) ?? "0:00") / \(LocalTrack.format(duration) ?? "0:00")"
+                        )
+                        .font(Typeface.monoSmall)
+                        .monospacedDigit()
+                        .foregroundStyle(palette.textSecondary)
+                        .accessibilityLabel("Позиция трека")
                     } else if player.isPlaying {
                         LiveIndicator()
                     } else {
@@ -88,6 +96,10 @@ struct PlayerBar: View {
             }
             .padding(.horizontal, Space.xl)
             .frame(height: 68)
+
+            if let duration = localDuration {
+                seekBar(duration: duration)
+            }
         }
     }
 
@@ -157,7 +169,7 @@ struct PlayerBar: View {
 
     private var playButton: some View {
         Button {
-            if player.station == nil {
+            if player.station == nil, player.localTrack == nil {
                 onPlayFallback()
             } else {
                 player.togglePlayPause()
@@ -191,11 +203,22 @@ struct PlayerBar: View {
     // MARK: - Content
 
     private var title: String {
+        if let local = player.localTrack { return local.displayTitle }
         if let track = player.nowPlaying { return track.displayTitle }
         return player.station?.name ?? "Ничего не играет"
     }
 
     private var subtitle: String {
+        if let local = player.localTrack {
+            if player.status == .error {
+                return player.errorMessage ?? "Не удалось открыть файл"
+            }
+            var parts: [String] = []
+            if let artist = local.displayArtist { parts.append(artist) }
+            if let album = local.displayAlbum { parts.append(album) }
+            if parts.isEmpty { parts.append("Локальный файл") }
+            return parts.joined(separator: " — ")
+        }
         if player.status == .reconnecting {
             return player.errorMessage ?? "Переподключение…"
         }
@@ -211,5 +234,45 @@ struct PlayerBar: View {
         if player.status == .loading { return "Подключение…" }
         if player.isActive { return "Нет данных о треке" }
         return player.station?.genre ?? "Выберите станцию из списка"
+    }
+
+    // MARK: - Local progress
+
+    private var localDuration: Double? {
+        guard player.isLocalPlayback,
+              let duration = player.playbackDuration,
+              duration > 0
+        else { return nil }
+        return duration
+    }
+
+    /// Slim seek line under the transport, shown only for local files.
+    private func seekBar(duration: Double) -> some View {
+        GeometryReader { geometry in
+            let width = max(geometry.size.width, 1)
+            let fraction = min(1, max(0, player.playbackElapsed / duration))
+
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(palette.separator)
+                    .frame(height: 2)
+                Rectangle()
+                    .fill(palette.textPrimary)
+                    .frame(width: width * fraction, height: 2)
+            }
+            .frame(height: 8)
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { value in
+                        player.seekLocal(toFraction: value.location.x / width)
+                    }
+            )
+        }
+        .frame(height: 8)
+        .padding(.horizontal, Space.xl)
+        .padding(.bottom, 4)
+        .help("Перемотка")
+        .accessibilityLabel("Позиция трека")
     }
 }

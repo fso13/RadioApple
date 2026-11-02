@@ -17,6 +17,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     var onStop: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
     var onOpenHistory: (() -> Void)?
+    var onOpenMusic: (() -> Void)?
     var onQuit: (() -> Void)?
 
     init(environment: AppEnvironment) {
@@ -56,6 +57,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
             rootView: MiniPlayerView(
                 player: environment.player,
                 library: environment.library,
+                music: environment.music,
                 theme: environment.theme,
                 onOpenWindow: { [weak self] in
                     self?.popover.performClose(nil)
@@ -113,11 +115,17 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         menu.delegate = self
 
         let player = environment.player
-        if let station = player.station, !station.name.isEmpty {
-            menu.addItem(disabledItem(station.name))
-        }
-        if let track = player.nowPlaying?.trayLine, !track.isEmpty {
-            menu.addItem(disabledItem(truncated(track, limit: 48)))
+        if let local = player.localTrack {
+            menu.addItem(disabledItem(truncated(local.displayTitle, limit: 60)))
+            let subtitle = local.subtitle.isEmpty ? "Локальная музыка" : local.subtitle
+            menu.addItem(disabledItem(truncated(subtitle, limit: 48)))
+        } else {
+            if let station = player.station, !station.name.isEmpty {
+                menu.addItem(disabledItem(station.name))
+            }
+            if let track = player.nowPlaying?.trayLine, !track.isEmpty {
+                menu.addItem(disabledItem(truncated(track, limit: 48)))
+            }
         }
         if menu.items.isEmpty == false { menu.addItem(.separator()) }
 
@@ -168,6 +176,10 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         updates.target = self
         menu.addItem(updates)
 
+        let music = NSMenuItem(title: "Локальная музыка…", action: #selector(openMusic), keyEquivalent: "")
+        music.target = self
+        menu.addItem(music)
+
         let history = NSMenuItem(title: "История треков…", action: #selector(openHistory), keyEquivalent: "")
         history.target = self
         menu.addItem(history)
@@ -207,8 +219,13 @@ final class StatusItemController: NSObject, NSMenuDelegate {
         let player = environment.player
 
         var parts: [String] = []
-        if let name = player.station?.name, !name.isEmpty { parts.append(name) }
-        if let track = player.nowPlaying?.trayLine, !track.isEmpty { parts.append(track) }
+        if let local = player.localTrack {
+            parts.append(local.displayTitle)
+            if let artist = local.displayArtist { parts.append(artist) }
+        } else {
+            if let name = player.station?.name, !name.isEmpty { parts.append(name) }
+            if let track = player.nowPlaying?.trayLine, !track.isEmpty { parts.append(track) }
+        }
         let body = parts.joined(separator: " · ")
 
         var tip = body.isEmpty ? "RadioMac" : (player.isPlaying ? "▶ \(body)" : body)
@@ -235,6 +252,7 @@ final class StatusItemController: NSObject, NSMenuDelegate {
     @objc private func showWindow() { onShowWindow?() }
     @objc private func openSettings() { onOpenSettings?() }
     @objc private func openHistory() { onOpenHistory?() }
+    @objc private func openMusic() { onOpenMusic?() }
     @objc private func checkForUpdates() { onCheckForUpdates?() }
     @objc private func quitApp() { onQuit?() }
 }

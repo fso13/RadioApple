@@ -32,6 +32,10 @@
 | --- | --- | --- |
 | ![Radio Browser](site/assets/screenshots/radio-browser.jpg) | ![Импорт и экспорт](site/assets/screenshots/transfer.jpg) | ![Мини-плеер](site/assets/screenshots/mini-player.jpg) |
 
+| Локальная музыка | Метаданные трека |
+| --- | --- |
+| ![Локальная музыка](site/assets/screenshots/music.jpg) | ![Метаданные трека](site/assets/screenshots/music-editor.jpg) |
+
 ## Flutter-версия
 
 Flutter-приложение больше не лежит в `main`: оно сохранено в ветке
@@ -62,7 +66,7 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (38 unit + 4 UI XCTest-кейса):
+Тесты (45 unit + 4 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
@@ -105,7 +109,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Диагностика**: opt-in локальный журнал, обнаружение аварийных завершений,
   просмотр, копирование и очистка; без отправки данных.
 - **Swift 6**: язык проекта, strict concurrency complete и warnings as errors.
-- **Last.fm**: opt-in OAuth, now-playing и scrobble после 4 минут. API-ключи
+- **Last.fm**: opt-in OAuth, now-playing и scrobble (4 минуты или половина
+  длительности для локальных файлов). API-ключи
   встраиваются при сборке из GitHub Secrets, сессия хранится в Keychain;
   отключение одной кнопкой.
 - **Audio engine**: HLS, AAC и MP3 играют через AVPlayer. HLS-метаданные приходят
@@ -117,8 +122,18 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
   RadioMac»), URL `radiomac://play/<id>`, `radiomac://pause`, `radiomac://open`.
 - **Radio Browser**: поиск станций по названию, жанру и стране, превью потока,
   добавление в библиотеку и защита от дублей по URL/external ID.
-- **Импорт и экспорт**: JSON, M3U и OPML, drag-and-drop, режимы «Добавить/Заменить»
-  с сохранением избранного.
+- **Импорт и экспорт**: JSON, M3U и OPML для станций, drag-and-drop, режимы
+  «Добавить/Заменить» с сохранением избранного.
+- **Локальная музыка**: своя страница (⌘L) с папками-источниками, тегами, обложками
+  и очередью воспроизведения; MP3, M4A, AAC, ALAC, FLAC, WAV, AIFF и CAF.
+  Доступ к папкам запоминается security-scoped закладками, перемотка и следующий/предыдущий
+  трек, обложки из тегов; название и исполнитель из имени файла, если тегов нет.
+- **Плейлисты**: создание, переименование, удаление, добавление треков и порядок;
+  импорт и экспорт M3U/M3U8 (абсолютные, относительные пути и `file://`), drag-and-drop
+  плейлистов и папок, поиск и сортировка по названию, исполнителю, альбому и длительности.
+- **Обогащение метаданных**: обложки, альбомы, год и жанр из Apple Music (iTunes Search)
+  и Deezer — автоматически для новых треков, вручную для одного трека и для всей
+  библиотеки, с предпросмотром в редакторе. Правки хранятся в библиотеке, файлы не изменяются.
 - **Настройки станции**: смещение громкости в dB, свой EQ-пресет и автозапуск
   при старте RadioMac; сохраняются в библиотеке.
 - **Автообновление**: Sparkle 2, appcast в latest release, EdDSA-подпись и проверка
@@ -172,8 +187,8 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
-| **Образ** | `dist/RadioMac-1.3.1.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.3.1.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Образ** | `dist/RadioMac-1.4.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-1.4.0.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -207,7 +222,7 @@ scripts/install.sh --skip-build     # установить уже собранн
 ```bash
 scripts/make_installer.sh                 # Release (universal) + dist/*.dmg + dist/*.pkg
 scripts/make_installer.sh --skip-build    # только упаковать
-scripts/make_installer.sh --version 1.3.1
+scripts/make_installer.sh --version 1.4.0
 ```
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
@@ -239,7 +254,7 @@ RadioMacWidget/              WidgetKit ext: виджет и Control Center
 RadioMac/
   RadioMacApp.swift           @main, запуск NSApplication как accessory-агента
   AppDelegate.swift           статус-итем, окно, меню правки для ⌘C/⌘V
-  Models/                     RadioStation (Codable, ключи как во Flutter), NowPlaying + парсер, EQ-пресеты, StreamInfo
+  Models/                     RadioStation (Codable, ключи как во Flutter), LocalTrack + MusicPlaylist, NowPlaying + парсер, EQ-пресеты, StreamInfo
   Data/                       встроенный каталог (47 станций) и справка
   Intents/                    App Intents, Shortcuts и URL-команды radiomac://
   Services/
@@ -252,6 +267,11 @@ RadioMac/
     UpdateService.swift       Sparkle 2 updater
     EqualizerService.swift    полосы, пресеты, дебаунс записи
     NowPlayingLookup.swift    SomaFM / Radio Paradise / Icecast / ICY + обложки iTunes
+    MusicLibrary.swift        локальная библиотека: папки, теги, плейлисты, M3U, закладки доступа
+    LocalAudioMetadata.swift  чтение тегов и обложек через AVFoundation, кэш обложек
+    MusicPlaylistFile.swift   импорт и экспорт M3U/M3U8 для локальных файлов
+    MetadataEnrichment.swift  нормализация, поиск и оценка совпадений из онлайн-каталогов
+    MetadataProviders.swift   Apple Music (iTunes Search) и Deezer
     LogoResolver.swift        Radio Browser и favicon-фолбэки
     NowPlayingCenter.swift    MPNowPlayingInfoCenter + MPRemoteCommandCenter
     Preferences.swift         ключи UserDefaults и миграция из Flutter
@@ -273,11 +293,16 @@ RadioMac/
     RadioBrowserView.swift    поиск Radio Browser, превью и добавление
     StationTransferView.swift импорт/экспорт станций и drag-and-drop
     MiniPlayerView.swift      поповер в меню-баре
+    MusicView.swift           локальная музыка: плейлисты и таблица треков
+    MusicTrackRow.swift       строка таблицы треков
+    MusicTrackEditorView.swift метаданные трека и онлайн-поиск
+    MusicSourcesView.swift    папки-источники и обогащение
+    MusicPlaylistPromptView.swift создание и переименование плейлиста
     BrandMark.swift           логотип и глиф
     StationLogo.swift         обложка станции
-  Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, debug-харнесс
+  Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, MusicViewModel, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                35 логических тестов
+RadioMacTests/                45 логических тестов
 RadioMacUITests/              2 XCUITest: сценарий и свет/тьма (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов
@@ -295,6 +320,7 @@ scripts/dmg_settings.py       раскладка окна установки д�
 scripts/make_brand_assets.py  генерация иконки приложения и фона установщика
 scripts/release_notes.py      тело релиза из CHANGELOG
 scripts/check_site.py         проверка ссылок и alt-текстов сайта
+scripts/add_xcode_files.py    регистрация новых .swift в project.pbxproj
 scripts/preview_site.sh       локальный сервер сайта
 scripts/check_wiki.py         проверка ссылок и навигации вики
 scripts/publish_wiki.sh       публикация wiki/ в GitHub Wiki
@@ -322,13 +348,14 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
   навигацию по жанрам.
 - Переключение станций вперёд/назад в текущей выборке и запуск первой станции кнопкой Play.
 - Анимации появления/скрытия окна, затухание списков, уважение Reduce Motion.
-- `-snapshot` / `-playtest` — отладочные утилиты (только Debug), см. ниже.
+- `-snapshot` / `-playtest` / `-musicplaytest` / `-enrichtest` — отладочные утилиты
+  (только Debug), см. ниже.
 
 ## CI/CD
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 38 unit + 4 UI, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 45 unit + 4 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -341,12 +368,12 @@ CodeQL собирает нативный проект через autobuild: Flut
 
 ### Как выпустить релиз
 
-1. Добавьте в `CHANGELOG.md` секцию `## [1.3.1] — 2026-10-22`.
+1. Добавьте в `CHANGELOG.md` секцию `## [1.4.0] — 2026-11-02`.
 2. Поставьте тег и отправьте его:
 
    ```bash
-   git tag v1.3.1
-   git push origin v1.3.1
+   git tag v1.4.0
+   git push origin v1.4.0
    ```
 
 3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,
@@ -418,8 +445,10 @@ wiki-репозиторий только после первой страниц�
 
 ```bash
 APP=.build/DerivedData/Build/Products/Debug/RadioMac.app
-open -n "$APP" --args -snapshot shots     # 01-main … 09-settings-dark
+open -n "$APP" --args -snapshot shots     # 01-main … 18-mini-player-music
 open -n "$APP" --args -playtest playtest.txt
+open -n "$APP" --args -musicplaytest local.txt
+open -n "$APP" --args -enrichtest enrich.txt
 
 ls ~/Library/Containers/com.fso13.radioMac/Data/tmp/shots
 cat ~/Library/Containers/com.fso13.radioMac/Data/tmp/playtest.txt

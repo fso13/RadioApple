@@ -59,3 +59,10 @@ _site/
 release-notes.md
 sbom.spdx.json
 grype.sarif
+
+# Distribution artefacts (built locally or by the release workflow)
+dist/*.dmg
+dist/*.pkg
+dist/*.spdx.json
+dist/appcast.xml
+dist/SHA256SUMS.txt

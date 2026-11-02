@@ -68,6 +68,11 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `SleepTimerService` | таймер сна и пятисекундное затухание |
 | `GlobalHotKeyService` | Carbon play/pause и следующая станция |
 | `TrackHistoryService` | последние 100 треков локально |
+| `MusicLibrary` | локальная музыка: папки-источники, теги, плейлисты, M3U, обогащение |
+| `LocalAudioMetadata` | теги и обложки из файлов через AVFoundation, кэш обложек |
+| `MusicPlaylistFile` | импорт и экспорт M3U/M3U8 для локальных файлов |
+| `MetadataEnrichmentService` | нормализация, оценка совпадений и кэш запросов |
+| `MetadataProviders` | Apple Music (iTunes Search) и Deezer |
 
 `AppEnvironment` собирает сервисы и UI-состояние (`MainViewModel`, `WindowRouter`).
 `MainViewModel` фильтрует список, хранит поиск, выделение, открытые листы и тосты.
@@ -81,6 +86,10 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
   `Task { @MainActor in ... }`.
 - `NowPlayingLookup` и `LogoResolver` помечены `@unchecked Sendable`: их кэши
   используются только из асинхронных задач плеера/библиотеки.
+- `MetadataEnrichmentService` — `@unchecked Sendable` с `NSLock` для кэша; оба
+  онлайн-каталога опрашиваются параллельно в `TaskGroup`.
+- Теги локальных файлов читаются вне main-актора батчами по 6 файлов;
+  `MusicLibrary` обновляет прогресс между батчами.
 - EQ-буферы AVPlayer обрабатываются в realtime-колбэке без аллокаций.
 - AVPlayer живёт на главном акторе; его KVO-состояния приходят через `Task { @MainActor in }`.
 - `RadioPlayerService` всегда использует AVPlayer; отдельной настройки движка нет.
@@ -92,6 +101,10 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 - Метаданные и обложки загружаются асинхронно (`URLSession`, `async/await`),
   с проверкой поколения, чтобы ответ старой станции не перетёр новый трек.
 - Опрос метаданных — таймер раз в 20 секунд; отменяется при остановке.
+- Локальные файлы играет тот же AVPlayer по `file://`-URL: ICY и HLS-метаданные
+  для них отключаются, а длительность и позиция читаются из `AVPlayer`.
+  По окончании трека `onEnded` переключает очередь `localQueue` или завершает
+  воспроизведение.
 
 ## Данные
 
@@ -109,10 +122,15 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `lastfm_enabled` | согласие на Last.fm |
 | `audio_engine` | удалён: всегда AVPlayer |
 | `native_migration_v1` | флаг миграции из Flutter |
+| `music_auto_enrich` | автоматическое обогащение новых локальных треков |
 
 Станции кодируются Codable с ключами Flutter-версии (`logoUrl`), поэтому данные
 совместимы. Миграция копирует `flutter.*` → нативные ключи один раз и не перетирает
 новые значения.
+
+Локальная музыка в `UserDefaults` не хранится: треки, плейлисты и закладки доступа
+лежат в `Application Support/RadioMac/music-library.json`, обложки — в
+`Caches/RadioMac/Artwork/`. Файлы на диске не изменяются.
 
 ## UI и дизайн-система
 
@@ -125,6 +143,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `UI/Sidebar.swift` | жанры и обложка |
 | `UI/StationRow.swift` | строка таблицы |
 | `UI/PlayerBar.swift` | нижний транспорт |
+| `UI/MusicView.swift`, `UI/MusicTrackRow.swift` | страница локальной музыки, плейлисты и таблица треков |
+| `UI/MusicTrackEditorView.swift`, `UI/MusicSourcesView.swift`, `UI/MusicPlaylistPromptView.swift` | метаданные, источники, имя плейлиста |
 | `UI/SettingsView.swift`, `HelpView.swift`, `EqualizerView.swift`, `StationEditorView.swift` | страницы и листы |
 | `UI/BrandMark.swift`, `StationLogo.swift`, `ImageCache.swift` | бренд, обложки, кэш |
 
@@ -133,7 +153,10 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 
 ## Безопасность
 
-- App Sandbox включён; сетевой клиент — единственное сетевое право.
+- App Sandbox включён; сетевые права — только исходящие соединения.
+- Локальная музыка читается через `NSOpenPanel` (`files.user-selected.read-only`)
+  и security-scoped закладки (`files.bookmarks.app-scope`); доступ можно отозвать
+  в «Источниках».
 - Запись — только в контейнер `~/Library/Containers/com.fso13.radioMac/`.
 - Нет аккаунтов, телеметрии и сторонних SDK.
 - Вендорные dylib подписываются вместе с приложением и проверяются по SHA-256.
@@ -145,3 +168,6 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 - [MainWindowController.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Window/MainWindowController.swift)
 - [NativeAudioEngine.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/NativeAudioEngine.swift)
 - [RadioPlayerService.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/RadioPlayerService.swift)
+- [MusicLibrary.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/MusicLibrary.swift)
+- [LocalAudioMetadata.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/LocalAudioMetadata.swift)
+- [MetadataEnrichment.swift](https://github.com/fso13/RadioApple/blob/main/RadioMac/Services/MetadataEnrichment.swift)

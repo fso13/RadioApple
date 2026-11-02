@@ -8,6 +8,7 @@ final class AppEnvironment {
     let settings: AppSettings
     let theme: ThemeService
     let library: StationLibrary
+    let music: MusicLibrary
     let equalizer: EqualizerService
     let player: RadioPlayerService
     let alarm: AlarmService
@@ -20,12 +21,14 @@ final class AppEnvironment {
     let toasts = ToastCenter()
     let router = WindowRouter()
     let mainModel: MainViewModel
+    let musicModel = MusicViewModel()
 
     init() {
         PreferencesMigrator.migrateIfNeeded()
         settings = AppSettings()
         theme = ThemeService()
         library = StationLibrary()
+        music = MusicLibrary()
         equalizer = EqualizerService()
         player = RadioPlayerService(settings: settings, library: library, equalizer: equalizer)
         sleepTimer = SleepTimerService(player: player)
@@ -37,6 +40,7 @@ final class AppEnvironment {
         mainModel = MainViewModel(library: library)
 
         library.load()
+        music.load()
         player.start()
         hotKeys.start()
         alarm.start()
@@ -120,6 +124,8 @@ final class MainWindowController: NSWindowController {
             sleepTimer: environment.sleepTimer,
             hotKeys: environment.hotKeys,
             history: environment.history,
+            music: environment.music,
+            musicModel: environment.musicModel,
             updates: environment.updates,
             toasts: environment.toasts,
             onClose: { [weak self] in self?.hide() },
@@ -151,11 +157,24 @@ final class MainWindowController: NSWindowController {
         let environment = self.environment
         keyboard.onEscape = { [weak self] in self?.hide() }
         keyboard.onPlayPause = { environment.player.togglePlayPause() }
-        keyboard.onMoveSelection = { environment.mainModel.moveSelection($0) }
-        keyboard.onPlaySelected = { environment.mainModel.playSelected(using: environment.player) }
-        keyboard.onPlayIndex = { environment.mainModel.playVisible(at: $0, using: environment.player) }
+        keyboard.onMoveSelection = { [weak self] delta in
+            guard let self, self.environment.router.route == .main else { return }
+            self.environment.mainModel.moveSelection(delta)
+        }
+        keyboard.onPlaySelected = { [weak self] in
+            guard let self, self.environment.router.route == .main else { return }
+            self.environment.mainModel.playSelected(using: self.environment.player)
+        }
+        keyboard.onPlayIndex = { [weak self] index in
+            guard let self, self.environment.router.route == .main else { return }
+            self.environment.mainModel.playVisible(at: index, using: self.environment.player)
+        }
         keyboard.onFocusSearch = { [weak self] in
             guard let self else { return }
+            if self.environment.router.route == .music {
+                self.environment.musicModel.focusSearch()
+                return
+            }
             if self.environment.router.route != .main {
                 self.environment.router.route = .main
             }
@@ -168,7 +187,17 @@ final class MainWindowController: NSWindowController {
             }
             self.environment.mainModel.newStation()
         }
-        keyboard.onResignSearch = { environment.mainModel.resignSearch() }
+        keyboard.onOpenMusic = { [weak self] in
+            self?.showMusic()
+        }
+        keyboard.onResignSearch = { [weak self] in
+            guard let self else { return }
+            if self.environment.router.route == .music {
+                self.environment.musicModel.resignSearch()
+            } else {
+                self.environment.mainModel.resignSearch()
+            }
+        }
     }
 
     private func observeTheme() {
@@ -216,6 +245,10 @@ final class MainWindowController: NSWindowController {
         show(route: .settings)
     }
 
+    func showMusic() {
+        show(route: .music)
+    }
+
     func showHistory() {
         show(route: .main)
         environment.router.sheet = .history
@@ -244,6 +277,7 @@ final class MainWindowController: NSWindowController {
                 self.isHiding = false
                 self.environment.router.route = .main
                 self.environment.mainModel.resetAfterHide()
+                self.environment.musicModel.reset()
             }
         }
     }

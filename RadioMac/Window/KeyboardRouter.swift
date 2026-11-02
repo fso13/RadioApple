@@ -2,7 +2,8 @@ import AppKit
 
 /// Keyboard handling for the panel, ported from the Flutter shortcuts:
 /// Esc hides (or leaves search), Space toggles, ↑/↓ move the selection,
-/// Enter plays, 1–9 jump to a station, ⌘F focuses search, ⌘N adds a station.
+/// Enter plays, 1–9 jump to a station, ⌘F focuses search, ⌘N adds a station,
+/// ⌘L opens the local music page.
 @MainActor
 final class KeyboardRouter {
     weak var panel: NSWindow?
@@ -14,6 +15,7 @@ final class KeyboardRouter {
     var onPlayIndex: ((Int) -> Void)?
     var onFocusSearch: (() -> Void)?
     var onNewStation: (() -> Void)?
+    var onOpenMusic: (() -> Void)?
     var onResignSearch: (() -> Void)?
 
     private var monitor: Any?
@@ -49,6 +51,9 @@ final class KeyboardRouter {
                 return true
             case "n":
                 onNewStation?()
+                return true
+            case "l":
+                onOpenMusic?()
                 return true
             default:
                 return false

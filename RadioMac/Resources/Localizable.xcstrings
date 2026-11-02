@@ -740,6 +740,866 @@
           }
         }
       }
+    },
+    "Все треки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All tracks"
+          }
+        }
+      }
+    },
+    "Плейлисты": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists"
+          }
+        }
+      }
+    },
+    "Пока нет плейлистов": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No playlists yet"
+          }
+        }
+      }
+    },
+    "Новый плейлист": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New playlist"
+          }
+        }
+      }
+    },
+    "Импорт M3U": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import M3U"
+          }
+        }
+      }
+    },
+    "Импорт M3U…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Import M3U…"
+          }
+        }
+      }
+    },
+    "Источники…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources…"
+          }
+        }
+      }
+    },
+    "Источники и папки…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sources and folders…"
+          }
+        }
+      }
+    },
+    "Источники музыки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music sources"
+          }
+        }
+      }
+    },
+    "Папки и файлы, к которым у RadioMac есть доступ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folders and files RadioMac can read"
+          }
+        }
+      }
+    },
+    "ТРЕК": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TRACK"
+          }
+        }
+      }
+    },
+    "АЛЬБОМ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ALBUM"
+          }
+        }
+      }
+    },
+    "ВРЕМЯ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "TIME"
+          }
+        }
+      }
+    },
+    "Действия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Actions"
+          }
+        }
+      }
+    },
+    "Список треков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track list"
+          }
+        }
+      }
+    },
+    "Плейлисты хранят ссылки на файлы — музыка не копируется": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists keep file references — music is not copied"
+          }
+        }
+      }
+    },
+    "Обогатить из сети": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look up online"
+          }
+        }
+      }
+    },
+    "Остановить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop"
+          }
+        }
+      }
+    },
+    "Добавить папку…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add folder…"
+          }
+        }
+      }
+    },
+    "Добавить файлы…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add files…"
+          }
+        }
+      }
+    },
+    "Экспорт плейлиста в M3U…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export playlist as M3U…"
+          }
+        }
+      }
+    },
+    "Экспорт в M3U…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export as M3U…"
+          }
+        }
+      }
+    },
+    "Пересканировать папки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan folders"
+          }
+        }
+      }
+    },
+    "Пересканировать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rescan"
+          }
+        }
+      }
+    },
+    "Обогащение идёт…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Looking up…"
+          }
+        }
+      }
+    },
+    "Сбросить поиск": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear search"
+          }
+        }
+      }
+    },
+    "Добавить папку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add folder"
+          }
+        }
+      }
+    },
+    "Играть плейлист": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play playlist"
+          }
+        }
+      }
+    },
+    "Переименовать…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename…"
+          }
+        }
+      }
+    },
+    "Удалить плейлист": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete playlist"
+          }
+        }
+      }
+    },
+    "Удалить трек?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete track?"
+          }
+        }
+      }
+    },
+    "Удалить плейлист?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Delete playlist?"
+          }
+        }
+      }
+    },
+    "Найти в сети": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search online"
+          }
+        }
+      }
+    },
+    "Ищу…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching…"
+          }
+        }
+      }
+    },
+    "Изменить метаданные…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit metadata…"
+          }
+        }
+      }
+    },
+    "Добавить в плейлист": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to playlist"
+          }
+        }
+      }
+    },
+    "Убрать из плейлиста": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from playlist"
+          }
+        }
+      }
+    },
+    "Показать в Finder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in Finder"
+          }
+        }
+      }
+    },
+    "Удалить из библиотеки": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from library"
+          }
+        }
+      }
+    },
+    "Без исполнителя": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown artist"
+          }
+        }
+      }
+    },
+    "Файл не найден": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "File not found"
+          }
+        }
+      }
+    },
+    "Действия с треком": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track actions"
+          }
+        }
+      }
+    },
+    "Метаданные трека": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track metadata"
+          }
+        }
+      }
+    },
+    "Правки хранятся в библиотеке, файл не изменяется": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edits live in the library; the file is not modified"
+          }
+        }
+      }
+    },
+    "Исполнитель": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artist"
+          }
+        }
+      }
+    },
+    "Альбом": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Album"
+          }
+        }
+      }
+    },
+    "Год": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Year"
+          }
+        }
+      }
+    },
+    "Номер": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Number"
+          }
+        }
+      }
+    },
+    "Обложка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Artwork"
+          }
+        }
+      }
+    },
+    "ОНЛАЙН-ПОИСК": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ONLINE SEARCH"
+          }
+        }
+      }
+    },
+    "Совпадений не нашлось.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No matches found."
+          }
+        }
+      }
+    },
+    "Подставить эти данные": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apply these details"
+          }
+        }
+      }
+    },
+    "Без названия": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled"
+          }
+        }
+      }
+    },
+    "Папок пока нет": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No folders yet"
+          }
+        }
+      }
+    },
+    "Добавьте папку с музыкой — приложение запомнит доступ и при следующем запуске.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a music folder — the app keeps access after a restart."
+          }
+        }
+      }
+    },
+    "Добавить файлы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add files"
+          }
+        }
+      }
+    },
+    "Убрать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove"
+          }
+        }
+      }
+    },
+    "Подтягивать обложки и альбомы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fetch artwork and albums"
+          }
+        }
+      }
+    },
+    "Поиск в Apple Music и Deezer для треков без обложки. Файлы не изменяются.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searches Apple Music and Deezer for tracks without artwork. Files are not modified."
+          }
+        }
+      }
+    },
+    "Поиск в Apple Music и Deezer; файлы не изменяются": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searches Apple Music and Deezer; files are not modified"
+          }
+        }
+      }
+    },
+    "Работаю…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Working…"
+          }
+        }
+      }
+    },
+    "Убрать источник?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove source?"
+          }
+        }
+      }
+    },
+    "Плейлист хранит ссылки на треки — файлы не копируются": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A playlist keeps track references — files are not copied"
+          }
+        }
+      }
+    },
+    "Локальная музыка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local music"
+          }
+        }
+      }
+    },
+    "Локальная музыка…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local music…"
+          }
+        }
+      }
+    },
+    "MP3, FLAC, M4A, WAV и M3U-плейлисты из ваших папок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MP3, FLAC, M4A, WAV and M3U playlists from your folders"
+          }
+        }
+      }
+    },
+    "Обработка": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Processing"
+          }
+        }
+      }
+    },
+    "Плейлисты и метаданные хранятся в библиотеке приложения: музыка не копируется и не перезаписывается.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlists and metadata live in the app library: music is never copied or overwritten."
+          }
+        }
+      }
+    },
+    "Плейлист пуст": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Playlist is empty"
+          }
+        }
+      }
+    },
+    "Добавьте музыку": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add music"
+          }
+        }
+      }
+    },
+    "МУЗЫКА": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "MUSIC"
+          }
+        }
+      }
+    },
+    "ПАУЗА": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "PAUSED"
+          }
+        }
+      }
+    },
+    "СТОП": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "STOPPED"
+          }
+        }
+      }
+    },
+    "Станции": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stations"
+          }
+        }
+      }
+    },
+    "Локальные файлы": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Local files"
+          }
+        }
+      }
+    },
+    "Обогащение": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enrichment"
+          }
+        }
+      }
+    },
+    "Добавьте папку с музыкой или перетащите файлы и M3U-плейлисты в окно. Обложки и альбомы подтянутся из сети.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a music folder or drop files and M3U playlists onto the window. Artwork and albums can be fetched online."
+          }
+        }
+      }
+    },
+    "Измените запрос или выберите «Все треки».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the query or pick “All tracks”."
+          }
+        }
+      }
+    },
+    "Добавьте треки из «Все треки» через меню строки или перетащите файлы.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add tracks from “All tracks” via the row menu, or drop files here."
+          }
+        }
+      }
+    },
+    "Выберите папку с музыкой или перетащите файлы и M3U-плейлисты в окно. Обложки и альбомы подтянутся из сети.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a music folder or drop files and M3U playlists onto the window. Artwork and albums can be fetched online."
+          }
+        }
+      }
+    },
+    "Ничего не нашлось — уточните исполнителя и название.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing found — check the artist and title."
+          }
+        }
+      }
+    },
+    "Ничего не нашлось в сети": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing found online"
+          }
+        }
+      }
+    },
+    "Доступ выдаётся системным окном выбора и хранится в закладках macOS. Источник можно убрать в любой момент — файлы останутся на диске.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access is granted through the system picker and kept in macOS bookmarks. You can remove a source at any time — files on disk stay untouched."
+          }
+        }
+      }
+    },
+    "Поиск треков": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search tracks"
+          }
+        }
+      }
+    },
+    "Переименовать плейлист": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rename playlist"
+          }
+        }
+      }
+    },
+    "Создать": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

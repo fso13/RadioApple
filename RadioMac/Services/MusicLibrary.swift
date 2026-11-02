@@ -1,0 +1,828 @@
+import AppKit
+import Combine
+import Foundation
+
+enum MusicLibraryError: LocalizedError {
+    case unreadable(String)
+    case emptyPlaylist
+    case unsupportedFile(String)
+    case noAccess(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .unreadable(let name):
+            return "Не удалось прочитать «\(name)»."
+        case .emptyPlaylist:
+            return "В плейлисте нет локальных файлов."
+        case .unsupportedFile(let name):
+            return "«\(name)» — не аудиофайл."
+        case .noAccess(let name):
+            return "Нет доступа к «\(name)». Добавьте папку в источниках музыки."
+        }
+    }
+}
+
+/// The user's local music: audio files from granted folders, playlists and
+/// online-enriched metadata. Everything is stored in the app container; audio
+/// files are never modified.
+@MainActor
+final class MusicLibrary: ObservableObject {
+    @Published private(set) var tracks: [LocalTrack] = []
+    @Published private(set) var playlists: [MusicPlaylist] = []
+    @Published private(set) var sources: [MusicSource] = []
+
+    @Published private(set) var isScanning = false
+    @Published private(set) var scanStatus: String?
+    @Published private(set) var isEnriching = false
+    @Published private(set) var enrichmentStatus: String?
+
+    /// Pull covers and album names for new tracks automatically.
+    @Published private(set) var autoEnrich: Bool
+
+    private let storageURL: URL?
+    private let defaults: UserDefaults
+    private let enrichment = MetadataEnrichmentService.shared
+
+    private var activeScopes: [String: URL] = [:]
+    private var startedScopes: Set<String> = []
+    private var saveTask: Task<Void, Never>?
+    private var scanTask: Task<Void, Never>?
+    private var enrichmentTask: Task<Void, Never>?
+    /// Debug harness snapshots seed an in-memory library; nothing is written.
+    private var persistenceEnabled = true
+
+    init(
+        storageURL: URL? = MusicLibrary.defaultStorageURL,
+        defaults: UserDefaults = .standard
+    ) {
+        self.storageURL = storageURL
+        self.defaults = defaults
+        autoEnrich = defaults.boolLike(DefaultsKey.musicAutoEnrich) ?? true
+    }
+
+    // MARK: - Derived
+
+    var isEmpty: Bool { tracks.isEmpty }
+
+    var missingCount: Int {
+        tracks.filter(\.isMissing).count
+    }
+
+    func track(id: String) -> LocalTrack? {
+        tracks.first { $0.id == id }
+    }
+
+    func playlist(id: String) -> MusicPlaylist? {
+        playlists.first { $0.id == id }
+    }
+
+    func tracks(in playlistID: String?) -> [LocalTrack] {
+        guard let playlistID else { return tracks }
+        guard let playlist = playlist(id: playlistID) else { return [] }
+        let byID = Dictionary(uniqueKeysWithValues: tracks.map { ($0.id, $0) })
+        return playlist.trackIDs.compactMap { byID[$0] }
+    }
+
+    func filteredTracks(
+        query: String,
+        playlistID: String?,
+        sort: MusicSortOrder
+    ) -> [LocalTrack] {
+        var items = tracks(in: playlistID)
+        let needle = query
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        if !needle.isEmpty {
+            items = items.filter { $0.searchText.contains(needle) }
+        }
+        return sorted(items, by: sort)
+    }
+
+    func sorted(_ items: [LocalTrack], by order: MusicSortOrder) -> [LocalTrack] {
+        switch order {
+        case .added:
+            return items.sorted { $0.addedAt > $1.addedAt }
+        case .title:
+            return items.sorted {
+                $0.displayTitle.localizedStandardCompare($1.displayTitle) == .orderedAscending
+            }
+        case .artist:
+            return items.sorted {
+                let left = $0.displayArtist ?? "\u{FFFF}"
+                let right = $1.displayArtist ?? "\u{FFFF}"
+                if left == right {
+                    return $0.displayTitle.localizedStandardCompare($1.displayTitle)
+                        == .orderedAscending
+                }
+                return left.localizedStandardCompare(right) == .orderedAscending
+            }
+        case .album:
+            return items.sorted {
+                let left = $0.displayAlbum ?? "\u{FFFF}"
+                let right = $1.displayAlbum ?? "\u{FFFF}"
+                if left == right {
+                    let leftNumber = $0.trackNumber ?? 0
+                    let rightNumber = $1.trackNumber ?? 0
+                    if leftNumber != rightNumber { return leftNumber < rightNumber }
+                    return $0.displayTitle.localizedStandardCompare($1.displayTitle)
+                        == .orderedAscending
+                }
+                return left.localizedStandardCompare(right) == .orderedAscending
+            }
+        case .duration:
+            return items.sorted { ($0.duration ?? 0) < ($1.duration ?? 0) }
+        }
+    }
+
+    // MARK: - Loading
+
+    func load() {
+        guard let storageURL,
+              let data = try? Data(contentsOf: storageURL)
+        else { return }
+        guard let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) else {
+            return
+        }
+        tracks = snapshot.tracks.filter { !$0.path.isEmpty }
+        playlists = snapshot.playlists
+        sources = snapshot.sources
+        for source in sources {
+            _ = startAccess(for: source)
+        }
+        refreshMissingFlags()
+    }
+
+    /// Writes pending changes immediately. Called when the app quits.
+    func flush() {
+        saveTask?.cancel()
+        saveTask = nil
+        persistNow()
+    }
+
+    func setAutoEnrich(_ value: Bool) {
+        guard value != autoEnrich else { return }
+        autoEnrich = value
+        defaults.set(value, forKey: DefaultsKey.musicAutoEnrich)
+    }
+
+    // MARK: - Sources
+
+    func hasAccess(toFolder url: URL) -> Bool {
+        let path = url.standardizedFileURL.path
+        return sources.contains { source in
+            source.isFolder
+                && (path == source.path || path.hasPrefix(source.path + "/"))
+        }
+    }
+
+    @discardableResult
+    func addFolder(_ url: URL) async -> MusicImportSummary {
+        let summary = await addFolderWithoutEnrichment(url)
+        startEnrichmentIfNeeded()
+        return summary
+    }
+
+    @discardableResult
+    func addFiles(_ urls: [URL]) async -> MusicImportSummary {
+        var summary = MusicImportSummary()
+        var audioURLs: [URL] = []
+        for url in urls {
+            let standardized = url.standardizedFileURL
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: standardized.path, isDirectory: &isDirectory) else {
+                summary.missing += 1
+                continue
+            }
+            if isDirectory.boolValue {
+                let folder = await addFolderWithoutEnrichment(standardized)
+                summary.added += folder.added
+                summary.skipped += folder.skipped
+                summary.missing += folder.missing
+                summary.errors.append(contentsOf: folder.errors)
+            } else if MusicPlaylistFile.fileExtensions.contains(standardized.pathExtension.lowercased()) {
+                summary.errors.append("«\(standardized.lastPathComponent)» — плейлист, импортируйте его отдельно.")
+            } else if LocalAudioMetadata.isSupported(standardized) {
+                ensureSource(for: standardized)
+                audioURLs.append(standardized)
+            } else {
+                summary.skipped += 1
+                summary.errors.append("«\(standardized.lastPathComponent)» — не поддерживаемый формат.")
+            }
+        }
+
+        if !audioURLs.isEmpty {
+            let imported = await importAudioFiles(audioURLs)
+            summary.added += imported.added
+            summary.skipped += imported.skipped
+            summary.missing += imported.missing
+            summary.errors.append(contentsOf: imported.errors)
+        }
+        startEnrichmentIfNeeded()
+        return summary
+    }
+
+    private func addFolderWithoutEnrichment(_ url: URL) async -> MusicImportSummary {
+        let standardized = url.standardizedFileURL
+        if let existing = sources.first(where: { $0.path == standardized.path }) {
+            _ = startAccess(for: existing)
+        } else {
+            let source = makeSource(for: standardized, isFolder: true)
+            sources.append(source)
+            _ = startAccess(for: source)
+            schedulePersist()
+        }
+        let urls = collectAudioFiles(in: [standardized])
+        return await importAudioFiles(urls)
+    }
+
+    /// Grants access to a folder without scanning it yet (used by M3U import).
+    @discardableResult
+    func grantFolderAccess(_ url: URL) -> Bool {
+        let standardized = url.standardizedFileURL
+        if hasAccess(toFolder: standardized) { return true }
+        let source = makeSource(for: standardized, isFolder: true)
+        sources.append(source)
+        let started = startAccess(for: source) != nil
+        schedulePersist()
+        return started
+    }
+
+    func rescan() {
+        guard scanTask == nil, !isScanning else { return }
+        scanTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            await self.runRescan()
+            self.scanTask = nil
+        }
+    }
+
+    func cancelScan() {
+        scanTask?.cancel()
+        scanTask = nil
+        isScanning = false
+        scanStatus = nil
+    }
+
+    private func runRescan() async {
+        guard !sources.isEmpty else { return }
+        isScanning = true
+        scanStatus = "Сканирую папки…"
+        defer {
+            isScanning = false
+            scanStatus = nil
+        }
+
+        var urls: [URL] = []
+        for source in sources {
+            guard let folder = startAccess(for: source) else { continue }
+            urls.append(contentsOf: collectAudioFiles(in: [folder]))
+        }
+        let summary = await importAudioFiles(urls)
+        refreshMissingFlags()
+        if summary.added > 0 {
+            startEnrichmentIfNeeded()
+        }
+        flush()
+    }
+
+    func removeSource(id: String) {
+        guard let source = sources.first(where: { $0.id == id }) else { return }
+        stopAccess(for: source.id)
+        sources.removeAll { $0.id == id }
+
+        let prefix = source.path + "/"
+        let removedIDs = Set(
+            tracks.filter { $0.path == source.path || $0.path.hasPrefix(prefix) }.map(\.id)
+        )
+        if !removedIDs.isEmpty {
+            removeTracks(ids: removedIDs)
+        }
+        schedulePersist()
+    }
+
+    // MARK: - Tracks
+
+    func update(_ track: LocalTrack) {
+        guard let index = tracks.firstIndex(where: { $0.id == track.id }) else { return }
+        var updated = track
+        updated.title = updated.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        updated.artist = LocalTrack.trimmed(updated.artist)
+        updated.album = LocalTrack.trimmed(updated.album)
+        updated.genre = LocalTrack.trimmed(updated.genre)
+        updated.year = LocalTrack.validYear(updated.year)
+        tracks[index] = updated
+        schedulePersist()
+    }
+
+    func removeTrack(id: String) {
+        removeTracks(ids: [id])
+    }
+
+    func removeTracks(ids: Set<String>) {
+        guard !ids.isEmpty else { return }
+        tracks.removeAll { ids.contains($0.id) }
+        for index in playlists.indices {
+            let filtered = playlists[index].trackIDs.filter { !ids.contains($0) }
+            if filtered.count != playlists[index].trackIDs.count {
+                playlists[index].trackIDs = filtered
+                playlists[index].updatedAt = Date()
+            }
+        }
+        for id in ids { MusicArtworkStore.remove(for: id) }
+        schedulePersist()
+    }
+
+    func revealInFinder(_ track: LocalTrack) {
+        NSWorkspace.shared.activateFileViewerSelecting([track.url])
+    }
+
+    func refreshMissingFlags() {
+        guard !tracks.isEmpty else { return }
+        var changed = false
+        for index in tracks.indices {
+            let exists = FileManager.default.fileExists(atPath: tracks[index].path)
+            if tracks[index].isMissing == exists {
+                tracks[index].isMissing = !exists
+                changed = true
+            }
+        }
+        if changed { schedulePersist() }
+    }
+
+    // MARK: - Playlists
+
+    @discardableResult
+    func createPlaylist(name: String, trackIDs: [String] = [], sourceName: String? = nil) -> MusicPlaylist? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        let playlist = MusicPlaylist(
+            name: uniquePlaylistName(for: trimmed),
+            trackIDs: trackIDs.filter { id in tracks.contains { $0.id == id } },
+            sourceName: sourceName
+        )
+        playlists.append(playlist)
+        schedulePersist()
+        return playlist
+    }
+
+    func renamePlaylist(id: String, name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              let index = playlists.firstIndex(where: { $0.id == id })
+        else { return }
+        let taken = playlists.contains {
+            $0.id != id && $0.name.localizedCaseInsensitiveCompare(trimmed) == .orderedSame
+        }
+        playlists[index].name = taken ? uniquePlaylistName(for: trimmed, ignoring: id) : trimmed
+        playlists[index].updatedAt = Date()
+        schedulePersist()
+    }
+
+    func deletePlaylist(id: String) {
+        playlists.removeAll { $0.id == id }
+        schedulePersist()
+    }
+
+    func addTracks(_ trackIDs: [String], to playlistID: String) {
+        guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
+        let valid = trackIDs.filter { id in tracks.contains { $0.id == id } }
+        let existing = Set(playlists[index].trackIDs)
+        let additions = valid.filter { !existing.contains($0) }
+        guard !additions.isEmpty else { return }
+        playlists[index].trackIDs.append(contentsOf: additions)
+        playlists[index].updatedAt = Date()
+        schedulePersist()
+    }
+
+    func removeTrack(_ trackID: String, from playlistID: String) {
+        guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
+        playlists[index].trackIDs.removeAll { $0 == trackID }
+        playlists[index].updatedAt = Date()
+        schedulePersist()
+    }
+
+    // MARK: - M3U
+
+    func m3uData(for playlistID: String) -> Data? {
+        guard let playlist = playlist(id: playlistID) else { return nil }
+        let items = tracks(in: playlistID)
+        return MusicPlaylistFile.exportData(name: playlist.name, tracks: items)
+    }
+
+    @discardableResult
+    func importPlaylist(from url: URL) async throws -> MusicPlaylistImportResult {
+        let standardized = url.standardizedFileURL
+        guard let data = try? Data(contentsOf: standardized) else {
+            throw MusicLibraryError.unreadable(standardized.lastPathComponent)
+        }
+        let parsed = MusicPlaylistFile.parse(data)
+        guard !parsed.isEmpty else { throw MusicLibraryError.emptyPlaylist }
+
+        let folder = standardized.deletingLastPathComponent()
+        if hasAccess(toFolder: folder) == false, sources.contains(where: { $0.path == folder.path }) == false {
+            // Reading the playlist file works through the open panel grant; the
+            // sibling folder needs its own permission, which the UI asks for.
+            grantFolderAccess(folder)
+        }
+
+        var fileURLs: [URL] = []
+        var skipped = 0
+        for entry in parsed.entries {
+            guard let fileURL = MusicPlaylistFile.resolvedURL(
+                for: entry.location,
+                relativeTo: standardized
+            ) else {
+                skipped += 1
+                continue
+            }
+            guard LocalAudioMetadata.isSupported(fileURL),
+                  FileManager.default.fileExists(atPath: fileURL.path)
+            else {
+                skipped += 1
+                continue
+            }
+            fileURLs.append(fileURL.standardizedFileURL)
+        }
+
+        let summary = await importAudioFiles(fileURLs)
+        let paths = fileURLs.map(\.path)
+        let order = Dictionary(uniqueKeysWithValues: tracks.map { ($0.path, $0.id) })
+        let orderedIDs = paths.compactMap { order[$0] }
+        let name = parsed.name ?? standardized.deletingPathExtension().lastPathComponent
+        let playlist = createPlaylist(
+            name: name,
+            trackIDs: orderedIDs,
+            sourceName: standardized.lastPathComponent
+        )
+        guard let playlist else { throw MusicLibraryError.emptyPlaylist }
+
+        startEnrichmentIfNeeded()
+        return MusicPlaylistImportResult(
+            playlistID: playlist.id,
+            name: playlist.name,
+            addedTracks: summary.added,
+            skippedEntries: skipped + summary.skipped + summary.missing
+        )
+    }
+
+    // MARK: - Enrichment
+
+    func startEnrichment(limit: Int = 0) {
+        guard enrichmentTask == nil, !isEnriching else { return }
+        enrichmentTask = Task { @MainActor [weak self] in
+            await self?.runEnrichment(limit: limit)
+            self?.enrichmentTask = nil
+        }
+    }
+
+    func cancelEnrichment() {
+        enrichmentTask?.cancel()
+    }
+
+    @discardableResult
+    func enrich(trackID: String) async -> TrackEnrichment? {
+        guard let track = track(id: trackID), !track.isMissing else { return nil }
+        let match = await enrichment.bestMatch(for: track)
+        if let match {
+            apply(match, to: trackID, overwrite: false)
+        }
+        return match
+    }
+
+    func apply(_ match: TrackEnrichment, to trackID: String, overwrite: Bool = false) {
+        guard let index = tracks.firstIndex(where: { $0.id == trackID }) else { return }
+        var track = tracks[index]
+        let changes = match.changes(for: track)
+
+        if overwrite {
+            if let value = LocalTrack.trimmed(match.title) { track.title = value }
+            if let value = LocalTrack.trimmed(match.artist) { track.artist = value }
+            if let value = LocalTrack.trimmed(match.album) { track.album = value }
+            if let value = LocalTrack.trimmed(match.genre) { track.genre = value }
+            if let value = match.year { track.year = value }
+            if let value = LocalTrack.trimmed(match.artworkURL) { track.artworkURL = value }
+        } else {
+            if let value = changes.title { track.title = value }
+            if let value = changes.artist { track.artist = value }
+            if let value = changes.album { track.album = value }
+            if let value = changes.genre { track.genre = value }
+            if let value = changes.year { track.year = value }
+            if let value = changes.artworkURL { track.artworkURL = value }
+        }
+
+        guard overwrite || !changes.isEmpty else { return }
+        track.enrichedAt = Date()
+        track.enrichmentSource = match.source
+        tracks[index] = track
+        schedulePersist()
+    }
+
+    private func startEnrichmentIfNeeded() {
+        guard autoEnrich else { return }
+        startEnrichment(limit: 500)
+    }
+
+    private func runEnrichment(limit: Int) async {
+        isEnriching = true
+        defer {
+            isEnriching = false
+            enrichmentStatus = nil
+        }
+
+        let targets = tracks.filter(\.needsEnrichment)
+        guard !targets.isEmpty else { return }
+        let capped = limit > 0 ? Array(targets.prefix(limit)) : targets
+
+        var updated = 0
+        var misses = 0
+        for (offset, target) in capped.enumerated() {
+            if Task.isCancelled { break }
+            enrichmentStatus = "Обогащение \(offset + 1) из \(capped.count)…"
+            guard let match = await enrichment.bestMatch(for: target) else {
+                misses += 1
+                // Three empty answers in a row usually mean there is no network;
+                // do not spend minutes timing out on the rest of the library.
+                if misses >= 3 {
+                    enrichmentStatus = "Сеть недоступна — обогащение остановлено"
+                    break
+                }
+                continue
+            }
+            misses = 0
+            let before = track(id: target.id)
+            apply(match, to: target.id, overwrite: false)
+            if track(id: target.id) != before { updated += 1 }
+            try? await Task.sleep(nanoseconds: 220_000_000)
+        }
+        flush()
+    }
+
+    // MARK: - Scanning internals
+
+    private func ensureSource(for url: URL) {
+        if let source = sources.first(where: { $0.isFolder && covers($0, url: url) }) {
+            _ = startAccess(for: source)
+            return
+        }
+        if let source = sources.first(where: { $0.path == url.path }) {
+            _ = startAccess(for: source)
+            return
+        }
+        let source = makeSource(for: url, isFolder: false)
+        sources.append(source)
+        _ = startAccess(for: source)
+        schedulePersist()
+    }
+
+    private func covers(_ source: MusicSource, url: URL) -> Bool {
+        let path = url.standardizedFileURL.path
+        return path.hasPrefix(source.path + "/")
+    }
+
+    private func makeSource(for url: URL, isFolder: Bool) -> MusicSource {
+        MusicSource(
+            path: url.standardizedFileURL.path,
+            isFolder: isFolder,
+            bookmark: Self.bookmarkData(for: url)
+        )
+    }
+
+    private func collectAudioFiles(in folders: [URL]) -> [URL] {
+        var found: [URL] = []
+        for folder in folders {
+            var isDirectory: ObjCBool = false
+            guard FileManager.default.fileExists(atPath: folder.path, isDirectory: &isDirectory) else {
+                continue
+            }
+            if !isDirectory.boolValue {
+                if LocalAudioMetadata.isSupported(folder) { found.append(folder.standardizedFileURL) }
+                continue
+            }
+            let keys: [URLResourceKey] = [.isRegularFileKey]
+            guard let enumerator = FileManager.default.enumerator(
+                at: folder,
+                includingPropertiesForKeys: keys,
+                options: [.skipsHiddenFiles, .skipsPackageDescendants],
+                errorHandler: { _, _ in true }
+            ) else { continue }
+            for case let fileURL as URL in enumerator
+            where LocalAudioMetadata.isSupported(fileURL) {
+                found.append(fileURL.standardizedFileURL)
+            }
+        }
+        return found
+    }
+
+    private func importAudioFiles(_ urls: [URL]) async -> MusicImportSummary {
+        var summary = MusicImportSummary()
+        guard !urls.isEmpty else { return summary }
+
+        let existingPaths = Set(tracks.map(\.path))
+        var seen: Set<String> = []
+        var newURLs: [URL] = []
+        for url in urls {
+            let path = url.standardizedFileURL.path
+            guard seen.insert(path).inserted else { continue }
+            if existingPaths.contains(path) { continue }
+            guard LocalAudioMetadata.isSupported(url) else {
+                summary.skipped += 1
+                continue
+            }
+            guard FileManager.default.fileExists(atPath: path) else {
+                summary.missing += 1
+                continue
+            }
+            newURLs.append(url.standardizedFileURL)
+        }
+        guard !newURLs.isEmpty else { return summary }
+        newURLs.sort { $0.path.localizedStandardCompare($1.path) == .orderedAscending }
+
+        isScanning = true
+        defer {
+            isScanning = false
+            scanStatus = nil
+        }
+
+        var created: [LocalTrack] = []
+        var skipped = 0
+        let batchSize = 6
+        var offset = 0
+        while offset < newURLs.count {
+            if Task.isCancelled { break }
+            let batch = Array(newURLs[offset..<min(offset + batchSize, newURLs.count)])
+            let pairs = await withTaskGroup(
+                of: (URL, AudioFileMetadata).self,
+                returning: [(URL, AudioFileMetadata)].self
+            ) { group in
+                for url in batch {
+                    group.addTask { (url, await LocalAudioMetadata.read(at: url)) }
+                }
+                var collected: [(URL, AudioFileMetadata)] = []
+                for await pair in group { collected.append(pair) }
+                return collected
+            }
+            for (url, metadata) in pairs {
+                guard metadata.playable else {
+                    skipped += 1
+                    continue
+                }
+                created.append(makeTrack(url: url, metadata: metadata))
+            }
+            offset += batchSize
+            scanStatus = "Читаю теги: \(min(offset, newURLs.count)) из \(newURLs.count)"
+            await Task.yield()
+        }
+
+        if !created.isEmpty {
+            tracks.append(contentsOf: created)
+            summary.added = created.count
+        }
+        summary.skipped += skipped
+        schedulePersist()
+        return summary
+    }
+
+    private func makeTrack(url: URL, metadata: AudioFileMetadata) -> LocalTrack {
+        let fallback = LocalAudioMetadata.fallback(from: url)
+        var track = LocalTrack(
+            path: url.standardizedFileURL.path,
+            title: metadata.title ?? fallback.title,
+            artist: metadata.artist ?? fallback.artist,
+            album: metadata.album,
+            genre: metadata.genre,
+            year: metadata.year,
+            trackNumber: metadata.trackNumber,
+            duration: metadata.duration
+        )
+        if let data = metadata.artworkData {
+            track.artworkURL = MusicArtworkStore.save(data, for: track.id)
+        }
+        return track
+    }
+
+    // MARK: - Security-scoped access
+
+    private func startAccess(for source: MusicSource) -> URL? {
+        if let active = activeScopes[source.id] { return active }
+
+        if let bookmark = source.bookmark {
+            var stale = false
+            if let url = try? URL(
+                resolvingBookmarkData: bookmark,
+                options: [.withSecurityScope],
+                relativeTo: nil,
+                bookmarkDataIsStale: &stale
+            ) {
+                if url.startAccessingSecurityScopedResource() {
+                    startedScopes.insert(source.id)
+                }
+                activeScopes[source.id] = url
+                if stale, let fresh = Self.bookmarkData(for: url),
+                   let index = sources.firstIndex(where: { $0.id == source.id }) {
+                    sources[index].bookmark = fresh
+                    schedulePersist()
+                }
+                return url
+            }
+            if let url = try? URL(
+                resolvingBookmarkData: bookmark,
+                relativeTo: nil,
+                bookmarkDataIsStale: &stale
+            ) {
+                activeScopes[source.id] = url
+                return url
+            }
+        }
+
+        let fallback = URL(fileURLWithPath: source.path)
+        guard FileManager.default.fileExists(atPath: fallback.path) else { return nil }
+        activeScopes[source.id] = fallback
+        return fallback
+    }
+
+    private func stopAccess(for sourceID: String) {
+        if startedScopes.contains(sourceID) {
+            activeScopes[sourceID]?.stopAccessingSecurityScopedResource()
+            startedScopes.remove(sourceID)
+        }
+        activeScopes.removeValue(forKey: sourceID)
+    }
+
+    static func bookmarkData(for url: URL) -> Data? {
+        if let data = try? url.bookmarkData(
+            options: [.withSecurityScope],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        ) {
+            return data
+        }
+        return try? url.bookmarkData(
+            options: [],
+            includingResourceValuesForKeys: nil,
+            relativeTo: nil
+        )
+    }
+
+    // MARK: - Persistence
+
+    private struct Snapshot: Codable {
+        var tracks: [LocalTrack]
+        var playlists: [MusicPlaylist]
+        var sources: [MusicSource]
+    }
+
+    private func schedulePersist() {
+        saveTask?.cancel()
+        saveTask = Task { @MainActor [weak self] in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            guard let self, !Task.isCancelled else { return }
+            self.persistNow()
+        }
+    }
+
+    private func persistNow() {
+        guard persistenceEnabled, let storageURL else { return }
+        let snapshot = Snapshot(tracks: tracks, playlists: playlists, sources: sources)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.withoutEscapingSlashes]
+        guard let data = try? encoder.encode(snapshot) else { return }
+        do {
+            try FileManager.default.createDirectory(
+                at: storageURL.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            try data.write(to: storageURL, options: .atomic)
+        } catch {
+            // A failed write must not break playback; the next change retries.
+        }
+    }
+
+    private func uniquePlaylistName(for name: String, ignoring id: String? = nil) -> String {
+        let taken = { (candidate: String) -> Bool in
+            self.playlists.contains {
+                $0.id != id && $0.name.localizedCaseInsensitiveCompare(candidate) == .orderedSame
+            }
+        }
+        guard taken(name) else { return name }
+        var counter = 2
+        while taken("\(name) \(counter)") { counter += 1 }
+        return "\(name) \(counter)"
+    }
+
+#if DEBUG
+    /// Snapshot-only helper: installs a library without touching the real one.
+    func debugInstall(tracks: [LocalTrack], playlists: [MusicPlaylist] = []) {
+        persistenceEnabled = false
+        self.tracks = tracks
+        self.playlists = playlists
+    }
+#endif
+
+    static var defaultStorageURL: URL? {
+        FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("RadioMac", isDirectory: true)
+            .appendingPathComponent("music-library.json")
+    }
+}

@@ -20,6 +20,7 @@ enum DefaultsKey {
     static let diagnosticsEnabled = "diagnostics_enabled"
     static let lastFmEnabled = "lastfm_enabled"
     static let migrationFlag = "native_migration_v1"
+    static let musicAutoEnrich = "music_auto_enrich"
 
     /// `shared_preferences` on macOS stores every entry with this prefix.
     static let flutterPrefix = "flutter."

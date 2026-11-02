@@ -1,3 +1,4 @@
+import AVFoundation
 import AudioToolbox
 import Carbon.HIToolbox
 import XCTest
@@ -548,6 +549,11 @@ final class RadioMacLogicTests: XCTestCase {
         XCTAssertFalse(LastFmService.shouldScrobble(elapsed: 239.9))
         XCTAssertTrue(LastFmService.shouldScrobble(elapsed: 240))
         XCTAssertTrue(LastFmService.shouldScrobble(elapsed: 600))
+
+        XCTAssertEqual(LastFmService.minimumScrobbleDuration(for: nil), 240)
+        XCTAssertEqual(LastFmService.minimumScrobbleDuration(for: 20), 240)
+        XCTAssertEqual(LastFmService.minimumScrobbleDuration(for: 180), 90)
+        XCTAssertEqual(LastFmService.minimumScrobbleDuration(for: 600), 240)
 
         let client = LastFmClient(apiKey: "abc", apiSecret: "secret")
         let url = try? client.authURL(token: "token-1")

@@ -34,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem.onStop = { [weak environment] in environment?.player.stop() }
         statusItem.onCheckForUpdates = { UpdateService.shared.checkForUpdates() }
         statusItem.onOpenHistory = { [weak windowController] in windowController?.showHistory() }
+        statusItem.onOpenMusic = { [weak windowController] in windowController?.showMusic() }
         statusItem.onQuit = { NSApp.terminate(nil) }
         statusItemController = statusItem
 
@@ -73,6 +74,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         environment?.diagnostics.markCleanExit()
+        environment?.music.flush()
         environment?.hotKeys.stop()
         environment?.player.stop()
     }

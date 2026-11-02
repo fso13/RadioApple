@@ -7,6 +7,8 @@ struct NowPlaying: Equatable, Sendable {
     var title: String?
     var album: String?
     var artworkURL: String?
+    /// Length of the track when known (local files).
+    var duration: TimeInterval?
 
     var hasArtwork: Bool {
         guard let artworkURL else { return false }

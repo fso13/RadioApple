@@ -177,6 +177,7 @@ final class GlobalHotKeyService: ObservableObject {
     }
 
     private func playNext() {
+        if player.isLocalPlayback, player.playNextLocalTrack() { return }
         let stations = library.stations
         guard !stations.isEmpty else { return }
         if let current = player.station,

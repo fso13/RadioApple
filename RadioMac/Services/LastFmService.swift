@@ -22,6 +22,7 @@ final class LastFmService: ObservableObject {
         let artist: String
         let title: String
         let album: String?
+        let duration: TimeInterval?
         let key: String
     }
 
@@ -52,6 +53,14 @@ final class LastFmService: ObservableObject {
 
     static func shouldScrobble(elapsed: TimeInterval) -> Bool {
         elapsed >= scrobbleThreshold
+    }
+
+    /// Last.fm's rule: a track counts when played for four minutes or half its
+    /// length, whichever comes first. Local files know their duration, so short
+    /// songs scrobble when they actually finish.
+    static func minimumScrobbleDuration(for duration: TimeInterval?) -> TimeInterval {
+        guard let duration, duration > 30 else { return scrobbleThreshold }
+        return min(scrobbleThreshold, duration / 2)
     }
 
     // MARK: - Opt-in
@@ -271,10 +280,12 @@ final class LastFmService: ObservableObject {
         else { return nil }
 
         let album = nowPlaying.album?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let duration = nowPlaying.duration ?? player.playbackDuration
         return Track(
             artist: artist,
             title: title,
             album: album?.isEmpty == false ? album : nil,
+            duration: duration,
             key: "\(artist.lowercased())|\(title.lowercased())"
         )
     }
@@ -285,7 +296,8 @@ final class LastFmService: ObservableObject {
         activeStartedAt = nil
         lastNowPlayingKey = nil
 
-        guard Self.shouldScrobble(elapsed: Date().timeIntervalSince(startedAt)),
+        let elapsed = Date().timeIntervalSince(startedAt)
+        guard elapsed >= Self.minimumScrobbleDuration(for: track.duration),
               let client,
               let sessionKey = credentials?.sessionKey
         else { return }
@@ -310,7 +322,7 @@ final class LastFmService: ObservableObject {
                 artist: track.artist,
                 title: track.title,
                 album: track.album,
-                duration: nil,
+                duration: track.duration.map { Int($0.rounded()) },
                 sessionKey: sessionKey
             )
             statusMessage = "Now playing: \(track.artist) — \(track.title)"
@@ -332,7 +344,7 @@ final class LastFmService: ObservableObject {
                 title: track.title,
                 album: track.album,
                 timestamp: Int(startedAt.timeIntervalSince1970),
-                duration: nil,
+                duration: track.duration.map { Int($0.rounded()) },
                 sessionKey: sessionKey
             )
             statusMessage = "Скроббл: \(track.artist) — \(track.title)"

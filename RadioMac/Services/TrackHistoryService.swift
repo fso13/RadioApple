@@ -21,18 +21,41 @@ final class TrackHistoryService: ObservableObject {
             .compactMap { $0 }
             .receive(on: RunLoop.main)
             .sink { [weak self] track in
-                self?.record(track, station: player.station)
+                guard let self else { return }
+                if let station = player.station {
+                    self.record(track, station: station)
+                } else if let local = player.localTrack {
+                    self.record(
+                        track,
+                        sourceID: "local-music",
+                        sourceName: LocalTrack.trimmed(local.album) ?? "Локальная музыка"
+                    )
+                }
             }
             .store(in: &cancellables)
     }
 
     func record(_ track: NowPlaying, station: RadioStation?, at date: Date = Date()) {
         guard let station else { return }
+        record(
+            track,
+            sourceID: station.id,
+            sourceName: station.name,
+            at: date
+        )
+    }
+
+    func record(
+        _ track: NowPlaying,
+        sourceID: String,
+        sourceName: String,
+        at date: Date = Date()
+    ) {
         let title = track.displayTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !title.isEmpty else { return }
         let artist = track.displayArtist
         if let last = entries.first,
-           last.stationID == station.id,
+           last.stationID == sourceID,
            last.title == title,
            last.artist == artist {
             return
@@ -40,7 +63,8 @@ final class TrackHistoryService: ObservableObject {
 
         entries.insert(
             TrackHistoryEntry(
-                station: station,
+                sourceID: sourceID,
+                sourceName: sourceName,
                 title: title,
                 artist: artist,
                 playedAt: date

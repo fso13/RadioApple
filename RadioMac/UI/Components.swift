@@ -287,6 +287,8 @@ struct DestructiveButton: View {
 struct SearchLine: View {
     @Binding var text: String
     @FocusState.Binding var isFocused: Bool
+    var prompt: LocalizedStringKey = "Поиск станций"
+    var accessibilityLabel: String = "Поиск станций"
 
     @Environment(\.palette) private var palette
     @State private var hoveringClear = false
@@ -301,14 +303,14 @@ struct SearchLine: View {
                 TextField(
                     "",
                     text: $text,
-                    prompt: Text("Поиск станций").foregroundColor(palette.textTertiary)
+                    prompt: Text(prompt).foregroundColor(palette.textTertiary)
                 )
                 .textFieldStyle(.plain)
                 .font(Typeface.callout)
                 .foregroundStyle(palette.textPrimary)
                 .focused($isFocused)
                 .accessibilityIdentifier("station-search")
-                .accessibilityLabel("Поиск станций")
+                .accessibilityLabel(accessibilityLabel)
 
                 if text.isEmpty {
                     Text("⌘F")

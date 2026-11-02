@@ -11,6 +11,8 @@ final class NativeAudioEngine {
     var onStateChange: (@MainActor (RadioPlaybackState) -> Void)?
     var onMetadata: (@MainActor (String) -> Void)?
     var onPlaybackError: (@MainActor (String) -> Void)?
+    /// Fired when a local file reaches its end (streams never do).
+    var onEnded: (@MainActor () -> Void)?
 
     private var player: AVPlayer?
     private var item: AVPlayerItem?
@@ -30,15 +32,24 @@ final class NativeAudioEngine {
     private var audioMix: AVAudioMix?
     private var audioTap: MTAudioProcessingTap?
 
+    /// True while a file from the user's library is playing (no ICY, no HLS).
+    private(set) var isLocalFile = false
+    /// Known length of a local file, in seconds.
+    private(set) var duration: Double?
+
     func play(url: URL) {
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
 
+        let local = url.isFileURL
+        isLocalFile = local
+        duration = nil
+
         let item = AVPlayerItem(url: url)
         let player = AVPlayer(playerItem: item)
         player.volume = Float(volume)
-        player.automaticallyWaitsToMinimizeStalling = true
+        player.automaticallyWaitsToMinimizeStalling = !local
 
         self.item = item
         self.player = player
@@ -48,24 +59,56 @@ final class NativeAudioEngine {
         audioMix = nil
         audioTap = nil
 
-        let output = AVPlayerItemMetadataOutput(identifiers: nil)
-        let delegate = HLSMetadataDelegate()
-        delegate.onTitle = { [weak self] raw in
-            Task { @MainActor in self?.emitMetadata(raw) }
-        }
-        output.setDelegate(delegate, queue: .main)
-        item.add(output)
-        metadataOutput = output
-        metadataDelegate = delegate
+        if local {
+            metadataOutput = nil
+            metadataDelegate = nil
+            icyReader.stop()
+            loadDuration(for: item)
+        } else {
+            let output = AVPlayerItemMetadataOutput(identifiers: nil)
+            let delegate = HLSMetadataDelegate()
+            delegate.onTitle = { [weak self] raw in
+                Task { @MainActor in self?.emitMetadata(raw) }
+            }
+            output.setDelegate(delegate, queue: .main)
+            item.add(output)
+            metadataOutput = output
+            metadataDelegate = delegate
 
-        icyReader.onTitle = { [weak self] raw in
-            Task { @MainActor in self?.emitMetadata(raw) }
+            icyReader.onTitle = { [weak self] raw in
+                Task { @MainActor in self?.emitMetadata(raw) }
+            }
+            startICYIfNeeded()
         }
-        startICYIfNeeded()
 
         observe(item: item, player: player)
         onStateChange?(.loading)
         attachAudioMix(item: item, player: player)
+    }
+
+    // MARK: - Local files
+
+    var currentTime: Double {
+        guard let player else { return 0 }
+        let seconds = CMTimeGetSeconds(player.currentTime())
+        return seconds.isFinite && seconds >= 0 ? seconds : 0
+    }
+
+    func seek(to seconds: Double) {
+        guard let player else { return }
+        let clamped = max(0, seconds)
+        let time = CMTime(seconds: clamped, preferredTimescale: 600)
+        player.seek(to: time, toleranceBefore: .zero, toleranceAfter: .zero)
+    }
+
+    private func loadDuration(for item: AVPlayerItem) {
+        let expected = item
+        Task { @MainActor [weak self] in
+            guard let assetDuration = try? await expected.asset.load(.duration) else { return }
+            let seconds = CMTimeGetSeconds(assetDuration)
+            guard let self, self.item === expected, seconds.isFinite, seconds > 0 else { return }
+            self.duration = seconds
+        }
     }
 
     func setEQEnabled(_ enabled: Bool) {
@@ -125,6 +168,8 @@ final class NativeAudioEngine {
         lastMetadata = nil
         audioMix = nil
         audioTap = nil
+        isLocalFile = false
+        duration = nil
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
@@ -140,6 +185,8 @@ final class NativeAudioEngine {
 
     private func startICYIfNeeded() {
         guard let currentURL,
+              let scheme = currentURL.scheme?.lowercased(),
+              scheme == "http" || scheme == "https",
               !currentURL.absoluteString.lowercased().contains(".m3u8")
         else {
             icyReader.stop()
@@ -363,5 +410,9 @@ final class NativeAudioEngine {
         wantsPlayback = false
         icyReader.stop()
         onStateChange?(.idle)
+        if isLocalFile {
+            // The player service advances the queue or stops gracefully.
+            onEnded?()
+        }
     }
 }

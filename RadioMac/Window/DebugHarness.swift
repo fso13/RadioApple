@@ -1,4 +1,5 @@
 #if DEBUG
+@preconcurrency import AVFoundation
 import AppKit
 import Combine
 import Foundation
@@ -77,6 +78,19 @@ enum DebugHarness {
             )
             return true
         }
+        if let name = value(after: "-enrichtest", in: arguments) {
+            runEnrichmentTest(
+                output: scratchDirectory(named: "").appendingPathComponent(name)
+            )
+            return true
+        }
+        if let name = value(after: "-musicplaytest", in: arguments) {
+            runMusicPlaytest(
+                output: scratchDirectory(named: "").appendingPathComponent(name),
+                environment: environment
+            )
+            return true
+        }
         if let name = value(after: "-hotkeytest", in: arguments) {
             let output = scratchDirectory(named: "").appendingPathComponent(name)
             let lines = [
@@ -106,6 +120,79 @@ enum DebugHarness {
             return true
         }
         return false
+    }
+
+    // MARK: - Local music
+
+    /// Checks the online catalogues and the match scoring against live APIs.
+    private static func runEnrichmentTest(output: URL) {
+        Task { @MainActor in
+            let queries = [
+                ("Gymnopedie No. 1", "Erik Satie"),
+                ("Clair de Lune", "Claude Debussy"),
+                ("Peace Piece", "Bill Evans"),
+                ("Some Song That Cannot Exist 9x8y7z", "Nobody"),
+            ]
+            var lines: [String] = []
+            for (title, artist) in queries {
+                let found = await MetadataEnrichmentService.shared.candidates(
+                    title: title,
+                    artist: artist,
+                    album: nil
+                )
+                lines.append("query=\(title) count=\(found.count)")
+                for candidate in found.prefix(3) {
+                    lines.append(
+                        "  score=\(String(format: "%.2f", candidate.matchScore)) "
+                            + "title=\(candidate.title ?? "-") "
+                            + "artist=\(candidate.artist ?? "-") "
+                            + "album=\(candidate.album ?? "-") "
+                            + "year=\(candidate.year.map(String.init) ?? "-") "
+                            + "genre=\(candidate.genre ?? "-") "
+                            + "art=\(candidate.artworkURL != nil) "
+                            + "source=\(candidate.source)"
+                    )
+                }
+            }
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output,
+                atomically: true,
+                encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
+    }
+
+    /// Plays the sample WAVs and records the player state, so the local queue
+    /// and auto-advance can be checked without clicking through the UI.
+    private static func runMusicPlaytest(output: URL, environment: AppEnvironment) {
+        seedMusicSnapshot(environment: environment)
+        let tracks = environment.music.sorted(environment.music.tracks, by: .title)
+        environment.player.playLocalTracks(tracks, startingAt: 0, title: "test")
+        let player = environment.player
+
+        var lines: [String] = []
+        Task { @MainActor in
+            for step in 0..<12 {
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                lines.append(
+                    "t=\(Double(step) * 0.5) status=\(player.status.rawValue) "
+                        + "track=\(player.localTrack?.displayTitle ?? "-") "
+                        + "playing=\(player.isPlaying) "
+                        + "elapsed=\(String(format: "%.2f", player.playbackElapsed)) "
+                        + "duration=\(player.playbackDuration ?? -1) "
+                        + "queue=\(player.localQueue.count) "
+                        + "now=\(player.nowPlaying?.trayLine ?? "-")"
+                )
+            }
+            lines.append("error=\(player.consumeError() ?? "none")")
+            try? lines.joined(separator: "\n").appending("\n").write(
+                to: output,
+                atomically: true,
+                encoding: .utf8
+            )
+            NSApp.terminate(nil)
+        }
     }
 
     // MARK: - Snapshots
@@ -161,6 +248,7 @@ enum DebugHarness {
                 MiniPlayerView(
                     player: environment.player,
                     library: environment.library,
+                    music: environment.music,
                     theme: environment.theme,
                     onOpenWindow: {}
                 ),
@@ -213,7 +301,126 @@ enum DebugHarness {
                 to: directory.appendingPathComponent("11-transfer.png")
             )
         }
+        seedMusicSnapshot(environment: environment)
+        after { environment.router.route = .music }
+        after { }
+        after { window.snapshotPanel(to: directory.appendingPathComponent("13-music.png")) }
+        after {
+            let items = environment.music.sorted(environment.music.tracks, by: .title)
+            guard !items.isEmpty else { return }
+            environment.player.playLocalTracks(items, startingAt: 0, title: "Все треки")
+        }
+        after { }
+        after { window.snapshotPanel(to: directory.appendingPathComponent("14-music-playing.png")) }
+        after {
+            snapshotHosting(
+                MiniPlayerView(
+                    player: environment.player,
+                    library: environment.library,
+                    music: environment.music,
+                    theme: environment.theme,
+                    onOpenWindow: {}
+                ),
+                size: NSSize(width: 320, height: 430),
+                to: directory.appendingPathComponent("18-mini-player-music.png")
+            )
+        }
+        after {
+            environment.player.stop()
+            environment.theme.setPreference(.dark)
+        }
+        after { window.snapshotPanel(to: directory.appendingPathComponent("15-music-dark.png")) }
+        after {
+            environment.theme.setPreference(.system)
+            environment.router.route = .settings
+        }
+        after {
+            if let track = environment.music.tracks.first {
+                snapshotHosting(
+                    ThemedRoot {
+                        MusicTrackEditorView(track: track, library: environment.music)
+                    },
+                    size: NSSize(width: 560, height: 720),
+                    to: directory.appendingPathComponent("16-music-editor.png")
+                )
+            }
+        }
+        after {
+            snapshotHosting(
+                ThemedRoot {
+                    MusicSourcesView(
+                        library: environment.music,
+                        toasts: environment.toasts,
+                        onClose: {}
+                    )
+                },
+                size: NSSize(width: 620, height: 560),
+                to: directory.appendingPathComponent("17-music-sources.png")
+            )
+        }
         after { NSApp.terminate(nil) }
+    }
+
+    /// Snapshot helper: a few silent WAVs with tag-like file names, installed
+    /// in memory so the developer's own library is untouched.
+    private static func seedMusicSnapshot(environment: AppEnvironment) {
+        let folder = FileManager.default.temporaryDirectory
+            .appendingPathComponent("RadioMacSnapshotMusic", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+
+        let names = [
+            "01 - Erik Satie - Gymnopedie No. 1.wav",
+            "02 - Claude Debussy - Clair de Lune.wav",
+            "03 - Bill Evans - Peace Piece.wav",
+            "04 - Nils Frahm - Says.wav",
+            "05 - Philip Glass - Opening.wav",
+        ]
+        let albums = ["Quiet Piano", "Quiet Piano", "Kind of Blue", "Spaces", "Glassworks"]
+
+        var tracks: [LocalTrack] = []
+        for (index, name) in names.enumerated() {
+            let url = folder.appendingPathComponent(name)
+            if !FileManager.default.fileExists(atPath: url.path) {
+                writeSilentWav(to: url, seconds: 3)
+            }
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            let fallback = LocalAudioMetadata.fallback(from: url)
+            tracks.append(
+                LocalTrack(
+                    path: url.path,
+                    title: fallback.title,
+                    artist: fallback.artist,
+                    album: albums[index],
+                    genre: index == 2 ? "Jazz" : "Ambient",
+                    year: 2016,
+                    trackNumber: index + 1,
+                    duration: 3,
+                    addedAt: Date(timeIntervalSinceNow: TimeInterval(-index * 3600))
+                )
+            )
+        }
+        let playlist = MusicPlaylist(
+            name: "Для работы",
+            trackIDs: tracks.prefix(3).map(\.id),
+            sourceName: "work.m3u"
+        )
+        environment.music.debugInstall(tracks: tracks, playlists: [playlist])
+    }
+
+    private static func writeSilentWav(to url: URL, seconds: Int) {
+        guard let format = AVAudioFormat(
+            standardFormatWithSampleRate: 44_100,
+            channels: 1
+        ) else { return }
+        guard let file = try? AVAudioFile(forWriting: url, settings: format.settings) else {
+            return
+        }
+        let frames = AVAudioFrameCount(44_100 * seconds)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: frames) else {
+            return
+        }
+        buffer.frameLength = frames
+        try? file.write(from: buffer)
     }
 
     private static func snapshotHosting<Content: View>(
