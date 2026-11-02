@@ -320,7 +320,6 @@ scripts/dmg_settings.py       раскладка окна установки д�
 scripts/make_brand_assets.py  генерация иконки приложения и фона установщика
 scripts/release_notes.py      тело релиза из CHANGELOG
 scripts/check_site.py         проверка ссылок и alt-текстов сайта
-scripts/add_xcode_files.py    регистрация новых .swift в project.pbxproj
 scripts/preview_site.sh       локальный сервер сайта
 scripts/check_wiki.py         проверка ссылок и навигации вики
 scripts/publish_wiki.sh       публикация wiki/ в GitHub Wiki

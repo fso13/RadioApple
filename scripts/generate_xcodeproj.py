@@ -15,6 +15,9 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCES_DIR = ROOT / "RadioMac"
 PROJECT_NAME = "RadioMac"
+# Keep in sync with CHANGELOG/release tags; the release workflow overrides these.
+MARKETING_VERSION = "1.4.0"
+BUILD_NUMBER = "8"
 
 ASSETS = SOURCES_DIR / "Resources" / "Assets.xcassets"
 INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
@@ -369,7 +372,7 @@ def build() -> tuple[str, str]:
         'CODE_SIGN_IDENTITY = "-";',
         "CODE_SIGN_STYLE = Manual;",
         "COMBINE_HIDPI_IMAGES = YES;",
-        "CURRENT_PROJECT_VERSION = 7;",
+        f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
         "ENABLE_HARDENED_RUNTIME = NO;",
         "ENABLE_PREVIEWS = YES;",
         "INFOPLIST_FILE = RadioMac/Resources/Info.plist;",
@@ -382,7 +385,7 @@ def build() -> tuple[str, str]:
         '\t"-framework",',
         '\tAppIntents,',
         ");",
-        "MARKETING_VERSION = 1.3.1;",
+        f"MARKETING_VERSION = {MARKETING_VERSION};",
         "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac;",
         'PRODUCT_NAME = "$(TARGET_NAME)";',
         "SWIFT_STRICT_CONCURRENCY = complete;",
@@ -447,14 +450,14 @@ def build() -> tuple[str, str]:
             "CODE_SIGN_ENTITLEMENTS = RadioMacWidget/RadioMacWidget.entitlements;",
             'CODE_SIGN_IDENTITY = "-";',
             "CODE_SIGN_STYLE = Manual;",
-            "CURRENT_PROJECT_VERSION = 7;",
+            f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
             "GENERATE_INFOPLIST_FILE = NO;",
             "INFOPLIST_FILE = RadioMacWidget/Info.plist;",
             "LD_RUNPATH_SEARCH_PATHS = (",
             '\t"$(inherited)",',
             '\t"@executable_path/../../../../Frameworks",',
             ");",
-            "MARKETING_VERSION = 1.3.1;",
+            f"MARKETING_VERSION = {MARKETING_VERSION};",
             "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac.widget;",
             'PRODUCT_NAME = "$(TARGET_NAME)";',
             "SKIP_INSTALL = YES;",
