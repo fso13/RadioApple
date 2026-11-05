@@ -63,8 +63,9 @@ final class RadioMacFinderSync: FIFinderSync {
 /// Hands a Finder selection over to the RadioMac app.
 enum FinderLauncher {
     static func open(_ selection: FinderSelection) {
+        let request = request(for: selection)
         guard let appURL = applicationURL else {
-            FinderBridge.post(request(for: selection))
+            FinderBridge.post(request)
             return
         }
 
@@ -76,10 +77,11 @@ enum FinderLauncher {
             withApplicationAt: appURL,
             configuration: configuration
         ) { _, error in
-            guard error != nil else { return }
-            // The app is probably not reachable through Launch Services; a
-            // running app can still act on the paths through the notification.
-            FinderBridge.post(request(for: selection))
+            guard let error else { return }
+            // Launch Services refused the items; keep the reason where the app
+            // and a bug report can find it, then let a running app try itself.
+            FinderBridge.report(error, for: request)
+            FinderBridge.post(request)
         }
     }
 

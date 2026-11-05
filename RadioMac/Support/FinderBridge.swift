@@ -93,4 +93,28 @@ enum FinderBridge {
         guard let data = userInfo?[requestKey] as? Data else { return nil }
         return try? JSONDecoder().decode(FinderRequest.self, from: data)
     }
+
+    /// Path of the note about the last failed hand-off.
+    static var reportURL: URL {
+        SharedPlaybackState.directoryURL.appendingPathComponent("finder-last-error.txt")
+    }
+
+    /// Records why Launch Services refused the items: the Finder menu has no UI
+    /// for errors, so the reason goes next to the shared playback state.
+    static func report(_ error: Error, for request: FinderRequest) {
+        let failure = error as NSError
+        let text = """
+        \(Date().formatted(.iso8601))
+        action: \(request.action.rawValue)
+        error: \(failure.domain) \(failure.code) — \(failure.localizedDescription)
+        items:
+        \(request.paths.joined(separator: "\n"))
+        """
+        let manager = FileManager.default
+        try? manager.createDirectory(
+            at: SharedPlaybackState.directoryURL,
+            withIntermediateDirectories: true
+        )
+        try? text.write(to: reportURL, atomically: true, encoding: .utf8)
+    }
 }

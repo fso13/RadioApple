@@ -163,6 +163,7 @@ def build() -> tuple[str, str]:
     finder_sources = sorted(FINDER_DIR.glob("*.swift")) + [
         SOURCES_DIR / "Support" / "FinderBridge.swift",
         SOURCES_DIR / "Support" / "AudioFileTypes.swift",
+        SOURCES_DIR / "Services" / "SharedPlaybackState.swift",
     ]
 
     ios_sources = sorted(IOS_DIR.rglob("*.swift"))
