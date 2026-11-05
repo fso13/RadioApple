@@ -1,6 +1,9 @@
+#if os(macOS)
 import AppKit
+#endif
 import Combine
 import Foundation
+
 
 enum MusicLibraryError: LocalizedError {
     case unreadable(String)
@@ -28,8 +31,8 @@ enum MusicLibraryError: LocalizedError {
 @MainActor
 final class MusicLibrary: ObservableObject {
     @Published var tracks: [LocalTrack] = []
-    @Published private(set) var playlists: [MusicPlaylist] = []
-    @Published private(set) var sources: [MusicSource] = []
+    @Published var playlists: [MusicPlaylist] = []
+    @Published var sources: [MusicSource] = []
     /// Manually picked artist covers, keyed by the displayed artist name.
     @Published var artistArtwork: [String: String] = [:]
 
@@ -72,6 +75,12 @@ final class MusicLibrary: ObservableObject {
 
     func track(id: String) -> LocalTrack? {
         tracks.first { $0.id == id }
+    }
+
+    /// Looks a track up by its absolute path; used when the Finder hands files
+    /// to the app instead of the library.
+    func track(atPath path: String) -> LocalTrack? {
+        tracks.first { $0.path == path }
     }
 
     func playlist(id: String) -> MusicPlaylist? {
@@ -316,11 +325,17 @@ final class MusicLibrary: ObservableObject {
         playlists = snapshot.playlists
         sources = snapshot.sources
         artistArtwork = snapshot.artistArtwork ?? [:]
+        #if os(iOS)
+        migrateContainerPaths()
+        #endif
+        deduplicateTracks()
+
         for source in sources {
             _ = startAccess(for: source)
         }
         refreshMissingFlags()
     }
+
 
     /// Writes pending changes immediately. Called when the app quits.
     func flush() {
@@ -337,17 +352,18 @@ final class MusicLibrary: ObservableObject {
 
     // MARK: - Sources
 
-    func hasAccess(toFolder url: URL) -> Bool {
-        let path = url.standardizedFileURL.path
-        return sources.contains { source in
-            source.isFolder
-                && (path == source.path || path.hasPrefix(source.path + "/"))
-        }
-    }
-
     @discardableResult
     func addFolder(_ url: URL) async -> MusicImportSummary {
+        #if os(iOS)
+        guard let local = await MusicImportCopier.copy(url) else {
+            var failure = MusicImportSummary()
+            failure.missing = 1
+            return failure
+        }
+        let summary = await addFolderWithoutEnrichment(local)
+        #else
         let summary = await addFolderWithoutEnrichment(url)
+        #endif
         startEnrichmentIfNeeded()
         return summary
     }
@@ -356,7 +372,19 @@ final class MusicLibrary: ObservableObject {
     func addFiles(_ urls: [URL]) async -> MusicImportSummary {
         var summary = MusicImportSummary()
         var audioURLs: [URL] = []
+        #if os(iOS)
+        var candidates: [URL] = []
         for url in urls {
+            if let local = await MusicImportCopier.copy(url) {
+                candidates.append(local)
+            } else {
+                summary.missing += 1
+            }
+        }
+        #else
+        let candidates = urls
+        #endif
+        for url in candidates {
             let standardized = url.standardizedFileURL
             var isDirectory: ObjCBool = false
             guard FileManager.default.fileExists(atPath: standardized.path, isDirectory: &isDirectory) else {
@@ -390,6 +418,7 @@ final class MusicLibrary: ObservableObject {
         startEnrichmentIfNeeded()
         return summary
     }
+
 
     private func addFolderWithoutEnrichment(_ url: URL) async -> MusicImportSummary {
         let standardized = url.standardizedFileURL
@@ -532,7 +561,9 @@ final class MusicLibrary: ObservableObject {
     }
 
     func revealInFinder(_ track: LocalTrack) {
+        #if os(macOS)
         NSWorkspace.shared.activateFileViewerSelecting([track.url])
+        #endif
     }
 
     func refreshMissingFlags() {
@@ -551,17 +582,34 @@ final class MusicLibrary: ObservableObject {
     // MARK: - Playlists
 
     @discardableResult
-    func createPlaylist(name: String, trackIDs: [String] = [], sourceName: String? = nil) -> MusicPlaylist? {
+    func createPlaylist(
+        name: String,
+        trackIDs: [String] = [],
+        sourceName: String? = nil,
+        folderPath: String? = nil
+    ) -> MusicPlaylist? {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return nil }
         let playlist = MusicPlaylist(
             name: uniquePlaylistName(for: trimmed),
             trackIDs: trackIDs.filter { id in tracks.contains { $0.id == id } },
-            sourceName: sourceName
+            sourceName: sourceName,
+            folderPath: folderPath
         )
         playlists.append(playlist)
         schedulePersist()
         return playlist
+    }
+
+    /// Replaces the content of a playlist that mirrors a folder, keeping its
+    /// name and identifier.
+    func replaceTracks(_ trackIDs: [String], in playlistID: String) {
+        guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
+        let valid = trackIDs.filter { id in tracks.contains { $0.id == id } }
+        guard playlists[index].trackIDs != valid else { return }
+        playlists[index].trackIDs = valid
+        playlists[index].updatedAt = Date()
+        schedulePersist()
     }
 
     func renamePlaylist(id: String, name: String) {
@@ -786,7 +834,7 @@ final class MusicLibrary: ObservableObject {
         )
     }
 
-    private func collectAudioFiles(in folders: [URL]) -> [URL] {
+    func collectAudioFiles(in folders: [URL]) -> [URL] {
         var found: [URL] = []
         for folder in folders {
             var isDirectory: ObjCBool = false
@@ -904,6 +952,7 @@ final class MusicLibrary: ObservableObject {
     private func startAccess(for source: MusicSource) -> URL? {
         if let active = activeScopes[source.id] { return active }
 
+        #if os(macOS)
         if let bookmark = source.bookmark {
             var stale = false
             if let url = try? URL(
@@ -932,6 +981,7 @@ final class MusicLibrary: ObservableObject {
                 return url
             }
         }
+        #endif
 
         let fallback = URL(fileURLWithPath: source.path)
         guard FileManager.default.fileExists(atPath: fallback.path) else { return nil }
@@ -948,6 +998,7 @@ final class MusicLibrary: ObservableObject {
     }
 
     static func bookmarkData(for url: URL) -> Data? {
+        #if os(macOS)
         if let data = try? url.bookmarkData(
             options: [.withSecurityScope],
             includingResourceValuesForKeys: nil,
@@ -960,6 +1011,11 @@ final class MusicLibrary: ObservableObject {
             includingResourceValuesForKeys: nil,
             relativeTo: nil
         )
+        #else
+        // iOS has no security-scoped bookmarks for arbitrary folders; imported
+        // audio is copied into the container instead (see `MusicImportCopier`).
+        return nil
+        #endif
     }
 
     // MARK: - Persistence
@@ -1031,3 +1087,62 @@ final class MusicLibrary: ObservableObject {
             .appendingPathComponent("music-library.json")
     }
 }
+
+#if os(iOS)
+/// Copies files and folders picked in the Files app into the app container.
+///
+/// iOS has no security-scoped bookmarks for arbitrary locations, so imported
+/// audio is copied once and then read from the sandbox for the lifetime of the
+/// library. The copy keeps the original file name and avoids overwriting an
+/// earlier import.
+enum MusicImportCopier {
+    /// Where imported audio lives. The container is always readable by the app.
+    static var directory: URL {
+        let documents = FileManager.default.urls(
+            for: .documentDirectory,
+            in: .userDomainMask
+        ).first ?? FileManager.default.temporaryDirectory
+        return documents.appendingPathComponent("Music", isDirectory: true)
+    }
+
+    static func copy(_ url: URL) async -> URL? {
+        let root = directory
+        // Files that already live in the import folder (dropped there through
+        // Files or Finder file sharing) are used in place, not copied again.
+        if url.standardizedFileURL.path.hasPrefix(root.standardizedFileURL.path + "/") {
+            return url
+        }
+        return await Task.detached(priority: .userInitiated) { [url, root] in
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer {
+                if scoped { url.stopAccessingSecurityScopedResource() }
+            }
+
+            let manager = FileManager.default
+            guard manager.fileExists(atPath: url.path) else { return nil }
+            do {
+                try manager.createDirectory(at: root, withIntermediateDirectories: true)
+                let destination = uniqueDestination(for: url.lastPathComponent, in: root)
+                try manager.copyItem(at: url, to: destination)
+                return destination
+            } catch {
+                return nil
+            }
+        }.value
+    }
+
+    private static func uniqueDestination(for name: String, in directory: URL) -> URL {
+        let manager = FileManager.default
+        let base = (name as NSString).deletingPathExtension
+        let ext = (name as NSString).pathExtension
+        var candidate = directory.appendingPathComponent(name)
+        var counter = 2
+        while manager.fileExists(atPath: candidate.path) {
+            let suffix = ext.isEmpty ? "" : ".\(ext)"
+            candidate = directory.appendingPathComponent("\(base) \(counter)\(suffix)")
+            counter += 1
+        }
+        return candidate
+    }
+}
+#endif

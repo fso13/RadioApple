@@ -71,6 +71,8 @@ RadioMac — нативное приложение на **Swift 6** (SwiftUI + A
 | `MusicLibrary` | локальная музыка: папки-источники, теги, альбомы, исполнители, плейлисты, обложки, M3U, обогащение |
 | `LocalAudioMetadata` | теги и обложки из файлов через AVFoundation, кэш обложек |
 | `MusicPlaylistFile` | импорт и экспорт M3U/M3U8 для локальных файлов |
+| `FinderRequestService` | пункты Finder: воспроизведение файлов и плейлист из папки |
+| `RadioMacFinder` | Finder Sync ext: контекстное меню «Проиграть/Создать плейлист» |
 | `MetadataEnrichmentService` | нормализация, оценка совпадений и кэш запросов |
 | `MetadataProviders` | Apple Music (iTunes Search) и Deezer |
 

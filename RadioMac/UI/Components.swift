@@ -1,8 +1,11 @@
+#if os(macOS)
 import AppKit
+#endif
 import SwiftUI
 
 // MARK: - Window drag handle
 
+#if os(macOS)
 /// Native drag handle for the frameless panel's header.
 struct WindowDragArea: NSViewRepresentable {
     final class DragView: NSView {
@@ -16,6 +19,7 @@ struct WindowDragArea: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView { DragView() }
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
+#endif
 
 // MARK: - Header
 
@@ -39,8 +43,10 @@ struct PanelHeader<Trailing: View>: View {
 
     var body: some View {
         ZStack {
+            #if os(macOS)
             WindowDragArea()
                 .accessibilityHidden(true)
+            #endif
 
             HStack(spacing: Space.s) {
                 if let onBack {
@@ -65,6 +71,7 @@ struct PanelHeader<Trailing: View>: View {
     }
 }
 
+#if os(macOS)
 /// The hamburger menu from the reference, backed by a native NSMenu.
 struct PanelMenu<Content: View>: View {
     @ViewBuilder var content: () -> Content
@@ -89,11 +96,12 @@ struct PanelMenu<Content: View>: View {
         .menuStyle(.borderlessButton)
         .menuIndicator(.hidden)
         .fixedSize()
-        .onHover { hovering = $0 }
-        .help("Меню")
+        .onHoverCompat { hovering = $0 }
+        .helpCompat("Меню")
         .accessibilityLabel("Меню")
     }
 }
+#endif
 
 // MARK: - Buttons
 
@@ -115,7 +123,12 @@ struct CircleIconButton: View {
             Image(systemName: systemName)
                 .font(.system(size: size, weight: weight))
                 .foregroundStyle(iconColor)
+                #if os(iOS)
+                // HIG: the minimum comfortable touch target is 44×44 pt.
+                .frame(width: 44, height: 44)
+                #else
                 .frame(width: 28, height: 28)
+                #endif
                 .background(
                     RoundedRectangle(cornerRadius: Radius.xs, style: .continuous)
                         .fill(hovering ? palette.surfaceHover : .clear)
@@ -123,9 +136,9 @@ struct CircleIconButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .hoverHighlight($hovering)
         .animation(Motion.hover, value: hovering)
-        .help(help ?? "")
+        .helpCompat(help ?? "")
         .accessibilityLabel(help ?? systemName)
     }
 
@@ -155,11 +168,19 @@ struct PrimaryButton: View {
                         .font(.system(size: 11, weight: .semibold))
                 }
                 Text(title)
+                    #if os(iOS)
+                    .font(.system(size: 15, weight: .semibold))
+                    #else
                     .font(Typeface.captionMedium)
+                    #endif
             }
             .foregroundStyle(palette.onAccent.opacity(isEnabled ? 1 : 0.6))
             .padding(.horizontal, Space.m + 2)
+            #if os(iOS)
+            .frame(height: 44)
+            #else
             .frame(height: 30)
+            #endif
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .background(
                 RoundedRectangle(cornerRadius: Radius.xs, style: .continuous)
@@ -169,7 +190,7 @@ struct PrimaryButton: View {
         }
         .buttonStyle(.plain)
         .disabled(!isEnabled)
-        .onHover { hovering = $0 && isEnabled }
+        .onHoverCompat { hovering = $0 && isEnabled }
         .animation(Motion.hover, value: hovering)
     }
 }
@@ -192,11 +213,19 @@ struct SecondaryButton: View {
                         .font(.system(size: 11, weight: .medium))
                 }
                 Text(title)
+                    #if os(iOS)
+                    .font(.system(size: 15, weight: .semibold))
+                    #else
                     .font(Typeface.captionMedium)
+                    #endif
             }
             .foregroundStyle(palette.textPrimary)
             .padding(.horizontal, Space.m + 2)
+            #if os(iOS)
+            .frame(height: 44)
+            #else
             .frame(height: 30)
+            #endif
             .frame(maxWidth: fullWidth ? .infinity : nil)
             .background(
                 RoundedRectangle(cornerRadius: Radius.xs, style: .continuous)
@@ -209,7 +238,7 @@ struct SecondaryButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHoverCompat { hovering = $0 }
         .animation(Motion.hover, value: hovering)
     }
 }
@@ -236,16 +265,24 @@ struct TextButton: View {
                 if iconPosition == .leading, let systemImage {
                     Image(systemName: systemImage).font(.system(size: 10, weight: .medium))
                 }
-                Text(title).font(Typeface.captionMedium)
+                Text(title)
+                    #if os(iOS)
+                    .font(.system(size: 15, weight: .medium))
+                    #else
+                    .font(Typeface.captionMedium)
+                    #endif
                 if iconPosition == .trailing, let systemImage {
                     Image(systemName: systemImage).font(.system(size: 10, weight: .medium))
                 }
             }
             .foregroundStyle((tint ?? palette.textPrimary).opacity(hovering ? 0.6 : 1))
             .contentShape(Rectangle())
+            #if os(iOS)
+            .frame(minHeight: 44)
+            #endif
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHoverCompat { hovering = $0 }
     }
 }
 
@@ -276,7 +313,7 @@ struct DestructiveButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHoverCompat { hovering = $0 }
         .animation(Motion.hover, value: hovering)
     }
 }
@@ -326,8 +363,8 @@ struct SearchLine: View {
                             .foregroundStyle(hoveringClear ? palette.textPrimary : palette.textTertiary)
                     }
                     .buttonStyle(.plain)
-                    .onHover { hoveringClear = $0 }
-                    .help("Очистить поиск")
+                    .onHoverCompat { hoveringClear = $0 }
+                    .helpCompat("Очистить поиск")
                     .accessibilityLabel("Очистить поиск")
                 }
             }
@@ -371,7 +408,7 @@ struct NavItem: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .onHover { hovering = $0 }
+        .onHoverCompat { hovering = $0 }
         .animation(Motion.hover, value: hovering)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -393,7 +430,11 @@ struct PageHeading: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Space.xs + 2) {
             Text(title)
+                #if os(iOS)
+                .font(.title2.bold())
+                #else
                 .font(Typeface.pageTitle)
+                #endif
                 .foregroundStyle(palette.textPrimary)
             if let subtitle {
                 Text(subtitle)
@@ -511,7 +552,7 @@ struct InfoRow: View {
                 .foregroundStyle(palette.textPrimary)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .help(value)
+                .helpCompat(value)
         }
         .padding(.vertical, Space.m - 2)
     }
@@ -536,12 +577,20 @@ struct EmptyStateView: View {
 
             VStack(spacing: Space.xs) {
                 Text(title)
+                    #if os(iOS)
+                    .font(.headline)
+                    #else
                     .font(Typeface.section)
+                    #endif
                     .foregroundStyle(palette.textPrimary)
                     .multilineTextAlignment(.center)
                 if let subtitle {
                     Text(subtitle)
+                        #if os(iOS)
+                        .font(.subheadline)
+                        #else
                         .font(Typeface.callout)
+                        #endif
                         .foregroundStyle(palette.textSecondary)
                         .multilineTextAlignment(.center)
                 }
@@ -595,7 +644,11 @@ struct LiveIndicator: View {
                 .fill(palette.red)
                 .frame(width: 4, height: 4)
             Text("LIVE")
+                #if os(iOS)
+                .font(.caption2.monospaced())
+                #else
                 .font(Typeface.monoSmall)
+                #endif
                 .tracking(1.1)
                 .foregroundStyle(palette.textSecondary)
         }

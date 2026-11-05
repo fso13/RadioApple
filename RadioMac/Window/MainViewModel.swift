@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-enum StationFilter: Equatable {
+enum StationFilter: Hashable {
     case all
     case favorites
     case genre(String)
@@ -71,10 +71,12 @@ final class MainViewModel: ObservableObject {
 
     // MARK: - Filtering
 
-    private func recompute(resetSelection: Bool) {
+    /// Stations of one filter, matching the current search. Used by the paged
+    /// radio UI so every page can render its own list.
+    func stations(for filter: StationFilter) -> [RadioStation] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
-        let items = library.stations.filter { station in
+        return library.stations.filter { station in
             switch filter {
             case .all:
                 break
@@ -98,7 +100,10 @@ final class MainViewModel: ObservableObject {
             ]
             return haystacks.contains { $0.contains(query) }
         }
+    }
 
+    private func recompute(resetSelection: Bool) {
+        let items = stations(for: filter)
         visible = items
 
         if resetSelection {

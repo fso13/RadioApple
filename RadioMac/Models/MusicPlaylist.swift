@@ -10,6 +10,9 @@ struct MusicPlaylist: Identifiable, Hashable, Codable, Sendable {
     var updatedAt: Date
     /// Name of the `.m3u` file the playlist came from, when it did.
     var sourceName: String?
+    /// Folder the playlist mirrors (the Finder menu), so the same folder
+    /// updates its playlist instead of creating a duplicate.
+    var folderPath: String?
 
     init(
         id: String = UUID().uuidString,
@@ -17,7 +20,8 @@ struct MusicPlaylist: Identifiable, Hashable, Codable, Sendable {
         trackIDs: [String] = [],
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        sourceName: String? = nil
+        sourceName: String? = nil,
+        folderPath: String? = nil
     ) {
         self.id = id
         self.name = name
@@ -25,6 +29,7 @@ struct MusicPlaylist: Identifiable, Hashable, Codable, Sendable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.sourceName = sourceName
+        self.folderPath = folderPath
     }
 
     var trackCount: Int { trackIDs.count }

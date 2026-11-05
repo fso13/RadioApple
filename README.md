@@ -4,6 +4,10 @@
 который продолжается после закрытия окна. Написан на **Swift / SwiftUI + AppKit** поверх
 нативного аудиодвижка AVFoundation/AVPlayer.
 
+В проекте есть и **iPhone-версия** (RadioiOS) на том же ядре: эфир, Radio Browser и
+локальные файлы. Она ставится из Xcode на свой телефон без App Store — см. раздел
+[iPhone](#iphone).
+
 Интерфейс — светлый редакционный минимализм: бумажный фон, одна краска (чернила), крупная
 типографика и таблица станций. Вдохновлено шотом
 [Office Radio app](https://dribbble.com/shots/19641552-Office-Radio-app) Марко Колича
@@ -38,7 +42,7 @@
 
 ## Требования
 
-- macOS 14 (Sonoma) или новее
+- macOS 14 (Sonoma) или новее; для iPhone — iOS 17 или новее
 - Xcode 16.4+ (Swift 6 language mode; проверено на Xcode 27 / Swift 6.4)
 - Apple Silicon или Intel: всё аудио идёт через системный AVFoundation/AVPlayer;
   внешние аудиобиблиотеки не требуются.
@@ -56,12 +60,80 @@ open .build/DerivedData/Build/Products/Debug/RadioMac.app
 Сборка подписана ad-hoc (`CODE_SIGN_IDENTITY = "-"`), для локального запуска этого достаточно.
 Для распространения задайте свою команду в *Signing & Capabilities*.
 
-Тесты (44 unit + 4 UI XCTest-кейса):
+Тесты (56 unit + 4 UI XCTest-кейса):
 
 ```bash
 xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
                 -configuration Debug -derivedDataPath .build/DerivedData
 ```
+
+## iPhone
+
+В проекте два приложения: **RadioMac** для macOS и **RadioiOS** для iPhone. У них общее
+ядро — модели, библиотека станций, Radio Browser, локальная музыка, эквалайзер и
+Now Playing — но разные интерфейсы: на телефоне вкладки «Радио», «Каталог», «Музыка»,
+«Настройки», мини-плеер над таб-баром и полноэкранный плеер.
+
+Что работает на iPhone:
+
+- эфир через AVPlayer (MP3/AAC/HLS), фоновое воспроизведение, экран блокировки и пульт;
+- станции по жанрам и группам, избранное, поиск, добавление и редактирование станции;
+  страницы фильтров «Все / Избранное / жанры / группы» перелистываются свайпом;
+- Radio Browser: поиск по названию, жанру и стране, превью и добавление в библиотеку;
+- локальная музыка: импорт файлов, папок и M3U через «Файлы», альбомы и исполнители
+  с обложками, плейлисты (создание, переименование, добавление и удаление треков),
+  очередь воспроизведения; страницы «Треки / Альбомы / Артисты / Плейлисты»
+  перелистываются свайпом; удаление треков из библиотеки — одиночное и
+  множественное (с «Выбрать все»), без физического удаления файлов;
+- обогащение метаданных: обложки, альбомы, годы и жанры из Apple Music и Deezer —
+  автоматически или вручную, плюс редактор метаданных и обложек на каждый трек;
+- эквалайзер, светлая/тёмная тема, продолжение последней станции;
+- deep links: `radiomac://play/<id>?player=1`, `radiomac://player`,
+  `radiomac://music/tracks|albums|artists|playlists`, `radiomac://browser`,
+  `radiomac://settings`, `radiomac://radio`.
+
+Намеренно не входит: будильник, таймер сна, Last.fm, меню-бар, глобальные горячие
+клавиши и обновления Sparkle — на iPhone этих сценариев нет.
+
+Сборка без подписи (проверка компиляции):
+
+```bash
+xcodebuild -project RadioMac.xcodeproj -scheme RadioiOS -configuration Debug \
+           -sdk iphoneos -destination 'generic/platform=iOS' \
+           CODE_SIGNING_ALLOWED=NO build
+```
+
+### Установка без App Store
+
+Приложение ставится прямо из Xcode на свой телефон, публикация в App Store не нужна.
+Достаточно бесплатного Apple ID (Personal Team).
+
+1. `open RadioMac.xcodeproj`, выберите схему **RadioiOS**.
+2. Xcode → Settings → Accounts: добавьте Apple ID и войдите.
+3. Target **RadioiOS** → *Signing & Capabilities* → Team: ваша команда (Personal Team).
+   Если Bundle ID занят, замените `com.fso13.radioMac.ios` на свой, например
+   `com.familiya.radiomac`.
+4. Подключите iPhone кабелем, разблокируйте, разрешите доступ и включите
+   *Настройки → Конфиденциальность и безопасность → Режим разработчика*.
+5. Выберите телефон в списке устройств и нажмите Run (⌘R).
+6. При первом запуске доверьте сертификату: *Настройки → Основные → VPN и управление
+   устройством → Разработчик*.
+
+Или одной командой (после входа в Apple ID в Xcode):
+
+```bash
+scripts/install_ios.sh
+# при необходимости:
+DEVELOPMENT_TEAM=XXXXXXXXXX RADIOIOS_BUNDLE_ID=com.familiya.radiomac scripts/install_ios.sh
+```
+
+**Профиль бесплатного Apple ID действует 7 дней.** Раз в неделю запускайте установку
+заново — библиотека и настройки на телефоне сохраняются. Ограничения бесплатного
+аккаунта: до 3 приложений и 10 App ID в неделю. Платный Apple Developer Program
+($99/год) даёт профиль на год, Ad Hoc и TestFlight — тоже без публикации в App Store.
+
+Локальная музыка: файлы и папки выбираются в «Файлах» и копируются в контейнер
+приложения (`RadioMac → Music`); эта папка также доступна в Finder через File Sharing.
 
 ## Дизайн
 
@@ -129,6 +201,12 @@ xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \
 - **Обогащение метаданных**: обложки, альбомы, год и жанр из Apple Music (iTunes Search)
   и Deezer — автоматически для новых треков, вручную для одного трека и для всей
   библиотеки, с предпросмотром в редакторе. Правки хранятся в библиотеке, файлы не изменяются.
+- **Контекстное меню Finder**: расширение Finder Sync добавляет «Проиграть в RadioMac»
+  для аудиофайлов и «Создать плейлист в RadioMac» для папки — плейлист называется как
+  папка и открывается сразу, а повторный запуск обновляет его треки вместо дубля.
+  Файлы приходят через Launch Services, поэтому песочница выдаёт доступ к ним,
+  а библиотека запоминает его закладкой. Состояние расширения показывается
+  в Настройки → Локальная музыка вместе с кнопкой включения.
 - **Настройки станции**: смещение громкости в dB, свой EQ-пресет и автозапуск
   при старте RadioMac; сохраняются в библиотеке.
 - **Автообновление**: Sparkle 2, appcast в latest release, EdDSA-подпись и проверка
@@ -247,6 +325,7 @@ xcrun stapler staple dist/RadioMac-1.0.0.dmg
 ```
 RadioMac.xcodeproj            проект Xcode (приложение + тесты)
 RadioMacWidget/              WidgetKit ext: виджет и Control Center
+RadioMacFinder/              Finder Sync ext: «Проиграть/Создать плейлист в RadioMac»
 RadioMac/
   RadioMacApp.swift           @main, запуск NSApplication как accessory-агента
   AppDelegate.swift           статус-итем, окно, меню правки для ⌘C/⌘V
@@ -264,6 +343,7 @@ RadioMac/
     EqualizerService.swift    полосы, пресеты, дебаунс записи
     NowPlayingLookup.swift    SomaFM / Radio Paradise / Icecast / ICY + обложки iTunes
     MusicLibrary.swift        локальная библиотека: папки, теги, альбомы, исполнители, плейлисты, обложки, M3U, закладки доступа
+    FinderRequestService.swift пункты Finder: воспроизведение файлов и плейлист из папки
     LocalAudioMetadata.swift  чтение тегов и обложек через AVFoundation, кэш обложек
     MusicPlaylistFile.swift   импорт и экспорт M3U/M3U8 для локальных файлов
     MetadataEnrichment.swift  нормализация, поиск и оценка совпадений из онлайн-каталогов
@@ -274,6 +354,7 @@ RadioMac/
     AppSettings.swift         громкость, автозапуск, последняя станция
     ThemeService.swift        тема и системный вид
     LaunchAtLogin.swift       SMAppService
+  Support/                    общий слой: Platform, AudioFileTypes, FinderBridge (запрос к расширению), FinderExtension (статус)
   UI/
     Palette.swift             монохромная семантическая палитра (свет/тьма)
     DesignSystem.swift        отступы, радиусы, шкала шрифтов, панель
@@ -301,7 +382,7 @@ RadioMac/
     StationLogo.swift         обложка станции
   Window/                     NSStatusItem, безрамочная панель, клавиатура, роутинг, MusicViewModel, debug-харнесс
   Resources/                  Info.plist, entitlements, Assets (иконка приложения и трея)
-RadioMacTests/                56 логических тестов
+RadioMacTests/                64 логических теста
 RadioMacUITests/              2 XCUITest: сценарий и свет/тьма (парсер, каталог, группы, поток, будильник, диагностика, Last.fm)
 .github/workflows/            CI, дистрибутив, релиз, анализ, безопасность, Pages
 .github/dependabot.yml        обновления GitHub Actions и Python-инструментов

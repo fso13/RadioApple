@@ -1,4 +1,5 @@
 import AudioToolbox
+import CoreAudio
 import Foundation
 
 /// Ten-band peaking equalizer for the AVPlayer audio tap.

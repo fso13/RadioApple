@@ -1,5 +1,6 @@
 import AppKit
 import Carbon.HIToolbox
+import Combine
 import SwiftUI
 
 /// Settings page: appearance, behaviour, sound, library, help and about.
@@ -36,6 +37,7 @@ struct SettingsView: View {
     @State private var confirmQuit = false
     @State private var showDiagnostics = false
     @State private var showLastFm = false
+    @State private var finderExtensionEnabled = false
 
     private var musicSummary: String {
         let tracks = music.tracks.count
@@ -105,7 +107,14 @@ struct SettingsView: View {
                 ToastOverlay(center: toasts)
             }
         }
-        .task { loadLaunchAtLogin() }
+        .task {
+            loadLaunchAtLogin()
+            finderExtensionEnabled = FinderExtension.isEnabled
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            // The user may have flipped the switch in System Settings.
+            finderExtensionEnabled = FinderExtension.isEnabled
+        }
         .alert("Восстановить каталог?", isPresented: $confirmRestore) {
             Button("Отмена", role: .cancel) {}
             Button("Восстановить") {
@@ -203,6 +212,24 @@ struct SettingsView: View {
                             value: music.scanStatus ?? music.enrichmentStatus ?? "…"
                         )
                     }
+                    Hairline()
+                    SettingsRow(
+                        title: "Меню Finder",
+                        subtitle: finderExtensionEnabled
+                            ? "«Проиграть в RadioMac» для аудио и «Создать плейлист в RadioMac» для папок"
+                            : "Выключено: включите расширение в системных настройках"
+                    ) {
+                        TextButton(
+                            title: finderExtensionEnabled ? "Настроить" : "Включить",
+                            systemImage: "folder.badge.plus"
+                        ) {
+                            FinderExtension.showSettings()
+                        }
+                    }
+                    Text("Пункты «Проиграть в RadioMac» и «Создать плейлист в RadioMac» работают при включённом расширении Finder.")
+                        .font(Typeface.caption)
+                        .foregroundStyle(palette.textTertiary)
+                        .fixedSize(horizontal: false, vertical: true)
                     Text("Плейлисты и метаданные хранятся в библиотеке приложения: музыка не копируется и не перезаписывается.")
                         .font(Typeface.caption)
                         .foregroundStyle(palette.textTertiary)

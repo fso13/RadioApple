@@ -140,11 +140,19 @@ if [[ -n "$IDENTITY" ]]; then
     while IFS= read -r -d '' dylib; do
         /usr/bin/codesign --force --options runtime --timestamp --sign "$IDENTITY" "$dylib"
     done < <(find "$APP/Contents/Frameworks" -name '*.dylib' -print0 2>/dev/null)
-    # Widget extensions are nested code too; sign them before the app.
+    # App extensions are nested code too; sign them before the app, each with
+    # its own entitlements (the widget shares state through /Users/Shared, the
+    # Finder extension only needs the sandbox).
     if [[ -d "$APP/Contents/PlugIns" ]]; then
         while IFS= read -r -d '' appex; do
+            appex_entitlements="$ROOT/RadioMacFinder/RadioMacFinder.entitlements"
+            case "$(basename "$appex")" in
+                RadioMacWidget.appex)
+                    appex_entitlements="$ROOT/RadioMacWidget/RadioMacWidget.entitlements"
+                    ;;
+            esac
             /usr/bin/codesign --force --options runtime --timestamp \
-                --entitlements "$ROOT/RadioMacWidget/RadioMacWidget.entitlements" \
+                --entitlements "$appex_entitlements" \
                 --sign "$IDENTITY" "$appex"
         done < <(find "$APP/Contents/PlugIns" -name '*.appex' -print0 2>/dev/null)
     fi

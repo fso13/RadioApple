@@ -2050,6 +2050,76 @@
           }
         }
       }
+    },
+    "Проиграть в RadioMac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play in RadioMac"
+          }
+        }
+      }
+    },
+    "Создать плейлист в RadioMac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New playlist in RadioMac"
+          }
+        }
+      }
+    },
+    "Меню Finder": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finder menu"
+          }
+        }
+      }
+    },
+    "«Проиграть в RadioMac» для аудио и «Создать плейлист в RadioMac» для папок": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Play in RadioMac” for audio and “New playlist in RadioMac” for folders"
+          }
+        }
+      }
+    },
+    "Выключено: включите расширение в системных настройках": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Off: enable the extension in System Settings"
+          }
+        }
+      }
+    },
+    "Настроить": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open"
+          }
+        }
+      }
+    },
+    "Пункты «Проиграть в RadioMac» и «Создать плейлист в RadioMac» работают при включённом расширении Finder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The “Play in RadioMac” and “New playlist in RadioMac” items need the Finder extension."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

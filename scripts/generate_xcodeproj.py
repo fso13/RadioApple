@@ -9,6 +9,7 @@ way to (re)create it, e.g. after adding or removing Swift files:
 
 from __future__ import annotations
 
+import os
 import pathlib
 import sys
 
@@ -26,6 +27,78 @@ LOCALIZATIONS = SOURCES_DIR / "Resources" / "Localizable.xcstrings"
 TESTS_DIR = ROOT / "RadioMacTests"
 UI_TESTS_DIR = ROOT / "RadioMacUITests"
 WIDGET_DIR = ROOT / "RadioMacWidget"
+
+# Finder Sync extension: the “Проиграть/Создать плейлист в RadioMac” context
+# menu. It shares the request model and the audio extension list with the app.
+FINDER_DIR = ROOT / "RadioMacFinder"
+FINDER_INFO_PLIST = FINDER_DIR / "Info.plist"
+FINDER_ENTITLEMENTS = FINDER_DIR / "RadioMacFinder.entitlements"
+
+# iPhone app. It reuses the portable core (models, services, design tokens) and
+# adds its own SwiftUI screens; macOS-only files never join this target.
+IOS_DIR = ROOT / "RadioiOS"
+IOS_INFO_PLIST = IOS_DIR / "Info.plist"
+IOS_ASSETS = IOS_DIR / "Assets.xcassets"
+IOS_DEPLOYMENT_TARGET = "17.0"
+# A free Apple ID ("Personal Team") works: the app is installed from Xcode and
+# never goes through the App Store. Override for a paid team with:
+#   DEVELOPMENT_TEAM=ABCDE12345 RADIOIOS_BUNDLE_ID=com.example.radio python3 ...
+IOS_DEVELOPMENT_TEAM = os.environ.get("DEVELOPMENT_TEAM", "")
+IOS_BUNDLE_ID = os.environ.get("RADIOIOS_BUNDLE_ID", "com.fso13.radioMac.ios")
+
+IOS_SHARED_SOURCES = [
+    "Support/Platform.swift",
+    "Support/AudioFileTypes.swift",
+    # Models
+    "Models/RadioStation.swift",
+    "Models/NowPlaying.swift",
+    "Models/StreamInfo.swift",
+    "Models/LocalTrack.swift",
+    "Models/MusicCollection.swift",
+    "Models/MusicPlaylist.swift",
+    "Models/EqualizerPreset.swift",
+    "Models/TrackHistoryEntry.swift",
+    "Models/MusicArtworkEditor.swift",
+    # Data
+    "Data/DefaultStations.swift",
+    # Services
+    "Services/Preferences.swift",
+    "Services/AppSettings.swift",
+    "Services/StationLibrary.swift",
+    "Services/StationTransfer.swift",
+    "Services/RadioBrowserService.swift",
+    "Services/RadioPlayerService.swift",
+    "Services/NativeAudioEngine.swift",
+    "Services/NativeEqualizer.swift",
+    "Services/AVAudioMixTap.swift",
+    "Services/HLSMetadataDelegate.swift",
+    "Services/ICYMetadataReader.swift",
+    "Services/PlaybackState.swift",
+    "Services/ReconnectPolicy.swift",
+    "Services/NowPlayingLookup.swift",
+    "Services/NowPlayingCenter.swift",
+    "Services/EqualizerService.swift",
+    "Services/ThemeService.swift",
+    "Services/LocalAudioMetadata.swift",
+    "Services/MetadataEnrichment.swift",
+    "Services/MetadataProviders.swift",
+    "Services/MusicLibrary.swift",
+    "Services/MusicLibraryMaintenance.swift",
+    "Services/MusicLibraryCollections.swift",
+    "Services/MusicPlaylistFile.swift",
+    "Services/LogoResolver.swift",
+    "Services/TrackHistoryService.swift",
+    # View models and shared design system
+    "Window/MainViewModel.swift",
+    "Window/MusicViewModel.swift",
+    "UI/Palette.swift",
+    "UI/DesignSystem.swift",
+    "UI/ImageCache.swift",
+    "UI/StationLogo.swift",
+    "UI/BrandMark.swift",
+    "UI/Components.swift",
+    "UI/StationEditorView.swift",
+]
 
 FILE_IDS: dict[str, str] = {}
 _counter = 0
@@ -84,11 +157,27 @@ def build() -> tuple[str, str]:
     widget_sources = sorted(WIDGET_DIR.glob("*.swift")) + [shared_state]
     widget_info = WIDGET_DIR / "Info.plist"
     widget_entitlements = WIDGET_DIR / "RadioMacWidget.entitlements"
+
+    # The request model and the audio extension list already belong to the app;
+    # the extension compiles them again for its own bundle.
+    finder_sources = sorted(FINDER_DIR.glob("*.swift")) + [
+        SOURCES_DIR / "Support" / "FinderBridge.swift",
+        SOURCES_DIR / "Support" / "AudioFileTypes.swift",
+    ]
+
+    ios_sources = sorted(IOS_DIR.rglob("*.swift"))
+    ios_shared_sources = [SOURCES_DIR / relative for relative in IOS_SHARED_SOURCES]
+    ios_target_sources = [*ios_shared_sources, *ios_sources]
+
     # The shared state is already an app source; keep one PBX file reference.
     all_files = list(dict.fromkeys([
-        *sources, *test_sources, *ui_test_sources, *widget_sources,
+        *sources, *test_sources, *ui_test_sources, *widget_sources, *finder_sources,
+        *ios_sources, IOS_INFO_PLIST, IOS_ASSETS,
         ASSETS, INFO_PLIST, ENTITLEMENTS, LOCALIZATIONS, widget_info, widget_entitlements,
+        FINDER_INFO_PLIST, FINDER_ENTITLEMENTS,
     ]))
+    for path in ios_shared_sources:
+        assert path.exists(), f"missing iOS shared source: {path}"
     assert shared_state.exists(), f"missing file: {shared_state}"
     for path in all_files:
         assert path.exists(), f"missing file: {path}"
@@ -138,9 +227,30 @@ def build() -> tuple[str, str]:
     widget_release = new_id("D5")
     widget_dependency = new_id("A9")
     widget_proxy = new_id("B9")
+    finder_target = new_id("A7")
+    finder_product = new_id("F1")
+    finder_group = new_id("A3")
+    finder_sources_phase = new_id("C4")
+    finder_frameworks_phase = new_id("C4")
+    finder_resources_phase = new_id("C4")
+    finder_embed_build = new_id("B2")
+    finder_configs = new_id("E6")
+    finder_debug = new_id("D5")
+    finder_release = new_id("D5")
+    finder_dependency = new_id("A9")
+    finder_proxy = new_id("B9")
+    ios_target = new_id("A7")
+    ios_product = new_id("F1")
+    ios_group = new_id("A3")
+    ios_sources_phase = new_id("C4")
+    ios_frameworks_phase = new_id("C4")
+    ios_resources_phase = new_id("C4")
+    ios_configs = new_id("E6")
+    ios_debug = new_id("D5")
+    ios_release = new_id("D5")
 
     folder_groups = {
-        name: new_id("A3") for name in ["Models", "Data", "Services", "Intents", "UI", "Window", "Resources"]
+        name: new_id("A3") for name in ["Models", "Data", "Services", "Intents", "UI", "Window", "Support", "Resources"]
     }
 
     sources_phase = new_id("C4")
@@ -164,7 +274,10 @@ def build() -> tuple[str, str]:
     test_build_files = [build_file(path) for path in test_sources]
     ui_test_build_files = [build_file(path) for path in ui_test_sources]
     widget_build_files = [build_file(path) for path in widget_sources]
+    finder_build_files = [build_file(path) for path in finder_sources]
+    ios_build_files = [build_file(path) for path in ios_target_sources]
     asset_build_file = build_file(ASSETS)
+    ios_asset_build_file = build_file(IOS_ASSETS)
     localizations_build_file = build_file(LOCALIZATIONS)
 
     # ------------------------------------------------------------------ sections
@@ -182,6 +295,11 @@ def build() -> tuple[str, str]:
     build_section.append(
         f"\t\t{widget_embed_build} /* RadioMacWidget.appex in Embed App Extensions */ = "
         f"{{isa = PBXBuildFile; fileRef = {widget_product} /* RadioMacWidget.appex */; "
+        "settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };"
+    )
+    build_section.append(
+        f"\t\t{finder_embed_build} /* RadioMacFinder.appex in Embed App Extensions */ = "
+        f"{{isa = PBXBuildFile; fileRef = {finder_product} /* RadioMacFinder.appex */; "
         "settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };"
     )
     build_section.append("/* End PBXBuildFile section */")
@@ -223,6 +341,16 @@ def build() -> tuple[str, str]:
         'explicitFileType = "wrapper.app-extension"; includeInIndex = 0; '
         "path = RadioMacWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };"
     )
+    file_section.append(
+        f"\t\t{finder_product} /* RadioMacFinder.appex */ = {{isa = PBXFileReference; "
+        'explicitFileType = "wrapper.app-extension"; includeInIndex = 0; '
+        "path = RadioMacFinder.appex; sourceTree = BUILT_PRODUCTS_DIR; };"
+    )
+    file_section.append(
+        f"\t\t{ios_product} /* RadioiOS.app */ = {{isa = PBXFileReference; "
+        'explicitFileType = wrapper.application; includeInIndex = 0; path = RadioiOS.app; '
+        "sourceTree = BUILT_PRODUCTS_DIR; };"
+    )
     file_section.append("/* End PBXFileReference section */")
 
     def files_in(folder: str) -> list[str]:
@@ -239,6 +367,8 @@ def build() -> tuple[str, str]:
                 f"{tests_group} /* {PROJECT_NAME}Tests */",
                 f"{ui_group} /* {PROJECT_NAME}UITests */",
                 f"{widget_group} /* RadioMacWidget */",
+                f"{finder_group} /* RadioMacFinder */",
+                f"{ios_group} /* RadioiOS */",
                 f"{products_group} /* Products */",
             ],
         )
@@ -254,12 +384,13 @@ def build() -> tuple[str, str]:
                 f"{folder_groups['Intents']} /* Intents */",
                 f"{folder_groups['UI']} /* UI */",
                 f"{folder_groups['Window']} /* Window */",
+                f"{folder_groups['Support']} /* Support */",
                 f"{folder_groups['Resources']} /* Resources */",
             ],
             path="RadioMac",
         )
     )
-    for name in ["Models", "Data", "Services", "Intents", "UI", "Window"]:
+    for name in ["Models", "Data", "Services", "Intents", "UI", "Window", "Support"]:
         group_section.append(group(folder_groups[name], files_in(name), path=name))
     group_section.append(
         group(
@@ -276,6 +407,8 @@ def build() -> tuple[str, str]:
                 f"{tests_product} /* {PROJECT_NAME}Tests.xctest */",
                 f"{ui_product} /* {PROJECT_NAME}UITests.xctest */",
                 f"{widget_product} /* RadioMacWidget.appex */",
+                f"{finder_product} /* RadioMacFinder.appex */",
+                f"{ios_product} /* RadioiOS.app */",
             ],
             name="Products",
         )
@@ -294,6 +427,21 @@ def build() -> tuple[str, str]:
             path="RadioMacWidget"
         )
     )
+    group_section.append(
+        group(
+            finder_group,
+            [ref(path) for path in finder_sources if path.parent == FINDER_DIR]
+                + [ref(FINDER_INFO_PLIST), ref(FINDER_ENTITLEMENTS)],
+            path="RadioMacFinder"
+        )
+    )
+    group_section.append(
+        group(
+            ios_group,
+            [ref(path) for path in ios_sources] + [ref(IOS_INFO_PLIST), ref(IOS_ASSETS)],
+            path="RadioiOS",
+        )
+    )
     group_section.append("/* End PBXGroup section */")
 
     sections = "\n".join([
@@ -308,6 +456,8 @@ def build() -> tuple[str, str]:
         phase(tests_sources_phase, "PBXSourcesBuildPhase", test_build_files),
         phase(ui_sources_phase, "PBXSourcesBuildPhase", ui_test_build_files),
         phase(widget_sources_phase, "PBXSourcesBuildPhase", widget_build_files),
+        phase(finder_sources_phase, "PBXSourcesBuildPhase", finder_build_files),
+        phase(ios_sources_phase, "PBXSourcesBuildPhase", ios_build_files),
         "/* End PBXSourcesBuildPhase section */",
         "/* Begin PBXContainerItemProxy section */",
         f"\t\t{tests_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
@@ -316,6 +466,8 @@ def build() -> tuple[str, str]:
         f"proxyType = 1; remoteGlobalIDString = {target_id}; remoteInfo = {PROJECT_NAME}; }};",
         f"\t\t{widget_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
         f"proxyType = 1; remoteGlobalIDString = {widget_target}; remoteInfo = RadioMacWidget; }};",
+        f"\t\t{finder_proxy} = {{isa = PBXContainerItemProxy; containerPortal = {project_id}; "
+        f"proxyType = 1; remoteGlobalIDString = {finder_target}; remoteInfo = RadioMacFinder; }};",
         "/* End PBXContainerItemProxy section */",
         "/* Begin PBXTargetDependency section */",
         f"\t\t{tests_dependency} = {{isa = PBXTargetDependency; target = {target_id}; "
@@ -324,16 +476,22 @@ def build() -> tuple[str, str]:
         f"targetProxy = {ui_proxy}; }};",
         f"\t\t{widget_dependency} = {{isa = PBXTargetDependency; target = {widget_target}; "
         f"targetProxy = {widget_proxy}; }};",
+        f"\t\t{finder_dependency} = {{isa = PBXTargetDependency; target = {finder_target}; "
+        f"targetProxy = {finder_proxy}; }};",
         "/* End PBXTargetDependency section */",
         "/* Begin PBXResourcesBuildPhase section (tests) */",
         phase(tests_resources_phase, "PBXResourcesBuildPhase", []),
         phase(ui_resources_phase, "PBXResourcesBuildPhase", []),
         phase(widget_resources_phase, "PBXResourcesBuildPhase", []),
+        phase(finder_resources_phase, "PBXResourcesBuildPhase", []),
+        phase(ios_resources_phase, "PBXResourcesBuildPhase", [ios_asset_build_file]),
         "/* End PBXResourcesBuildPhase section (tests) */",
         "/* Begin PBXFrameworksBuildPhase section (tests) */",
         phase(tests_frameworks_phase, "PBXFrameworksBuildPhase", []),
         phase(ui_frameworks_phase, "PBXFrameworksBuildPhase", []),
         phase(widget_frameworks_phase, "PBXFrameworksBuildPhase", []),
+        phase(finder_frameworks_phase, "PBXFrameworksBuildPhase", []),
+        phase(ios_frameworks_phase, "PBXFrameworksBuildPhase", []),
         "/* End PBXFrameworksBuildPhase section (tests) */",
         "/* Begin PBXCopyFilesBuildPhase section (widget) */",
         "\t\t" + widget_embed_phase + " /* Embed App Extensions */ = {",
@@ -341,6 +499,7 @@ def build() -> tuple[str, str]:
         "\t\t\tbuildActionMask = 2147483647;",
         "\t\t\tfiles = (",
         f"\t\t\t\t{widget_embed_build} /* RadioMacWidget.appex in Embed App Extensions */,",
+        f"\t\t\t\t{finder_embed_build} /* RadioMacFinder.appex in Embed App Extensions */,",
         "\t\t\t);",
         "\t\t\tdstPath = \"\";",
         "\t\t\tdstSubfolderSpec = 13;",
@@ -357,13 +516,11 @@ def build() -> tuple[str, str]:
         "CLANG_ENABLE_OBJC_ARC = YES;",
         "CLANG_WARN_BOOL_CONVERSION = YES;",
         "CLANG_WARN_UNREACHABLE_CODE = YES;",
-        'CODE_SIGN_IDENTITY = "-";',
         "COPY_PHASE_STRIP = NO;",
         "ENABLE_STRICT_OBJC_MSGSEND = YES;",
         "GCC_C_LANGUAGE_STANDARD = gnu17;",
         "GCC_NO_COMMON_BLOCKS = YES;",
-        "MACOSX_DEPLOYMENT_TARGET = 14.0;",
-        "SDKROOT = macosx;",
+        # Platform is chosen per target: the project hosts macOS and iOS apps.
         "SWIFT_VERSION = 6.0;",
     ]
     target_settings = [
@@ -371,6 +528,8 @@ def build() -> tuple[str, str]:
         "CODE_SIGN_ENTITLEMENTS = RadioMac/Resources/RadioMac.entitlements;",
         'CODE_SIGN_IDENTITY = "-";',
         "CODE_SIGN_STYLE = Manual;",
+        "MACOSX_DEPLOYMENT_TARGET = 14.0;",
+        "SDKROOT = macosx;",
         "COMBINE_HIDPI_IMAGES = YES;",
         f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
         "ENABLE_HARDENED_RUNTIME = NO;",
@@ -410,6 +569,7 @@ def build() -> tuple[str, str]:
             "CODE_SIGN_IDENTITY = \"-\";",
             "GENERATE_INFOPLIST_FILE = YES;",
             "MACOSX_DEPLOYMENT_TARGET = 14.0;",
+            "SDKROOT = macosx;",
             "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMacTests;",
             'PRODUCT_NAME = "$(TARGET_NAME)";',
             "SWIFT_STRICT_CONCURRENCY = complete;",
@@ -432,6 +592,7 @@ def build() -> tuple[str, str]:
             "CODE_SIGN_IDENTITY = \"-\";",
             "GENERATE_INFOPLIST_FILE = YES;",
             "MACOSX_DEPLOYMENT_TARGET = 14.0;",
+            "SDKROOT = macosx;",
             "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMacUITests;",
             'PRODUCT_NAME = "$(TARGET_NAME)";',
             "SWIFT_STRICT_CONCURRENCY = complete;",
@@ -452,6 +613,8 @@ def build() -> tuple[str, str]:
             "CODE_SIGN_STYLE = Manual;",
             f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
             "GENERATE_INFOPLIST_FILE = NO;",
+            "MACOSX_DEPLOYMENT_TARGET = 14.0;",
+            "SDKROOT = macosx;",
             "INFOPLIST_FILE = RadioMacWidget/Info.plist;",
             "LD_RUNPATH_SEARCH_PATHS = (",
             '\t"$(inherited)",',
@@ -465,6 +628,65 @@ def build() -> tuple[str, str]:
             "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
             "SWIFT_VERSION = 6.0;",
         ]
+        lines = [f"\t\t{identifier} /* {name} */ = {{", "\t\t\tisa = XCBuildConfiguration;", "\t\t\tbuildSettings = {"]
+        lines.extend(f"\t\t\t\t{entry}" for entry in settings)
+        lines.extend(["\t\t\t};", f"\t\t\tname = {name};", "\t\t};"])
+        return "\n".join(lines)
+
+    def config_finder(identifier: str, name: str) -> str:
+        settings = [
+            "APPLICATION_EXTENSION_API_ONLY = YES;",
+            "CODE_SIGN_ENTITLEMENTS = RadioMacFinder/RadioMacFinder.entitlements;",
+            'CODE_SIGN_IDENTITY = "-";',
+            "CODE_SIGN_STYLE = Manual;",
+            f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
+            "GENERATE_INFOPLIST_FILE = NO;",
+            "MACOSX_DEPLOYMENT_TARGET = 14.0;",
+            "SDKROOT = macosx;",
+            "INFOPLIST_FILE = RadioMacFinder/Info.plist;",
+            "LD_RUNPATH_SEARCH_PATHS = (",
+            '\t"$(inherited)",',
+            '\t"@executable_path/../../../../Frameworks",',
+            ");",
+            f"MARKETING_VERSION = {MARKETING_VERSION};",
+            "PRODUCT_BUNDLE_IDENTIFIER = com.fso13.radioMac.finder;",
+            'PRODUCT_NAME = "$(TARGET_NAME)";',
+            "SKIP_INSTALL = YES;",
+            "SWIFT_STRICT_CONCURRENCY = complete;",
+            "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
+            "SWIFT_VERSION = 6.0;",
+        ]
+        lines = [f"\t\t{identifier} /* {name} */ = {{", "\t\t\tisa = XCBuildConfiguration;", "\t\t\tbuildSettings = {"]
+        lines.extend(f"\t\t\t\t{entry}" for entry in settings)
+        lines.extend(["\t\t\t};", f"\t\t\tname = {name};", "\t\t};"])
+        return "\n".join(lines)
+
+    def config_ios(identifier: str, name: str) -> str:
+        settings = [
+            "ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;",
+            "CODE_SIGN_STYLE = Automatic;",
+            f"CURRENT_PROJECT_VERSION = {BUILD_NUMBER};",
+            "ENABLE_PREVIEWS = YES;",
+            "GENERATE_INFOPLIST_FILE = NO;",
+            "INFOPLIST_FILE = RadioiOS/Info.plist;",
+            f"IPHONEOS_DEPLOYMENT_TARGET = {IOS_DEPLOYMENT_TARGET};",
+            "LD_RUNPATH_SEARCH_PATHS = (",
+            '\t"$(inherited)",',
+            '\t"@executable_path/Frameworks",',
+            ");",
+            f"MARKETING_VERSION = {MARKETING_VERSION};",
+            f"PRODUCT_BUNDLE_IDENTIFIER = {IOS_BUNDLE_ID};",
+            'PRODUCT_NAME = "$(TARGET_NAME)";',
+            "SDKROOT = iphoneos;",
+            'SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";',
+            "SUPPORTS_MACCATALYST = NO;",
+            "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;",
+            "SWIFT_STRICT_CONCURRENCY = complete;",
+            "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
+            "TARGETED_DEVICE_FAMILY = 1;",
+        ]
+        if IOS_DEVELOPMENT_TEAM:
+            settings.append(f"DEVELOPMENT_TEAM = {IOS_DEVELOPMENT_TEAM};")
         lines = [f"\t\t{identifier} /* {name} */ = {{", "\t\t\tisa = XCBuildConfiguration;", "\t\t\tbuildSettings = {"]
         lines.extend(f"\t\t\t\t{entry}" for entry in settings)
         lines.extend(["\t\t\t};", f"\t\t\tname = {name};", "\t\t};"])
@@ -498,6 +720,10 @@ def build() -> tuple[str, str]:
         config_ui_tests(ui_release, "Release"),
         config_widget(widget_debug, "Debug"),
         config_widget(widget_release, "Release"),
+        config_finder(finder_debug, "Debug"),
+        config_finder(finder_release, "Release"),
+        config_ios(ios_debug, "Debug"),
+        config_ios(ios_release, "Release"),
         "/* End XCBuildConfiguration section */",
     ])
 
@@ -533,6 +759,18 @@ def build() -> tuple[str, str]:
         "\t\t\tdefaultConfigurationIsVisible = 0;",
         "\t\t\tdefaultConfigurationName = Release;",
         "\t\t};",
+        f"\t\t{finder_configs} /* Build configuration list for PBXNativeTarget \"RadioMacFinder\" */ = {{",
+        "\t\t\tisa = XCConfigurationList;",
+        f"\t\t\tbuildConfigurations = ({finder_debug} /* Debug */, {finder_release} /* Release */);",
+        "\t\t\tdefaultConfigurationIsVisible = 0;",
+        "\t\t\tdefaultConfigurationName = Release;",
+        "\t\t};",
+        f"\t\t{ios_configs} /* Build configuration list for PBXNativeTarget \"RadioiOS\" */ = {{",
+        "\t\t\tisa = XCConfigurationList;",
+        f"\t\t\tbuildConfigurations = ({ios_debug} /* Debug */, {ios_release} /* Release */);",
+        "\t\t\tdefaultConfigurationIsVisible = 0;",
+        "\t\t\tdefaultConfigurationName = Release;",
+        "\t\t};",
         "/* End XCConfigurationList section */",
     ])
 
@@ -548,7 +786,7 @@ def build() -> tuple[str, str]:
         f"\t\t\t\t{widget_embed_phase} /* Embed App Extensions */,",
         "\t\t\t);",
         "\t\t\tbuildRules = ();",
-        f"\t\t\tdependencies = ({widget_dependency} /* PBXTargetDependency */,);",
+        f"\t\t\tdependencies = ({widget_dependency} /* PBXTargetDependency */, {finder_dependency} /* PBXTargetDependency */,);",
         f"\t\t\tname = {PROJECT_NAME};",
         f"\t\t\tproductName = {PROJECT_NAME};",
         f"\t\t\tproductReference = {product_ref} /* {PROJECT_NAME}.app */;",
@@ -602,6 +840,36 @@ def build() -> tuple[str, str]:
         f"\t\t\tproductReference = {widget_product} /* RadioMacWidget.appex */;",
         '\t\t\tproductType = "com.apple.product-type.app-extension";',
         "\t\t};",
+        f"\t\t{finder_target} /* RadioMacFinder */ = {{",
+        "\t\t\tisa = PBXNativeTarget;",
+        f"\t\t\tbuildConfigurationList = {finder_configs};",
+        "\t\t\tbuildPhases = (",
+        f"\t\t\t\t{finder_sources_phase} /* Sources */,",
+        f"\t\t\t\t{finder_frameworks_phase} /* Frameworks */,",
+        f"\t\t\t\t{finder_resources_phase} /* Resources */,",
+        "\t\t\t);",
+        "\t\t\tbuildRules = ();",
+        "\t\t\tdependencies = ();",
+        "\t\t\tname = RadioMacFinder;",
+        "\t\t\tproductName = RadioMacFinder;",
+        f"\t\t\tproductReference = {finder_product} /* RadioMacFinder.appex */;",
+        '\t\t\tproductType = "com.apple.product-type.app-extension";',
+        "\t\t};",
+        f"\t\t{ios_target} /* RadioiOS */ = {{",
+        "\t\t\tisa = PBXNativeTarget;",
+        f"\t\t\tbuildConfigurationList = {ios_configs};",
+        "\t\t\tbuildPhases = (",
+        f"\t\t\t\t{ios_sources_phase} /* Sources */,",
+        f"\t\t\t\t{ios_frameworks_phase} /* Frameworks */,",
+        f"\t\t\t\t{ios_resources_phase} /* Resources */,",
+        "\t\t\t);",
+        "\t\t\tbuildRules = ();",
+        "\t\t\tdependencies = ();",
+        "\t\t\tname = RadioiOS;",
+        "\t\t\tproductName = RadioiOS;",
+        f"\t\t\tproductReference = {ios_product} /* RadioiOS.app */;",
+        '\t\t\tproductType = "com.apple.product-type.application";',
+        "\t\t};",
         "/* End PBXNativeTarget section */",
     ])
 
@@ -617,6 +885,9 @@ def build() -> tuple[str, str]:
         f"\t\t\t\t\t{target_id} = {{",
         "\t\t\t\t\t\tCreatedOnToolsVersion = 16.0;",
         "\t\t\t\t\t};",
+        f"\t\t\t\t\t{ios_target} = {{",
+        "\t\t\t\t\t\tCreatedOnToolsVersion = 17.0;",
+        "\t\t\t\t\t};",
         "\t\t\t\t};",
         "\t\t\t};",
         f"\t\t\tbuildConfigurationList = {project_configs};",
@@ -631,7 +902,7 @@ def build() -> tuple[str, str]:
         "\t\t\t);",
         '\t\t\tprojectDirPath = "";',
         '\t\t\tprojectRoot = "";',
-        f"\t\t\ttargets = ({target_id} /* {PROJECT_NAME} */, {tests_target} /* {PROJECT_NAME}Tests */, {ui_target} /* {PROJECT_NAME}UITests */, {widget_target} /* RadioMacWidget */);",
+        f"\t\t\ttargets = ({target_id} /* {PROJECT_NAME} */, {tests_target} /* {PROJECT_NAME}Tests */, {ui_target} /* {PROJECT_NAME}UITests */, {widget_target} /* RadioMacWidget */, {finder_target} /* RadioMacFinder */, {ios_target} /* RadioiOS */);",
         "\t\t};",
         "/* End PBXProject section */",
     ])
@@ -684,7 +955,7 @@ def build() -> tuple[str, str]:
         "}",
         "",
     ])
-    return document, (target_id, tests_target, ui_target, widget_target)
+    return document, (target_id, tests_target, ui_target, widget_target, finder_target, ios_target)
 
 
 SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
@@ -724,6 +995,15 @@ SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
                BlueprintIdentifier = "{widget_target_id}"
                BuildableName = "RadioMacWidget.appex"
                BlueprintName = "RadioMacWidget"
+               ReferencedContainer = "container:RadioMac.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{finder_target_id}"
+               BuildableName = "RadioMacFinder.appex"
+               BlueprintName = "RadioMacFinder"
                ReferencedContainer = "container:RadioMac.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -781,8 +1061,57 @@ SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
+IOS_SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
+<Scheme LastUpgradeVersion = "1700" version = "1.7">
+   <BuildAction parallelizeBuildables = "YES" buildImplicitDependencies = "YES">
+      <BuildActionEntries>
+         <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "{ios_target_id}"
+               BuildableName = "RadioiOS.app"
+               BlueprintName = "RadioiOS"
+               ReferencedContainer = "container:RadioMac.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+      </BuildActionEntries>
+   </BuildAction>
+   <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "YES">
+      <Testables>
+      </Testables>
+   </TestAction>
+   <LaunchAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" launchStyle = "0" useCustomWorkingDirectory = "NO" ignoresPersistentStateOnLaunch = "NO" debugDocumentVersioning = "YES" debugServiceExtension = "internal" allowLocationSimulation = "YES">
+      <BuildableProductRunnable runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "{ios_target_id}"
+            BuildableName = "RadioiOS.app"
+            BlueprintName = "RadioiOS"
+            ReferencedContainer = "container:RadioMac.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </LaunchAction>
+   <ProfileAction buildConfiguration = "Release" shouldUseLaunchSchemeArgsEnv = "YES" savedToolIdentifier = "" useCustomWorkingDirectory = "NO" debugDocumentVersioning = "YES">
+      <BuildableProductRunnable runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "{ios_target_id}"
+            BuildableName = "RadioiOS.app"
+            BlueprintName = "RadioiOS"
+            ReferencedContainer = "container:RadioMac.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
+   </ProfileAction>
+   <AnalyzeAction buildConfiguration = "Debug">
+   </AnalyzeAction>
+   <ArchiveAction buildConfiguration = "Release" revealArchiveInOrganizer = "YES">
+   </ArchiveAction>
+</Scheme>
+"""
+
+
 def main() -> int:
-    document, (target_id, tests_target, ui_target, widget_target) = build()
+    document, (target_id, tests_target, ui_target, widget_target, finder_target, ios_target_id) = build()
     project_dir = ROOT / f"{PROJECT_NAME}.xcodeproj"
     project_dir.mkdir(exist_ok=True)
     (project_dir / "project.pbxproj").write_text(document, encoding="utf-8")
@@ -793,10 +1122,18 @@ def main() -> int:
         SCHEME.replace("{target_id}", target_id)
         .replace("{test_target_id}", tests_target)
         .replace("{ui_test_target_id}", ui_target)
-        .replace("{widget_target_id}", widget_target),
+        .replace("{widget_target_id}", widget_target)
+        .replace("{finder_target_id}", finder_target),
         encoding="utf-8",
     )
-    print(f"wrote {project_dir} (app {target_id}, tests {tests_target}, ui {ui_target})")
+    (scheme_dir / "RadioiOS.xcscheme").write_text(
+        IOS_SCHEME.replace("{ios_target_id}", ios_target_id),
+        encoding="utf-8",
+    )
+    print(
+        f"wrote {project_dir} (app {target_id}, tests {tests_target}, "
+        f"ui {ui_target}, ios {ios_target_id})"
+    )
     return 0
 
 

@@ -19,16 +19,12 @@ struct AudioFileMetadata: Equatable, Sendable {
 /// artwork inside the app container.
 enum LocalAudioMetadata {
     /// Formats AVFoundation plays reliably on macOS 14+.
-    static let supportedExtensions: Set<String> = [
-        "mp3", "mp2", "mp1",
-        "m4a", "m4b", "m4r", "aac", "alac",
-        "flac", "wav", "wave", "aif", "aiff", "aifc", "caf",
-    ]
+    static var supportedExtensions: Set<String> { AudioFileTypes.supportedExtensions }
 
     static let maxArtworkBytes = 12 * 1024 * 1024
 
     static func isSupported(_ url: URL) -> Bool {
-        supportedExtensions.contains(url.pathExtension.lowercased())
+        AudioFileTypes.isSupported(url)
     }
 
     static func isPlaylistFile(_ url: URL) -> Bool {
@@ -239,8 +235,14 @@ enum LocalAudioMetadata {
 /// Cached embedded artwork, written to the app's caches directory.
 enum MusicArtworkStore {
     static var directory: URL {
+        #if os(iOS)
+        // The system may purge Caches at any time; covers belong to the library.
+        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.temporaryDirectory
+        #else
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
+        #endif
         return base
             .appendingPathComponent("RadioMac", isDirectory: true)
             .appendingPathComponent("Artwork", isDirectory: true)

@@ -1,4 +1,4 @@
-import AppKit
+import Foundation
 import SwiftUI
 
 /// Process-wide image cache for station logos and artwork.
@@ -6,32 +6,32 @@ import SwiftUI
 final class ImageCache {
     static let shared = ImageCache()
 
-    private let cache = NSCache<NSString, NSImage>()
+    private let cache = NSCache<NSString, PlatformImage>()
     private let lock = NSLock()
 
     private init() {
         cache.countLimit = 160
     }
 
-    func image(for url: String) -> NSImage? {
+    func image(for url: String) -> PlatformImage? {
         lock.lock()
         defer { lock.unlock() }
         return cache.object(forKey: url as NSString)
     }
 
-    func store(_ image: NSImage, for url: String) {
+    func store(_ image: PlatformImage, for url: String) {
         lock.lock()
         defer { lock.unlock() }
         cache.setObject(image, forKey: url as NSString)
     }
 
-    func load(_ urlString: String) async -> NSImage? {
+    func load(_ urlString: String) async -> PlatformImage? {
         if let cached = image(for: urlString) { return cached }
         guard let url = URL(string: urlString) else { return nil }
 
         if url.isFileURL {
             guard let data = try? Data(contentsOf: url),
-                  let image = NSImage(data: data),
+                  let image = PlatformImage(data: data),
                   image.size.width > 0
             else { return nil }
             store(image, for: urlString)
@@ -45,7 +45,7 @@ final class ImageCache {
         if let http = response as? HTTPURLResponse, !(200..<400).contains(http.statusCode) {
             return nil
         }
-        guard let image = NSImage(data: data), image.size.width > 0 else { return nil }
+        guard let image = PlatformImage(data: data), image.size.width > 0 else { return nil }
         store(image, for: urlString)
         return image
     }
@@ -57,7 +57,7 @@ struct RemoteImage<Fallback: View>: View {
     private let contentMode: ContentMode
     private let fallback: Fallback
 
-    @State private var image: NSImage?
+    @State private var image: PlatformImage?
 
     init(
         urlString: String?,
@@ -72,7 +72,7 @@ struct RemoteImage<Fallback: View>: View {
     var body: some View {
         Group {
             if let image {
-                Image(nsImage: image)
+                Image(platformImage: image)
                     .resizable()
                     .aspectRatio(contentMode: contentMode)
             } else {

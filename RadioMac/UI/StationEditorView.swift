@@ -137,9 +137,22 @@ struct StationEditorView: View {
                 }
             }
         }
+        #if os(macOS)
         .padding(Space.xxl + 2)
         .frame(width: 540, height: 720)
+        #else
+        .padding(Space.xl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        #endif
         .background(palette.surface)
+    }
+
+    private var autoplayLabel: String {
+        #if os(macOS)
+        "Запускать при старте RadioMac"
+        #else
+        "Запускать при старте приложения"
+        #endif
     }
 
     private var stationTuning: some View {
@@ -175,8 +188,10 @@ struct StationEditorView: View {
                 Spacer()
             }
 
-            Toggle("Запускать при старте RadioMac", isOn: $autoplay)
+            Toggle(autoplayLabel, isOn: $autoplay)
                 .toggleStyle(.switch)
+                .font(Typeface.caption)
+                .foregroundStyle(palette.textSecondary)
                 .font(Typeface.caption)
                 .foregroundStyle(palette.textSecondary)
         }
@@ -222,6 +237,7 @@ struct EditorialField: View {
     var placeholder: String = ""
     var isMonospaced: Bool = false
     var footnote: String?
+    var onSubmit: (() -> Void)?
 
     @Environment(\.palette) private var palette
     @FocusState private var isFocused: Bool
@@ -229,7 +245,11 @@ struct EditorialField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             Text(title.uppercased())
+                #if os(iOS)
+                .font(.caption2.weight(.semibold))
+                #else
                 .font(Typeface.overline)
+                #endif
                 .tracking(1.2)
                 .foregroundStyle(palette.textTertiary)
 
@@ -239,10 +259,20 @@ struct EditorialField: View {
                 prompt: Text(placeholder).foregroundColor(palette.textTertiary)
             )
             .textFieldStyle(.plain)
+            #if os(iOS)
+            .font(isMonospaced ? .system(size: 16, design: .monospaced) : .body)
+            #else
             .font(isMonospaced ? Typeface.mono : Typeface.body)
+            #endif
             .foregroundStyle(palette.textPrimary)
             .focused($isFocused)
+            .onSubmit { onSubmit?() }
+            #if os(iOS)
+            .padding(.vertical, 8)
+            .frame(minHeight: 44)
+            #else
             .padding(.vertical, 5)
+            #endif
 
             Rectangle()
                 .fill(isFocused ? palette.textPrimary : palette.separator)
@@ -251,7 +281,11 @@ struct EditorialField: View {
 
             if let footnote {
                 Text(footnote)
+                    #if os(iOS)
+                    .font(.caption)
+                    #else
                     .font(Typeface.caption)
+                    #endif
                     .foregroundStyle(palette.textTertiary)
                     .fixedSize(horizontal: false, vertical: true)
             }

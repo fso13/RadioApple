@@ -1,4 +1,3 @@
-import AppKit
 import Foundation
 import MediaPlayer
 
@@ -93,6 +92,11 @@ final class NowPlayingCenter {
         }
 
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
+        #if os(iOS)
+        // Lock-screen and Control Centre need the explicit state to animate
+        // the transport correctly.
+        MPNowPlayingInfoCenter.default().playbackState = isPlaying ? .playing : .paused
+        #endif
         loadArtwork(from: artworkURL)
     }
 
@@ -101,6 +105,9 @@ final class NowPlayingCenter {
         artworkTask = nil
         artworkURL = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        #if os(iOS)
+        MPNowPlayingInfoCenter.default().playbackState = .stopped
+        #endif
     }
 
     private func loadArtwork(from urlString: String?) {
@@ -119,14 +126,14 @@ final class NowPlayingCenter {
         if url.isFileURL {
             // Cached local cover: read it straight from disk.
             guard let data = try? Data(contentsOf: url),
-                  let image = NSImage(data: data)
+                  let image = PlatformImage(data: data)
             else { return }
             applyArtwork(image)
             return
         }
 
         artworkTask = URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
-            guard let self, let data, let image = NSImage(data: data) else { return }
+            guard let self, let data, let image = PlatformImage(data: data) else { return }
             let size = image.size == .zero ? CGSize(width: 300, height: 300) : image.size
             let artwork = MPMediaItemArtwork(boundsSize: size) { _ in image }
             DispatchQueue.main.async {
@@ -139,7 +146,7 @@ final class NowPlayingCenter {
         artworkTask?.resume()
     }
 
-    private func applyArtwork(_ image: NSImage) {
+    private func applyArtwork(_ image: PlatformImage) {
         let size = image.size == .zero ? CGSize(width: 300, height: 300) : image.size
         let artwork = MPMediaItemArtwork(boundsSize: size) { _ in image }
         var updated = MPNowPlayingInfoCenter.default().nowPlayingInfo ?? [:]

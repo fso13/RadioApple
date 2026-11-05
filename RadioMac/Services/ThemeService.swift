@@ -1,4 +1,6 @@
+#if os(macOS)
 import AppKit
+#endif
 import SwiftUI
 
 /// Light/dark/system theme choice, persisted in `UserDefaults`.
@@ -27,6 +29,7 @@ final class ThemeService: ObservableObject {
             }
         }
 
+        #if os(macOS)
         /// `nil` hands appearance control back to macOS.
         var appearance: NSAppearance? {
             switch self {
@@ -35,6 +38,16 @@ final class ThemeService: ObservableObject {
             case .dark: return NSAppearance(named: .darkAqua)
             }
         }
+        #else
+        /// `nil` follows the system appearance on iOS.
+        var colorScheme: ColorScheme? {
+            switch self {
+            case .system: return nil
+            case .light: return .light
+            case .dark: return .dark
+            }
+        }
+        #endif
     }
 
     private let defaults: UserDefaults

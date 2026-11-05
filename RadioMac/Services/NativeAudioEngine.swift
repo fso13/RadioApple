@@ -37,7 +37,33 @@ final class NativeAudioEngine {
     /// Known length of a local file, in seconds.
     private(set) var duration: Double?
 
+    #if os(iOS)
+    private var interruptionObserver: NSObjectProtocol?
+    private var interruptedWhilePlaying = false
+    #endif
+
+    init() {
+        #if os(iOS)
+        // A phone call or Siri pauses the stream; playback resumes when the
+        // system says it can.
+        let session = AVAudioSession.sharedInstance()
+        interruptionObserver = NotificationCenter.default.addObserver(
+            forName: AVAudioSession.interruptionNotification,
+            object: session,
+            queue: .main
+        ) { [weak self] note in
+            // `Notification` is not Sendable; only the two flags cross actors.
+            let rawType = note.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt ?? 0
+            let rawOptions = note.userInfo?[AVAudioSessionInterruptionOptionKey] as? UInt ?? 0
+            Task { @MainActor in
+                self?.handleAudioInterruption(typeRaw: rawType, optionsRaw: rawOptions)
+            }
+        }
+        #endif
+    }
+
     func play(url: URL) {
+        activateAudioSession()
         stopObservers()
         player?.pause()
         player?.replaceCurrentItem(with: nil)
@@ -155,6 +181,7 @@ final class NativeAudioEngine {
 
     func resume() {
         guard player != nil else { return }
+        activateAudioSession()
         wantsPlayback = true
         startICYIfNeeded()
         onStateChange?(.loading)
@@ -415,4 +442,42 @@ final class NativeAudioEngine {
             onEnded?()
         }
     }
+
+    // MARK: - Platform audio session
+
+    /// On iOS radio has to keep playing with the silent switch on and while the
+    /// app is in the background, so the session is `.playback`.
+    private func activateAudioSession() {
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        try? session.setCategory(.playback, mode: .default, options: [])
+        try? session.setActive(true)
+        #endif
+    }
+
+    #if os(iOS)
+    private func handleAudioInterruption(typeRaw: UInt, optionsRaw: UInt) {
+        guard let type = AVAudioSession.InterruptionType(rawValue: typeRaw) else { return }
+
+        switch type {
+        case .began:
+            interruptedWhilePlaying = wantsPlayback
+            if wantsPlayback {
+                wantsPlayback = false
+                player?.pause()
+                onStateChange?(.paused)
+            }
+        case .ended:
+            let options = AVAudioSession.InterruptionOptions(rawValue: optionsRaw)
+            if interruptedWhilePlaying, options.contains(.shouldResume) {
+                interruptedWhilePlaying = false
+                resume()
+            } else {
+                interruptedWhilePlaying = false
+            }
+        @unknown default:
+            break
+        }
+    }
+    #endif
 }

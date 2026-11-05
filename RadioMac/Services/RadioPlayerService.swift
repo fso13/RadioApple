@@ -1,6 +1,8 @@
 import Combine
 import Foundation
+#if os(macOS)
 import WidgetKit
+#endif
 
 /// Glue between the audio engine, the station library, track metadata and the
 /// system Now Playing tile.
@@ -268,6 +270,7 @@ final class RadioPlayerService: ObservableObject {
     }
 
     private func publishSharedState() {
+        #if os(macOS)
         let state: SharedPlaybackState
         if let localTrack {
             state = SharedPlaybackState(
@@ -288,6 +291,7 @@ final class RadioPlayerService: ObservableObject {
         }
         state.save()
         WidgetCenter.shared.reloadAllTimelines()
+        #endif
     }
 
     private func effectiveVolume(for station: RadioStation?) -> Double {

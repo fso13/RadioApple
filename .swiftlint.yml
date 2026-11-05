@@ -2,6 +2,7 @@
 # Warnings are reported in CI; only SwiftLint "error" rules fail the build.
 included:
   - RadioMac
+  - RadioiOS
   - RadioMacTests
 
 excluded:

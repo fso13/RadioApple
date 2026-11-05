@@ -40,6 +40,13 @@ jobs:
             -configuration Debug -derivedDataPath .build/DerivedData \
             build
 
+      - name: Build iPhone app (no signing)
+        run: |
+          xcodebuild -project RadioMac.xcodeproj -scheme RadioiOS \
+            -configuration Debug -sdk iphoneos \
+            -destination 'generic/platform=iOS' -derivedDataPath .build/iOS \
+            CODE_SIGNING_ALLOWED=NO build
+
       - name: Test
         run: |
           xcodebuild test -project RadioMac.xcodeproj -scheme RadioMac \

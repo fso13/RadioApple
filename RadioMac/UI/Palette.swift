@@ -18,7 +18,7 @@ struct AppPalette {
 
     let textPrimary: Color
     let textSecondary: Color
-    let textTertiary: Color
+    var textTertiary: Color
 
     /// Active text / marks.
     let accent: Color
@@ -80,7 +80,17 @@ extension AppPalette {
     )
 
     static func resolved(for scheme: ColorScheme) -> AppPalette {
-        scheme == .light ? .light : .dark
+        #if os(iOS)
+        // Slightly stronger tertiary ink on the phone: 11–12 pt captions must
+        // stay above the 4.5:1 contrast floor in both themes.
+        var palette = scheme == .light ? AppPalette.light : AppPalette.dark
+        palette.textTertiary = scheme == .light
+            ? Color(argb: 0xFF6E6E6E)
+            : Color(argb: 0xFF8A8A92)
+        return palette
+        #else
+        return scheme == .light ? .light : .dark
+        #endif
     }
 }
 

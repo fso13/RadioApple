@@ -5,6 +5,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var environment: AppEnvironment?
     private var windowController: MainWindowController?
     private var statusItemController: StatusItemController?
+    private var finderService: FinderRequestService?
+    /// Items opened before the app finished launching (Finder, «Открыть с
+    /// помощью») wait here for the environment to exist.
+    private var pendingDocuments: [URL] = []
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -44,6 +48,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             showSettings: { [weak windowController] in windowController?.showSettings() }
         )
 
+        let finderService = FinderRequestService(
+            environment: environment,
+            showMusic: { [weak windowController] in windowController?.showMusic() }
+        )
+        finderService.start()
+        self.finderService = finderService
+
 #if DEBUG
         if DebugHarness.handle(
             arguments: ProcessInfo.processInfo.arguments,
@@ -63,15 +74,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if ProcessInfo.processInfo.arguments.contains("-showMusic") {
             windowController.showMusic()
         }
+
+        if !pendingDocuments.isEmpty {
+            let documents = pendingDocuments
+            pendingDocuments = []
+            finderService.handleOpenDocuments(documents)
+        }
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
+        var documents: [URL] = []
         for url in urls {
-            guard let command = RadioURLCommand.parse(url) else { continue }
+            guard let command = RadioURLCommand.parse(url) else {
+                documents.append(url)
+                continue
+            }
 #if DEBUG
             DebugLog.write("open url: \(url.absoluteString) -> \(String(describing: command))")
 #endif
             AppRuntime.shared.handle(command)
+        }
+        guard !documents.isEmpty else { return }
+        if let finderService {
+            finderService.handleOpenDocuments(documents)
+        } else {
+            pendingDocuments.append(contentsOf: documents)
         }
     }
 
