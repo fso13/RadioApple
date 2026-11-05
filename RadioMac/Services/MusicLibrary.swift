@@ -77,12 +77,6 @@ final class MusicLibrary: ObservableObject {
         tracks.first { $0.id == id }
     }
 
-    /// Looks a track up by its absolute path; used when the Finder hands files
-    /// to the app instead of the library.
-    func track(atPath path: String) -> LocalTrack? {
-        tracks.first { $0.path == path }
-    }
-
     func playlist(id: String) -> MusicPlaylist? {
         playlists.first { $0.id == id }
     }
@@ -599,17 +593,6 @@ final class MusicLibrary: ObservableObject {
         playlists.append(playlist)
         schedulePersist()
         return playlist
-    }
-
-    /// Replaces the content of a playlist that mirrors a folder, keeping its
-    /// name and identifier.
-    func replaceTracks(_ trackIDs: [String], in playlistID: String) {
-        guard let index = playlists.firstIndex(where: { $0.id == playlistID }) else { return }
-        let valid = trackIDs.filter { id in tracks.contains { $0.id == id } }
-        guard playlists[index].trackIDs != valid else { return }
-        playlists[index].trackIDs = valid
-        playlists[index].updatedAt = Date()
-        schedulePersist()
     }
 
     func renamePlaylist(id: String, name: String) {
