@@ -261,8 +261,8 @@ DEVELOPMENT_TEAM=XXXXXXXXXX RADIOIOS_BUNDLE_ID=com.familiya.radiomac scripts/ins
 | --- | --- | --- |
 | **Сайт** | [fso13.github.io/RadioApple](https://fso13.github.io/RadioApple/) | кнопка «Скачать» ведёт на последний релиз |
 | **Homebrew** | `brew install --cask fso13/tap/radiomac` | после `brew tap fso13/tap` и `brew trust fso13/tap` |
-| **Образ** | `dist/RadioMac-1.4.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
-| **Установщик** | `dist/RadioMac-1.4.0.pkg` | двойной клик → «Продолжить» → «Установить» |
+| **Образ** | `dist/RadioMac-2.0.0.dmg` | открыть и перетащить `RadioMac` в `Applications` |
+| **Установщик** | `dist/RadioMac-2.0.0.pkg` | двойной клик → «Продолжить» → «Установить» |
 | Лаунчер | `Install RadioMac.command` | для локальной сборки: собрать, поставить в `/Applications`, запустить |
 | Контрольные суммы | `dist/SHA256SUMS.txt` | `shasum -a 256 -c SHA256SUMS.txt` |
 
@@ -296,7 +296,7 @@ scripts/install.sh --skip-build     # установить уже собранн
 ```bash
 scripts/make_installer.sh                 # Release (universal) + dist/*.dmg + dist/*.pkg
 scripts/make_installer.sh --skip-build    # только упаковать
-scripts/make_installer.sh --version 1.4.0
+scripts/make_installer.sh --version 2.0.0
 ```
 
 Раскладку окна DMG пишет [dmgbuild](https://github.com/dmgbuild/dmgbuild): скрипт сам заводит
@@ -432,7 +432,7 @@ scripts/generate_xcodeproj.py пересборка .xcodeproj из файлов 
 
 | Workflow | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 44 unit + 4 UI, xcresult при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 66 unit + 4 UI, xcresult при падении |
 | `distribute.yml` | push в `main`, вручную | Release-сборка (universal), DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись и нотарификация (если есть секреты), SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, проверка сайта и вики |
@@ -445,12 +445,12 @@ CodeQL собирает проект через autobuild: в репозитор
 
 ### Как выпустить релиз
 
-1. Добавьте в `CHANGELOG.md` секцию `## [1.4.0] — 2026-11-02`.
+1. Добавьте в `CHANGELOG.md` секцию `## [2.0.0] — 2026-11-05`.
 2. Поставьте тег и отправьте его:
 
    ```bash
-   git tag v1.4.0
-   git push origin v1.4.0
+   git tag v2.0.0
+   git push origin v2.0.0
    ```
 
 3. `release.yml` соберёт DMG и PKG, подпишет их (если настроены секреты), нотарифицирует,

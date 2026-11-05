@@ -7,7 +7,7 @@
 
 | Файл | Триггер | Что делает |
 | --- | --- | --- |
-| `ci.yml` | push/PR в `main` | Debug-сборка, 44 unit-теста, `xcresult` при падении |
+| `ci.yml` | push/PR в `main` | Debug-сборка, 66 unit-тестов, `xcresult` при падении |
 | `distribute.yml` | push в `main`, вручную | universal Release, DMG + PKG как артефакты |
 | `release.yml` | тег `v*`, вручную | сборка, подпись, нотарификация, SBOM, GitHub Release |
 | `lint.yml` | push/PR | SwiftLint, actionlint, ShellCheck, сверка `.xcodeproj`, сайт и вики |
