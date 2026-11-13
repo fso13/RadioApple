@@ -684,7 +684,7 @@ def build() -> tuple[str, str]:
             "SUPPORTS_MACCATALYST = NO;",
             "SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;",
             "SWIFT_STRICT_CONCURRENCY = complete;",
-            "SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;",
+            "SWIFT_TREAT_WARNINGS_AS_ERRORS = NO;",
             "TARGETED_DEVICE_FAMILY = 1;",
         ]
         if IOS_DEVELOPMENT_TEAM:

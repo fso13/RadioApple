@@ -42,10 +42,18 @@ jobs:
 
       - name: Build iPhone app (no signing)
         run: |
+          set -o pipefail
           xcodebuild -project RadioMac.xcodeproj -scheme RadioiOS \
             -configuration Debug -sdk iphoneos \
             -destination 'generic/platform=iOS' -derivedDataPath .build/iOS \
-            CODE_SIGNING_ALLOWED=NO build
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee /tmp/ios-build.log
+          status=$?
+          if [ $status -ne 0 ]; then
+            grep -E "error:" /tmp/ios-build.log | head -20 | while IFS= read -r line; do
+              echo "::error ::$line"
+            done
+          fi
+          exit $status
 
       - name: Test
         run: |
