@@ -101,7 +101,21 @@ enum MediaLibraryExporter {
         session.metadata = try? await asset.load(.commonMetadata)
 
         do {
+            #if compiler(>=6.2)
             try await session.export(to: destination, as: .m4a)
+            #else
+            // Xcode 16 / iOS 18 SDK has no async export API yet.
+            session.outputURL = destination
+            session.outputFileType = .m4a
+            session.exportAsynchronously {}
+            while session.status == .waiting || session.status == .exporting {
+                try await Task.sleep(nanoseconds: 100_000_000)
+            }
+            guard session.status == .completed else {
+                try? FileManager.default.removeItem(at: destination)
+                return nil
+            }
+            #endif
             return destination
         } catch {
             try? FileManager.default.removeItem(at: destination)
