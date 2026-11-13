@@ -96,10 +96,6 @@ enum MediaLibraryExporter {
             .appendingPathComponent(fileName(for: item))
         try? FileManager.default.removeItem(at: destination)
 
-        // Preserve the tags that the export preset supports. MPMediaItem
-        // metadata is also applied after import, so nothing is lost visually.
-        session.metadata = try? await asset.load(.commonMetadata)
-
         do {
             #if compiler(>=6.2)
             try await session.export(to: destination, as: .m4a)
