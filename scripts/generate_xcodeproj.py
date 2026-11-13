@@ -84,6 +84,7 @@ IOS_SHARED_SOURCES = [
     "Services/MetadataProviders.swift",
     "Services/MusicLibrary.swift",
     "Services/MusicLibraryMaintenance.swift",
+    "Services/MusicLibraryStorage.swift",
     "Services/MusicLibraryCollections.swift",
     "Services/MusicPlaylistFile.swift",
     "Services/LogoResolver.swift",
@@ -1010,7 +1011,11 @@ SCHEME = """<?xml version="1.0" encoding="UTF-8"?>
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
-   <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "YES">
+   <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "NO">
+      <CommandLineArguments>
+         <CommandLineArgument argument = "-skip-lastfm-keychain" isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <Testables>
          <TestableReference skipped = "NO">
             <BuildableReference

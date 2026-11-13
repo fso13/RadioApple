@@ -32,15 +32,30 @@ extension MusicLibrary {
         }
     }
 
-    /// Collapses tracks that point at the same file. Re-imports across app
-    /// container changes used to create copies with different absolute paths;
-    /// rebasing can fold them onto one path later.
+    /// Collapses tracks that point at the same file, then tracks that describe
+    /// the same song (title, artist and duration). Re-imports and duplicated
+    /// folders used to inflate the library even though the audio files were
+    /// identical.
     func deduplicateTracks() {
-        let groups = Dictionary(grouping: tracks.indices, by: { tracks[$0].path })
-        guard groups.contains(where: { $0.value.count > 1 }) else { return }
+        let byPath = collapseDuplicates { track in
+            track.path.isEmpty ? nil : "path:\(track.path)"
+        }
+        let byMetadata = collapseDuplicates { track in
+            Self.metadataKey(for: track)
+        }
+        if byPath || byMetadata { schedulePersist() }
+    }
+
+    /// Removes duplicates for one key, keeping the best-described track and
+    /// remapping playlist references. Returns whether anything was removed.
+    private func collapseDuplicates(key: (LocalTrack) -> String?) -> Bool {
+        var groups: [String: [Int]] = [:]
+        for index in tracks.indices {
+            guard let value = key(tracks[index]) else { continue }
+            groups[value, default: []].append(index)
+        }
 
         var removedToKept: [String: String] = [:]
-
         for (_, indices) in groups where indices.count > 1 {
             let kept = indices.max { lhs, rhs in
                 let left = Self.metadataScore(tracks[lhs])
@@ -54,7 +69,7 @@ extension MusicLibrary {
             }
         }
 
-        guard !removedToKept.isEmpty else { return }
+        guard !removedToKept.isEmpty else { return false }
         let removedIDs = Set(removedToKept.keys)
 
         tracks.removeAll { removedIDs.contains($0.id) }
@@ -71,7 +86,20 @@ extension MusicLibrary {
             playlists[index].updatedAt = Date()
         }
 
-        schedulePersist()
+        return true
+    }
+
+    private static func metadataKey(for track: LocalTrack) -> String? {
+        guard let title = LocalTrack.trimmed(track.displayTitle),
+              let artist = LocalTrack.trimmed(track.displayArtist),
+              let duration = track.duration,
+              duration > 0
+        else { return nil }
+
+        let folded = { (value: String) in
+            value.folding(options: [.diacriticInsensitive, .caseInsensitive], locale: nil)
+        }
+        return "song:\(folded(title))|\(folded(artist))|\(Int(duration.rounded()))"
     }
 
     private static func metadataScore(_ track: LocalTrack) -> Int {
@@ -122,6 +150,48 @@ extension MusicLibrary {
         }
 
         if changed { schedulePersist() }
+    }
+
+    /// Old media-library exports were named `UUID-Artist - Title.m4a`.
+    /// When such a file was re-imported from the shared folder, the filename
+    /// fallback turned the UUID prefix into part of the artist. Strip it once.
+    func repairLegacyImportMetadata() {
+        var changed = false
+
+        for index in tracks.indices {
+            let artist = Self.strippingUUIDPrefix(tracks[index].artist)
+            if artist != tracks[index].artist {
+                tracks[index].artist = artist
+                changed = true
+            }
+            let title = Self.strippingUUIDPrefix(tracks[index].title) ?? tracks[index].title
+            if title != tracks[index].title {
+                tracks[index].title = title
+                changed = true
+            }
+            let album = Self.strippingUUIDPrefix(tracks[index].album)
+            if album != tracks[index].album {
+                tracks[index].album = album
+                changed = true
+            }
+        }
+
+        if changed { schedulePersist() }
+    }
+
+    private static func strippingUUIDPrefix(_ value: String?) -> String? {
+        guard let value else { return nil }
+        let characters = Array(value)
+        guard characters.count > 37 else { return value }
+
+        let prefix = Array(characters.prefix(36))
+        let groups = String(prefix).split(separator: "-", omittingEmptySubsequences: false)
+        guard groups.map(\.count) == [8, 4, 4, 4, 12],
+              groups.joined().allSatisfy({ $0.isHexDigit }),
+              characters[36] == "-"
+        else { return value }
+
+        return LocalTrack.trimmed(String(characters.dropFirst(37)))
     }
 
     /// Imports audio and M3U playlists the user dropped into the app's shared

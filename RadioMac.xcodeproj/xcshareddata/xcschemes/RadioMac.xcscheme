@@ -5,7 +5,7 @@
          <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000137"
+               BlueprintIdentifier = "A70000000000000000000141"
                BuildableName = "RadioMac.app"
                BlueprintName = "RadioMac"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -14,7 +14,7 @@
          <BuildActionEntry buildForTesting = "YES" buildForRunning = "NO" buildForProfiling = "NO" buildForArchiving = "NO" buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000146"
+               BlueprintIdentifier = "A70000000000000000000150"
                BuildableName = "RadioMacTests.xctest"
                BlueprintName = "RadioMacTests"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -23,7 +23,7 @@
          <BuildActionEntry buildForTesting = "YES" buildForRunning = "NO" buildForProfiling = "NO" buildForArchiving = "NO" buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000157"
+               BlueprintIdentifier = "A70000000000000000000161"
                BuildableName = "RadioMacUITests.xctest"
                BlueprintName = "RadioMacUITests"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -32,7 +32,7 @@
          <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000168"
+               BlueprintIdentifier = "A70000000000000000000172"
                BuildableName = "RadioMacWidget.appex"
                BlueprintName = "RadioMacWidget"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -41,7 +41,7 @@
          <BuildActionEntry buildForTesting = "YES" buildForRunning = "YES" buildForProfiling = "YES" buildForArchiving = "YES" buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000181"
+               BlueprintIdentifier = "A70000000000000000000185"
                BuildableName = "RadioMacFinder.appex"
                BlueprintName = "RadioMacFinder"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -49,12 +49,16 @@
          </BuildActionEntry>
       </BuildActionEntries>
    </BuildAction>
-   <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "YES">
+   <TestAction buildConfiguration = "Debug" selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv = "NO">
+      <CommandLineArguments>
+         <CommandLineArgument argument = "-skip-lastfm-keychain" isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <Testables>
          <TestableReference skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000146"
+               BlueprintIdentifier = "A70000000000000000000150"
                BuildableName = "RadioMacTests.xctest"
                BlueprintName = "RadioMacTests"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -63,7 +67,7 @@
          <TestableReference skipped = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "A70000000000000000000157"
+               BlueprintIdentifier = "A70000000000000000000161"
                BuildableName = "RadioMacUITests.xctest"
                BlueprintName = "RadioMacUITests"
                ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -75,7 +79,7 @@
       <BuildableProductRunnable runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A70000000000000000000137"
+            BlueprintIdentifier = "A70000000000000000000141"
             BuildableName = "RadioMac.app"
             BlueprintName = "RadioMac"
             ReferencedContainer = "container:RadioMac.xcodeproj">
@@ -86,7 +90,7 @@
       <BuildableProductRunnable runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "A70000000000000000000137"
+            BlueprintIdentifier = "A70000000000000000000141"
             BuildableName = "RadioMac.app"
             BlueprintName = "RadioMac"
             ReferencedContainer = "container:RadioMac.xcodeproj">

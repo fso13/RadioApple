@@ -37,6 +37,8 @@
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
 	<true/>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Доступ к медиатеке нужен, чтобы добавлять загруженные на iPhone песни в локальную музыку RadioMac.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>

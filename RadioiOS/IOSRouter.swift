@@ -18,6 +18,12 @@ final class IOSRouter: ObservableObject {
     @Published var musicPage: MusicPage?
     /// One-shot request to import audio dropped into `Documents/Music`.
     @Published var importSharedMusic = false
+    /// One-shot request to open the system media library picker.
+    @Published var importMediaLibrary = false
+    /// One-shot request to import every available media-library song.
+    @Published var importAllMediaLibrary = false
+    /// One-shot request to import media-library playlists.
+    @Published var importMediaPlaylists = false
     /// One-shot request to open a playlist, album or artist by name.
     @Published var playlistName: String?
     @Published var albumTitle: String?

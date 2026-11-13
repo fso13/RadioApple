@@ -86,6 +86,15 @@ struct RadioiOSApp: App {
         case "import":
             router.musicPage = .allTracks
             router.importSharedMusic = true
+        case "media":
+            router.musicPage = .allTracks
+            router.importMediaLibrary = true
+        case "media-all":
+            router.musicPage = .allTracks
+            router.importAllMediaLibrary = true
+        case "media-playlists":
+            router.musicPage = .allTracks
+            router.importMediaPlaylists = true
         default:
             router.musicPage = .allTracks
         }

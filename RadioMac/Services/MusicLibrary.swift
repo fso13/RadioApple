@@ -73,14 +73,6 @@ final class MusicLibrary: ObservableObject {
         tracks.filter(\.isMissing).count
     }
 
-    func track(id: String) -> LocalTrack? {
-        tracks.first { $0.id == id }
-    }
-
-    func playlist(id: String) -> MusicPlaylist? {
-        playlists.first { $0.id == id }
-    }
-
     func tracks(in playlistID: String?) -> [LocalTrack] {
         guard let playlistID else { return tracks }
         guard let playlist = playlist(id: playlistID) else { return [] }
@@ -309,8 +301,11 @@ final class MusicLibrary: ObservableObject {
     // MARK: - Loading
 
     func load() {
-        guard let storageURL,
-              let data = try? Data(contentsOf: storageURL)
+        #if os(iOS)
+        migrateLibraryFileIfNeeded(at: storageURL)
+        #endif
+        guard let readURL = Self.readURL(for: storageURL),
+              let data = try? Data(contentsOf: readURL)
         else { return }
         guard let snapshot = try? JSONDecoder().decode(Snapshot.self, from: data) else {
             return
@@ -323,6 +318,10 @@ final class MusicLibrary: ObservableObject {
         migrateContainerPaths()
         #endif
         deduplicateTracks()
+        #if os(iOS)
+        migrateArtworkFiles()
+        repairLegacyImportMetadata()
+        #endif
 
         for source in sources {
             _ = startAccess(for: source)
@@ -473,6 +472,7 @@ final class MusicLibrary: ObservableObject {
         let summary = await importAudioFiles(urls)
         refreshMissingFlags()
         if summary.added > 0 {
+            deduplicateTracks()
             startEnrichmentIfNeeded()
         }
         flush()
@@ -1062,13 +1062,6 @@ final class MusicLibrary: ObservableObject {
     }
 #endif
 
-    static var defaultStorageURL: URL? {
-        FileManager.default
-            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
-            .first?
-            .appendingPathComponent("RadioMac", isDirectory: true)
-            .appendingPathComponent("music-library.json")
-    }
 }
 
 #if os(iOS)

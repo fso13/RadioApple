@@ -21,6 +21,7 @@ struct MusicView: View {
 
     @State var showSources = false
     @State var isTargeted = false
+    @State var importingMacMusic = false
     @State var pendingDeleteTrack: LocalTrack?
     @State var pendingDeletePlaylist: MusicPlaylist?
     @State var artworkEditor: MusicArtworkEditor?
@@ -117,17 +118,23 @@ struct MusicView: View {
     var header: some View {
         PanelHeader(onBack: onBack) {
             HStack(spacing: Space.s) {
-                if library.isScanning || library.isEnriching {
+                if library.isScanning || library.isEnriching || importingMacMusic {
                     ProgressView()
                         .progressViewStyle(.circular)
                         .controlSize(.mini)
                         .scaleEffect(0.7)
-                        .accessibilityLabel(library.scanStatus ?? "Идёт обработка")
+                        .accessibilityLabel(
+                            importingMacMusic
+                                ? "Читаю медиатеку «Музыка»"
+                                : (library.scanStatus ?? "Идёт обработка")
+                        )
                 }
 
                 PanelMenu {
                     Button("Добавить папку…") { chooseFolder() }
                     Button("Добавить файлы…") { chooseFiles() }
+                    Button("Импортировать из «Музыки»…") { importMacMusic() }
+                        .disabled(importingMacMusic)
                     Divider()
                     Button("Новый плейлист…") { model.presentCreatePlaylist() }
                     Button("Импорт M3U…") { importPlaylist() }
@@ -266,6 +273,8 @@ struct MusicView: View {
         Menu {
             Button("Добавить папку…") { chooseFolder() }
             Button("Добавить файлы…") { chooseFiles() }
+            Button("Импортировать из «Музыки»…") { importMacMusic() }
+                .disabled(importingMacMusic)
             Divider()
             Button("Новый плейлист…") { model.presentCreatePlaylist() }
             Button("Импорт M3U…") { importPlaylist() }
@@ -743,6 +752,96 @@ struct MusicView: View {
     }
 
     // MARK: - Files
+
+    /// Imports the local Music.app library: tracks by file location and user
+    /// playlists by persistent track IDs. Requires Automation access to Music
+    /// and read access to the folder that contains the media files.
+    func importMacMusic() {
+        guard !importingMacMusic else { return }
+        importingMacMusic = true
+        toasts.show("Читаю медиатеку «Музыка»…", kind: .info)
+
+        Task { @MainActor in
+            defer { importingMacMusic = false }
+
+            do {
+                let result = try await Task.detached(priority: .userInitiated) {
+                    try MacMusicLibraryService.load()
+                }.value
+
+                let located = result.tracks.filter { item in
+                    guard let url = item.location else { return false }
+                    return LocalAudioMetadata.isSupported(url)
+                        && FileManager.default.fileExists(atPath: url.path)
+                }
+                let playlists = result.playlists.filter { playlist in
+                    let name = playlist.name.lowercased()
+                    let isLibraryPlaylist = name == "музыка" || name == "music"
+                    let coversLibrary = playlist.trackIDs.count
+                        >= max(1, result.tracks.count - 5)
+                    return !(isLibraryPlaylist && coversLibrary)
+                }
+                guard !located.isEmpty || !playlists.isEmpty else {
+                    throw MacMusicLibraryError.noTracks
+                }
+
+                if !located.isEmpty, !ensureMusicFolderAccess() { return }
+
+                let alert = NSAlert()
+                alert.messageText = "Импортировать медиатеку «Музыка»?"
+                alert.informativeText = "Треков: \(located.count). "
+                    + "Плейлистов: \(playlists.count). "
+                    + "Облачные и защищённые записи будут пропущены."
+                alert.addButton(withTitle: "Импортировать")
+                alert.addButton(withTitle: "Отмена")
+                guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+                toasts.show("Импортирую треки…", kind: .info)
+                let summary = await library.addFiles(located.compactMap { $0.location })
+                library.flush()
+
+                let mapping = applyMacMusicMetadata(located)
+                let importedPlaylists = importMacMusicPlaylists(playlists, mapping: mapping)
+
+                var message = "Добавлено треков: \(summary.added)"
+                if importedPlaylists > 0 {
+                    message += ", плейлистов: \(importedPlaylists)"
+                }
+                if summary.added == 0, importedPlaylists == 0 {
+                    message = "Новых треков не появилось"
+                }
+                toasts.show(
+                    message,
+                    kind: summary.added > 0 || importedPlaylists > 0 ? .success : .info
+                )
+            } catch {
+                toasts.show(error.localizedDescription, kind: .error)
+            }
+        }
+    }
+
+    /// The sandbox needs a user grant for the Music media folder. Usually the
+    /// whole `~/Music` folder covers every song in the library.
+    func ensureMusicFolderAccess() -> Bool {
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Music", isDirectory: true)
+        if library.hasAccess(toFolder: root) { return true }
+
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = root
+        panel.prompt = "Разрешить"
+        panel.message = "Разрешите доступ к папке с музыкой, "
+            + "чтобы RadioMac мог читать файлы медиатеки."
+        guard panel.runModal() == .OK, let url = panel.url else { return false }
+        guard library.grantFolderAccess(url) else {
+            toasts.show("Не удалось получить доступ к папке с музыкой", kind: .error)
+            return false
+        }
+        return true
+    }
 
     func chooseFolder() {
         let panel = NSOpenPanel()

@@ -1,4 +1,7 @@
+// swiftlint:disable file_length
+import MediaPlayer
 import SwiftUI
+import UIKit
 import UniformTypeIdentifiers
 
 /// Local music: tracks, albums, artists and playlists over one shared library.
@@ -29,6 +32,15 @@ struct MusicScreen: View {
     @State private var isSelecting = false
     @State private var selectedTrackIDs: Set<String> = []
     @State private var confirmDeleteSelection = false
+    @State private var mediaProgress: String?
+    @State private var mediaNotice: String?
+    @State private var mediaPermissionDenied = false
+    @State private var mediaTask: Task<Void, Never>?
+    @State private var pendingAllMedia: [MPMediaItem] = []
+    @State private var pendingAllExisting = 0
+    @State private var pendingAllUnavailable = 0
+    @State private var pendingAllPlaylists = 0
+    @State private var showImportAllMedia = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -44,6 +56,10 @@ struct MusicScreen: View {
 
                 if isSelecting {
                     selectionBar
+                }
+
+                if let mediaNotice {
+                    mediaNoticeBar(mediaNotice)
                 }
 
                 if isCopying || music.isScanning || music.isEnriching {
@@ -102,6 +118,21 @@ struct MusicScreen: View {
             }) else { return }
             path.append(.artist(artist.id))
         }
+        .task(id: router.importMediaPlaylists) {
+            guard router.importMediaPlaylists else { return }
+            router.importMediaPlaylists = false
+            requestMediaPlaylists()
+        }
+        .task(id: router.importAllMediaLibrary) {
+            guard router.importAllMediaLibrary else { return }
+            router.importAllMediaLibrary = false
+            requestAllMediaLibrary()
+        }
+        .task(id: router.importMediaLibrary) {
+            guard router.importMediaLibrary else { return }
+            router.importMediaLibrary = false
+            requestMediaLibrary()
+        }
         .task(id: router.importSharedMusic) {
             guard router.importSharedMusic else { return }
             router.importSharedMusic = false
@@ -142,9 +173,31 @@ struct MusicScreen: View {
                 set: { if !$0 { alertText = nil } }
             )
         ) {
-            Button("OK", role: .cancel) { alertText = nil }
+            if mediaPermissionDenied {
+                Button("Настройки") { openAppSettings() }
+            }
+            Button("OK", role: .cancel) {
+                alertText = nil
+                mediaPermissionDenied = false
+            }
         } message: {
             Text(alertText ?? "")
+        }
+        .confirmationDialog(
+            "Импортировать всю медиатеку?",
+            isPresented: $showImportAllMedia,
+            titleVisibility: .visible
+        ) {
+            Button("Импортировать") {
+                let items = pendingAllMedia
+                pendingAllMedia = []
+                importMediaItems(items, importPlaylists: true)
+            }
+            Button("Отмена", role: .cancel) {
+                pendingAllMedia = []
+            }
+        } message: {
+            Text(allMediaConfirmationText)
         }
         .confirmationDialog(
             "Удалить трек?",
@@ -257,6 +310,38 @@ struct MusicScreen: View {
         }
     }
 
+    private func mediaNoticeBar(_ text: String) -> some View {
+        HStack(alignment: .top, spacing: Space.s) {
+            Image(systemName: "checkmark.circle")
+                .font(.system(size: 15))
+                .foregroundStyle(palette.green)
+                .padding(.top, 1)
+
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(palette.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer(minLength: Space.s)
+
+            Button {
+                mediaNotice = nil
+            } label: {
+                Image(systemName: "xmark")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(palette.textTertiary)
+                    .frame(width: 32, height: 32)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Скрыть сообщение")
+        }
+        .padding(.horizontal, Space.l)
+        .padding(.vertical, Space.s)
+        .background(palette.surfaceRaised)
+        .overlay(alignment: .bottom) { Hairline() }
+    }
+
     private var selectionBar: some View {
         HStack(spacing: Space.m) {
             Button(allVisibleSelected ? "Снять выбор" : "Выбрать все") {
@@ -341,7 +426,25 @@ struct MusicScreen: View {
             Button {
                 importing = true
             } label: {
-                Label("Импортировать музыку", systemImage: "square.and.arrow.down")
+                Label("Импортировать из «Файлов»…", systemImage: "square.and.arrow.down")
+            }
+
+            Button {
+                requestMediaLibrary()
+            } label: {
+                Label("Импортировать из медиатеки…", systemImage: "music.note")
+            }
+
+            Button {
+                requestAllMediaLibrary()
+            } label: {
+                Label("Импортировать всю медиатеку…", systemImage: "music.note.list")
+            }
+
+            Button {
+                requestMediaPlaylists()
+            } label: {
+                Label("Импортировать плейлисты медиатеки…", systemImage: "music.note.list")
             }
 
             Button {
@@ -400,6 +503,15 @@ struct MusicScreen: View {
                 .lineLimit(1)
 
             Spacer(minLength: 0)
+
+            if mediaTask != nil {
+                Button("Отменить") {
+                    mediaTask?.cancel()
+                }
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(palette.red)
+                .frame(minHeight: 44)
+            }
         }
         .padding(.horizontal, Space.l)
         .padding(.vertical, Space.s)
@@ -408,6 +520,7 @@ struct MusicScreen: View {
     }
 
     private var progressText: String {
+        if let mediaProgress { return mediaProgress }
         if isCopying { return "Копирую файлы в приложение…" }
         return music.scanStatus ?? music.enrichmentStatus ?? "Обновляю библиотеку…"
     }
@@ -748,6 +861,385 @@ extension MusicScreen {
         }
     }
 
+    private func requestMediaLibrary() {
+        switch MPMediaLibrary.authorizationStatus() {
+        case .authorized:
+            presentMediaPicker()
+        case .notDetermined:
+            MPMediaLibrary.requestAuthorization { status in
+                Task { @MainActor in
+                    if status == .authorized {
+                        presentMediaPicker()
+                    } else {
+                        presentMediaPermissionDenied()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            presentMediaPermissionDenied()
+        @unknown default:
+            presentMediaPermissionDenied()
+        }
+    }
+
+    private func requestAllMediaLibrary() {
+        switch MPMediaLibrary.authorizationStatus() {
+        case .authorized:
+            prepareImportAllMedia()
+        case .notDetermined:
+            MPMediaLibrary.requestAuthorization { status in
+                Task { @MainActor in
+                    if status == .authorized {
+                        prepareImportAllMedia()
+                    } else {
+                        presentMediaPermissionDenied()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            presentMediaPermissionDenied()
+        @unknown default:
+            presentMediaPermissionDenied()
+        }
+    }
+
+    private func prepareImportAllMedia() {
+        let all = MPMediaQuery.songs().items ?? []
+        let available = all.filter {
+            !$0.isCloudItem && !$0.hasProtectedAsset && $0.assetURL != nil
+        }
+        let fresh = available.filter { existingTrack(for: $0) == nil }
+        let mediaPlaylists = allMediaPlaylists()
+
+        pendingAllExisting = available.count - fresh.count
+        pendingAllUnavailable = all.count - available.count
+        pendingAllPlaylists = mediaPlaylists.count
+
+        guard !fresh.isEmpty || !mediaPlaylists.isEmpty else {
+            mediaNotice = all.isEmpty
+                ? "В медиатеке нет песен и плейлистов."
+                : "Все доступные песни уже в библиотеке, плейлистов нет."
+            return
+        }
+
+        pendingAllMedia = fresh
+        showImportAllMedia = true
+    }
+
+    private var allMediaConfirmationText: String {
+        var lines: [String] = []
+        if pendingAllMedia.isEmpty {
+            lines.append("Новых песен нет — импортирую только плейлисты.")
+        } else {
+            lines.append("Будет добавлено песен: \(pendingAllMedia.count).")
+        }
+        if pendingAllExisting > 0 {
+            lines.append("Уже в библиотеке: \(pendingAllExisting).")
+        }
+        if pendingAllUnavailable > 0 {
+            lines.append("Недоступно (облако или DRM): \(pendingAllUnavailable).")
+        }
+        if pendingAllPlaylists > 0 {
+            lines.append("Плейлистов из медиатеки: \(pendingAllPlaylists).")
+        }
+        lines.append("Импорт может занять несколько минут, его можно отменить.")
+        return lines.joined(separator: "\n")
+    }
+
+    private func allMediaPlaylists() -> [MPMediaPlaylist] {
+        (MPMediaQuery.playlists().collections ?? []).compactMap { $0 as? MPMediaPlaylist }
+    }
+
+    private func existingTrack(for item: MPMediaItem) -> LocalTrack? {
+        let persistentID = String(item.persistentID)
+        if let track = music.tracks.first(where: { $0.mediaLibraryID == persistentID }) {
+            return track
+        }
+
+        // Tracks imported before the persistent ID was stored are matched by
+        // title, artist and duration so a repeated import does not duplicate them.
+        guard let title = LocalTrack.trimmed(item.title)?.lowercased() else {
+            return nil
+        }
+        let artist = LocalTrack.trimmed(item.artist)?.lowercased() ?? ""
+        let duration = item.playbackDuration
+
+        return music.tracks.first { track in
+            guard track.title.lowercased() == title,
+                  (track.artist?.lowercased() ?? "") == artist
+            else { return false }
+            return duration <= 0 || abs((track.duration ?? 0) - duration) < 2
+        }
+    }
+
+    private func isMediaItemAlreadyImported(_ item: MPMediaItem) -> Bool {
+        existingTrack(for: item) != nil
+    }
+
+    private func requestMediaPlaylists() {
+        switch MPMediaLibrary.authorizationStatus() {
+        case .authorized:
+            importPlaylistsOnly()
+        case .notDetermined:
+            MPMediaLibrary.requestAuthorization { status in
+                Task { @MainActor in
+                    if status == .authorized {
+                        importPlaylistsOnly()
+                    } else {
+                        presentMediaPermissionDenied()
+                    }
+                }
+            }
+        case .denied, .restricted:
+            presentMediaPermissionDenied()
+        @unknown default:
+            presentMediaPermissionDenied()
+        }
+    }
+
+    private func importPlaylistsOnly() {
+        guard mediaTask == nil else { return }
+        mediaNotice = nil
+        isCopying = true
+
+        mediaTask = Task {
+            mediaProgress = "Импортирую плейлисты медиатеки…"
+            let result = importMediaPlaylists(mapping: [:])
+            mediaProgress = nil
+            isCopying = false
+            mediaTask = nil
+            mediaNotice = playlistSummary(
+                imported: result.playlists,
+                tracks: result.tracks
+            )
+        }
+    }
+
+    private func presentMediaPicker() {
+        MediaLibraryPresenter.shared.present {
+            importMediaItems($0)
+        } onCancel: {
+        }
+    }
+
+    private func presentMediaPermissionDenied() {
+        mediaPermissionDenied = true
+        alertText = "Доступ к медиатеке запрещён. Разрешите его в Настройки → RadioMac → Медиатека."
+    }
+
+    private func openAppSettings() {
+        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+        UIApplication.shared.open(url)
+        alertText = nil
+        mediaPermissionDenied = false
+    }
+
+    private func importMediaItems(_ items: [MPMediaItem], importPlaylists: Bool = false) {
+        guard !items.isEmpty || importPlaylists, mediaTask == nil else { return }
+        mediaNotice = nil
+        isCopying = true
+
+        mediaTask = Task {
+            var added = 0
+            var already = 0
+            var skipped: [String] = []
+            var cancelled = false
+            var mapping: [String: String] = [:]
+
+            for (index, item) in items.enumerated() {
+                if Task.isCancelled {
+                    cancelled = true
+                    break
+                }
+
+                mediaProgress = "Импортирую из медиатеки: \(index + 1) из \(items.count)"
+
+                if let track = existingTrack(for: item) {
+                    already += 1
+                    mapping[String(item.persistentID)] = track.id
+                    continue
+                }
+
+                guard let temporary = await MediaLibraryExporter.export(item) else {
+                    if Task.isCancelled {
+                        cancelled = true
+                        break
+                    }
+                    skipped.append(mediaTitle(item))
+                    continue
+                }
+
+                let summary = await music.addFiles([temporary])
+                if summary.added > 0 {
+                    added += summary.added
+                    if let trackID = applyMetadata(
+                        from: item,
+                        toTrackWithFileName: temporary.lastPathComponent
+                    ) {
+                        mapping[String(item.persistentID)] = trackID
+                    } else if let track = existingTrack(for: item) {
+                        mapping[String(item.persistentID)] = track.id
+                        assignMediaID(to: track, from: item)
+                    }
+                } else if let track = existingTrack(for: item) {
+                    mapping[String(item.persistentID)] = track.id
+                    assignMediaID(to: track, from: item)
+                } else {
+                    skipped.append(mediaTitle(item))
+                }
+                try? FileManager.default.removeItem(at: temporary)
+            }
+
+            var playlistCount = 0
+            var playlistTracks = 0
+            if importPlaylists, !cancelled {
+                mediaProgress = "Импортирую плейлисты медиатеки…"
+                let result = importMediaPlaylists(mapping: mapping)
+                playlistCount = result.playlists
+                playlistTracks = result.tracks
+            }
+
+            mediaProgress = nil
+            isCopying = false
+            mediaTask = nil
+            mediaNotice = mediaSummary(
+                added: added,
+                already: already,
+                skipped: skipped,
+                cancelled: cancelled,
+                playlists: playlistCount,
+                playlistTracks: playlistTracks
+            )
+        }
+    }
+
+    @discardableResult
+    private func applyMetadata(from item: MPMediaItem, toTrackWithFileName fileName: String) -> String? {
+        guard let track = music.tracks.first(where: {
+            ($0.path as NSString).lastPathComponent == fileName
+        }) else { return nil }
+
+        var updated = track
+        if let title = LocalTrack.trimmed(item.title) {
+            updated.title = title
+        }
+        if let artist = LocalTrack.trimmed(item.artist) {
+            updated.artist = artist
+        }
+        if let album = LocalTrack.trimmed(item.albumTitle) {
+            updated.album = album
+        }
+        if let genre = LocalTrack.trimmed(item.genre) {
+            updated.genre = genre
+        }
+        if item.albumTrackNumber > 0 {
+            updated.trackNumber = Int(item.albumTrackNumber)
+        }
+        if item.playbackDuration > 0 {
+            updated.duration = item.playbackDuration
+        }
+        updated.mediaLibraryID = String(item.persistentID)
+        if let image = item.artwork?.image(at: CGSize(width: 600, height: 600)),
+           let data = image.jpegData(compressionQuality: 0.9),
+           let stored = MusicArtworkStore.save(data, for: "media-\(UUID().uuidString)") {
+            updated.artworkURL = stored
+        }
+        music.update(updated)
+        return updated.id
+    }
+
+    private func assignMediaID(to track: LocalTrack, from item: MPMediaItem) {
+        guard track.mediaLibraryID == nil else { return }
+        var updated = track
+        updated.mediaLibraryID = String(item.persistentID)
+        music.update(updated)
+    }
+
+    private func importMediaPlaylists(mapping: [String: String]) -> (playlists: Int, tracks: Int) {
+        let mediaPlaylists = allMediaPlaylists()
+        var importedPlaylists = 0
+        var importedTracks = 0
+
+        for mediaPlaylist in mediaPlaylists {
+            guard let rawName = mediaPlaylist.value(
+                forProperty: MPMediaPlaylistPropertyName
+            ) as? String else { continue }
+            let name = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !name.isEmpty else { continue }
+
+            var seen: Set<String> = []
+            let trackIDs: [String] = mediaPlaylist.items.compactMap { item in
+                let id = mapping[String(item.persistentID)]
+                    ?? existingTrack(for: item)?.id
+                guard let id, seen.insert(id).inserted else { return nil }
+                return id
+            }
+            guard !trackIDs.isEmpty else { continue }
+
+            if let existing = music.playlists.first(where: {
+                $0.name.localizedCaseInsensitiveCompare(name) == .orderedSame
+            }) {
+                let before = Set(existing.trackIDs)
+                let additions = trackIDs.filter { !before.contains($0) }
+                music.addTracks(additions, to: existing.id)
+                importedTracks += additions.count
+            } else {
+                music.createPlaylist(name: name, trackIDs: trackIDs)
+                importedTracks += trackIDs.count
+            }
+            importedPlaylists += 1
+        }
+
+        return (importedPlaylists, importedTracks)
+    }
+
+    private func mediaTitle(_ item: MPMediaItem) -> String {
+        let parts = [item.artist, item.title]
+            .compactMap { $0?.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        return parts.isEmpty ? "Без названия" : parts.joined(separator: " — ")
+    }
+
+    private func playlistSummary(imported: Int, tracks: Int) -> String {
+        guard imported > 0 else {
+            return "В медиатеке нет плейлистов с добавленными треками."
+        }
+        return "Импортировано плейлистов: \(imported), треков: \(tracks)."
+    }
+
+    private func mediaSummary(
+        added: Int,
+        already: Int,
+        skipped: [String],
+        cancelled: Bool,
+        playlists: Int,
+        playlistTracks: Int
+    ) -> String {
+        var lines: [String] = []
+        if cancelled {
+            lines.append("Импорт остановлен.")
+        }
+        if added > 0 {
+            lines.append("Добавлено из медиатеки: \(added).")
+        }
+        if already > 0 {
+            lines.append("Уже в библиотеке: \(already).")
+        }
+        if playlists > 0 {
+            lines.append("Плейлистов: \(playlists), треков в них: \(playlistTracks).")
+        }
+        if skipped.isEmpty {
+            if added == 0, already == 0, playlists == 0, !cancelled {
+                lines.append("Ничего не добавлено.")
+            }
+        } else {
+            lines.append("Пропущено: \(skipped.count).")
+            lines.append(skipped.prefix(3).joined(separator: "\n"))
+            lines.append("Облачные и защищённые треки Apple Music скопировать нельзя.")
+        }
+        return lines.joined(separator: "\n")
+    }
+
     private func importSharedFiles() {
         isCopying = true
         Task {
@@ -782,3 +1274,5 @@ extension MusicScreen {
         return parts.joined(separator: "\n")
     }
 }
+
+// swiftlint:enable file_length

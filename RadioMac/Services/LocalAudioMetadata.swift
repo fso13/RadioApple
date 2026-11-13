@@ -236,8 +236,9 @@ enum LocalAudioMetadata {
 enum MusicArtworkStore {
     static var directory: URL {
         #if os(iOS)
-        // The system may purge Caches at any time; covers belong to the library.
-        let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        // Documents survives development re-installs together with the audio
+        // files; Application Support was rolled back by some installs.
+        let base = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? FileManager.default.temporaryDirectory
         #else
         let base = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first
@@ -247,6 +248,17 @@ enum MusicArtworkStore {
             .appendingPathComponent("RadioMac", isDirectory: true)
             .appendingPathComponent("Artwork", isDirectory: true)
     }
+
+    #if os(iOS)
+    /// Previous cover location, migrated into Documents on launch.
+    static var legacyDirectory: URL? {
+        FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)
+            .first?
+            .appendingPathComponent("RadioMac", isDirectory: true)
+            .appendingPathComponent("Artwork", isDirectory: true)
+    }
+    #endif
 
     @discardableResult
     static func save(_ data: Data, for trackID: String, in folder: URL = directory) -> String? {

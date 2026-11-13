@@ -24,6 +24,9 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
     var enrichmentSource: String?
     /// The file is gone (folder moved, drive unplugged) but the row is kept.
     var isMissing: Bool
+    /// Persistent ID of the source item in the iPhone media library, when the
+    /// track was imported from it. Used to skip duplicates on repeated imports.
+    var mediaLibraryID: String?
 
     init(
         id: String = UUID().uuidString,
@@ -39,7 +42,8 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
         addedAt: Date = Date(),
         enrichedAt: Date? = nil,
         enrichmentSource: String? = nil,
-        isMissing: Bool = false
+        isMissing: Bool = false,
+        mediaLibraryID: String? = nil
     ) {
         self.id = id
         self.path = path
@@ -55,6 +59,7 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
         self.enrichedAt = enrichedAt
         self.enrichmentSource = enrichmentSource
         self.isMissing = isMissing
+        self.mediaLibraryID = mediaLibraryID
     }
 
     // MARK: - Derived
@@ -134,7 +139,7 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case id, path, title, artist, album, genre, year, trackNumber, duration
-        case artworkUrl, addedAt, enrichedAt, enrichmentSource, isMissing
+        case artworkUrl, addedAt, enrichedAt, enrichmentSource, isMissing, mediaLibraryID
     }
 
     init(from decoder: Decoder) throws {
@@ -155,6 +160,9 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
             try container.decodeIfPresent(String.self, forKey: .enrichmentSource)
         )
         isMissing = try container.decodeIfPresent(Bool.self, forKey: .isMissing) ?? false
+        mediaLibraryID = Self.trimmed(
+            try container.decodeIfPresent(String.self, forKey: .mediaLibraryID)
+        )
     }
 
     func encode(to encoder: Encoder) throws {
@@ -173,6 +181,7 @@ struct LocalTrack: Identifiable, Hashable, Codable, Sendable {
         try container.encodeIfPresent(enrichedAt, forKey: .enrichedAt)
         try container.encodeIfPresent(enrichmentSource, forKey: .enrichmentSource)
         try container.encode(isMissing, forKey: .isMissing)
+        try container.encodeIfPresent(mediaLibraryID, forKey: .mediaLibraryID)
     }
 
     // MARK: - Helpers
