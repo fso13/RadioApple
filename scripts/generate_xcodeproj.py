@@ -17,8 +17,8 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SOURCES_DIR = ROOT / "RadioMac"
 PROJECT_NAME = "RadioMac"
 # Keep in sync with CHANGELOG/release tags; the release workflow overrides these.
-MARKETING_VERSION = "2.0.1"
-BUILD_NUMBER = "10"
+MARKETING_VERSION = "2.1.0"
+BUILD_NUMBER = "11"
 
 ASSETS = SOURCES_DIR / "Resources" / "Assets.xcassets"
 INFO_PLIST = SOURCES_DIR / "Resources" / "Info.plist"
