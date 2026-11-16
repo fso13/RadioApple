@@ -10,6 +10,8 @@ final class NowPlayingCenter {
     private var onPlay: (() -> Void)?
     private var onPause: (() -> Void)?
     private var onToggle: (() -> Void)?
+    private var onNext: (() -> Bool)?
+    private var onPrevious: (() -> Bool)?
     private var artworkTask: URLSessionDataTask?
     private var commandsConfigured = false
     private var artworkURL: String?
@@ -17,11 +19,15 @@ final class NowPlayingCenter {
     func configure(
         onPlay: @escaping () -> Void,
         onPause: @escaping () -> Void,
-        onToggle: @escaping () -> Void
+        onToggle: @escaping () -> Void,
+        onNext: @escaping () -> Bool,
+        onPrevious: @escaping () -> Bool
     ) {
         self.onPlay = onPlay
         self.onPause = onPause
         self.onToggle = onToggle
+        self.onNext = onNext
+        self.onPrevious = onPrevious
 
         guard !commandsConfigured else { return }
         commandsConfigured = true
@@ -43,9 +49,19 @@ final class NowPlayingCenter {
             return .success
         }
 
+        center.nextTrackCommand.addTarget { [weak self] _ in
+            guard self?.onNext?() == true else { return .commandFailed }
+            return .success
+        }
+        center.previousTrackCommand.addTarget { [weak self] _ in
+            guard self?.onPrevious?() == true else { return .commandFailed }
+            return .success
+        }
+        // Track navigation starts disabled: live radio has no next/previous.
+        center.nextTrackCommand.isEnabled = false
+        center.previousTrackCommand.isEnabled = false
+
         let disabled: [MPRemoteCommand] = [
-            center.nextTrackCommand,
-            center.previousTrackCommand,
             center.changePlaybackPositionCommand,
             center.seekForwardCommand,
             center.seekBackwardCommand,
@@ -58,6 +74,14 @@ final class NowPlayingCenter {
         for command in disabled { command.isEnabled = false }
     }
 
+    /// Enables the lock-screen / headphone next and previous buttons only while
+    /// a local track has neighbours in its playback queue.
+    func setTrackNavigation(canNext: Bool, canPrevious: Bool) {
+        let center = MPRemoteCommandCenter.shared()
+        center.nextTrackCommand.isEnabled = canNext
+        center.previousTrackCommand.isEnabled = canPrevious
+    }
+
     func update(
         title: String?,
         artist: String?,
@@ -66,7 +90,9 @@ final class NowPlayingCenter {
         isPlaying: Bool,
         isLive: Bool,
         elapsed: TimeInterval? = nil,
-        duration: TimeInterval? = nil
+        duration: TimeInterval? = nil,
+        queueIndex: Int? = nil,
+        queueCount: Int? = nil
     ) {
         var info: [String: Any] = [:]
 
@@ -84,7 +110,12 @@ final class NowPlayingCenter {
         }
 
         info[MPNowPlayingInfoPropertyIsLiveStream] = isLive
+        info[MPNowPlayingInfoPropertyMediaType] = MPNowPlayingInfoMediaType.audio.rawValue
         info[MPNowPlayingInfoPropertyPlaybackRate] = isPlaying ? 1.0 : 0.0
+        if let queueIndex, let queueCount, queueCount > 0 {
+            info[MPNowPlayingInfoPropertyPlaybackQueueIndex] = queueIndex
+            info[MPNowPlayingInfoPropertyPlaybackQueueCount] = queueCount
+        }
         if let elapsed, elapsed.isFinite, elapsed >= 0 {
             info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
         } else if isPlaying {
@@ -101,6 +132,7 @@ final class NowPlayingCenter {
     }
 
     func clear() {
+        setTrackNavigation(canNext: false, canPrevious: false)
         artworkTask?.cancel()
         artworkTask = nil
         artworkURL = nil

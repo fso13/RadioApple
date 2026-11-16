@@ -91,7 +91,9 @@ final class RadioPlayerService: ObservableObject {
         NowPlayingCenter.shared.configure(
             onPlay: { [weak self] in self?.resumeOrPlay() },
             onPause: { [weak self] in self?.pause() },
-            onToggle: { [weak self] in self?.togglePlayPause() }
+            onToggle: { [weak self] in self?.togglePlayPause() },
+            onNext: { [weak self] in self?.playNextLocalTrack() ?? false },
+            onPrevious: { [weak self] in self?.playPreviousLocalTrack() ?? false }
         )
     }
 
@@ -751,7 +753,13 @@ final class RadioPlayerService: ObservableObject {
                 isPlaying: status == .playing,
                 isLive: false,
                 elapsed: playbackElapsed,
-                duration: playbackDuration
+                duration: playbackDuration,
+                queueIndex: localTrackIndex,
+                queueCount: localQueue.count
+            )
+            NowPlayingCenter.shared.setTrackNavigation(
+                canNext: canPlayNextLocalTrack,
+                canPrevious: canPlayPreviousLocalTrack
             )
             return
         }
@@ -785,5 +793,6 @@ final class RadioPlayerService: ObservableObject {
             isPlaying: status == .playing,
             isLive: true
         )
+        NowPlayingCenter.shared.setTrackNavigation(canNext: false, canPrevious: false)
     }
 }
